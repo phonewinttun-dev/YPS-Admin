@@ -1,6 +1,1 @@
-﻿namespace YpsAdmin.Domain.DTOs.BusLine
-{
-    public class BusLineDto
-    {
-    }
-}
+// Unused single-class file replaced by BusLineDtos.cs
