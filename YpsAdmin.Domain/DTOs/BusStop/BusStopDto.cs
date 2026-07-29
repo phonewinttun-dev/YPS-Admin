@@ -1,6 +1,1 @@
-﻿namespace YpsAdmin.Domain.DTOs.BusStop
-{
-    public class BusStopDto
-    {
-    }
-}
+// Replaced by BusStopDtos.cs
