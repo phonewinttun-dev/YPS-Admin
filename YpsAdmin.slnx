@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="YpsAdmin.Api/YpsAdmin.Api.csproj" />
+  <Project Path="YpsAdmin.Database/YpsAdmin.Database.csproj" />
+  <Project Path="YpsAdmin.Domain/YpsAdmin.Domain.csproj" />
+  <Project Path="YpsAdmin.Shared/YpsAdmin.Shared.csproj" />
+</Solution>
