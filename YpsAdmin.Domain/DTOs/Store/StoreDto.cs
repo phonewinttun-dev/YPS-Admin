@@ -1,7 +1,1 @@
-﻿
-namespace YpsAdmin.Domain.DTOs.Store
-{
-    public class StoreDto
-    {
-    }
-}
+// Replaced by YpsStoreDtos.cs
