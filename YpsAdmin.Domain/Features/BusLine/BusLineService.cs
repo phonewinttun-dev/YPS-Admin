@@ -14,25 +14,50 @@ namespace YpsAdmin.Domain.Features.BusLine
             _context = context;
         }
 
-        public async Task<PagedResult<BusLineDto>> GetBusLinesAsync(BusLineQueryFilter filter)
+        //public async Task<PagedResult<BusLineDto>> GetBusLinesAsync(BusLineQueryFilter filter)
+        //{
+        //    var query = _context.Tblbuslines.AsNoTracking().AsQueryable();
+
+        //    // Search by bus number if search term is provided
+        //    if (!string.IsNullOrWhiteSpace(filter.SearchBusNumber))
+        //    {
+        //        string search = filter.SearchBusNumber.Trim().ToLower();
+        //        query = query.Where(b => b.BusNumber.ToLower().Contains(search));
+        //    }
+
+        //    int totalCount = await query.CountAsync();
+
+        //    int skip = (filter.PageNumber - 1) * filter.PageSize;
+
+        //    var items = await query
+        //        .OrderBy(b => b.BusNumber)
+        //        .Skip(skip)
+        //        .Take(filter.PageSize)
+        //        .Select(b => new BusLineDto
+        //        {
+        //            RouteId = b.RouteId,
+        //            BusNumber = b.BusNumber,
+        //            OutboundTitleMm = b.OutboundTitleMm,
+        //            OutboundTitleEn = b.OutboundTitleEn,
+        //            ReturnTitleMm = b.ReturnTitleMm,
+        //            ReturnTitleEn = b.ReturnTitleEn,
+        //            IsYpsAccepted = b.IsYpsAccepted ?? false
+        //        })
+        //        .ToListAsync();
+
+        //    var pagination = new Pagination(filter.PageNumber, filter.PageSize, totalCount);
+        //    return PagedResult<BusLineDto>.Success(items, pagination, "Bus lines retrieved successfully.");
+        //}
+
+        public async Task<PagedResult<BusLineDto>> GetBusLinesAsync(PaginationRequest request)
         {
-            var query = _context.Tblbuslines.AsNoTracking().AsQueryable();
-
-            // Search by bus number if search term is provided
-            if (!string.IsNullOrWhiteSpace(filter.SearchBusNumber))
-            {
-                string search = filter.SearchBusNumber.Trim().ToLower();
-                query = query.Where(b => b.BusNumber.ToLower().Contains(search));
-            }
-
+            var query = _context.Tblbuslines.AsNoTracking();
             int totalCount = await query.CountAsync();
-
-            int skip = (filter.PageNumber - 1) * filter.PageSize;
-
+            int skip = (request.PageNumber - 1) * request.PageSize;
             var items = await query
                 .OrderBy(b => b.BusNumber)
                 .Skip(skip)
-                .Take(filter.PageSize)
+                .Take(request.PageSize)
                 .Select(b => new BusLineDto
                 {
                     RouteId = b.RouteId,
@@ -44,8 +69,7 @@ namespace YpsAdmin.Domain.Features.BusLine
                     IsYpsAccepted = b.IsYpsAccepted ?? false
                 })
                 .ToListAsync();
-
-            var pagination = new Pagination(filter.PageNumber, filter.PageSize, totalCount);
+            var pagination = new Pagination(request.PageNumber, request.PageSize, totalCount);
             return PagedResult<BusLineDto>.Success(items, pagination, "Bus lines retrieved successfully.");
         }
 

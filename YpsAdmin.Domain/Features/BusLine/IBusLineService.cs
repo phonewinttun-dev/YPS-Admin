@@ -5,7 +5,7 @@ namespace YpsAdmin.Domain.Features.BusLine
 {
     public interface IBusLineService
     {
-        Task<PagedResult<BusLineDto>> GetBusLinesAsync(BusLineQueryFilter filter);
+        Task<PagedResult<BusLineDto>> GetBusLinesAsync(PaginationRequest request);
         Task<Result<BusLineDto>> GetBusLineByIdAsync(string routeId);
         Task<Result<BusLineDto>> CreateBusLineAsync(CreateBusLineRequest request);
         Task<Result<BusLineDto>> UpdateBusLineAsync(string routeId, UpdateBusLineRequest request);
