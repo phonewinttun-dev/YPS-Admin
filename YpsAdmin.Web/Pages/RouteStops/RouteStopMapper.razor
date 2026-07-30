@@ -18,7 +18,7 @@
                 {
                     @foreach (var line in busLineList)
                     {
-                        <option value="@line.BusLineId">@line.BusNumber - @line.RouteId</option>
+                        <option value="@line.RouteId">@line.BusNumber - Route #@line.RouteId</option>
                     }
                 }
             </select>
@@ -61,8 +61,8 @@
                                     <div class="flex items-center gap-3">
                                         <span class="w-5 h-5 rounded bg-surface-container-high text-tertiary flex items-center justify-center font-mono font-bold">@(index + 1)</span>
                                         <div>
-                                            <div class="font-bold text-on-surface">@(item.BusStop?.NameMm ?? "Stop #" + item.BusStopId)</div>
-                                            <div class="text-tertiary font-mono">@(item.BusStop?.NameEn) - @(item.BusStop?.Road)</div>
+                                            <div class="font-bold text-on-surface">@(item.StopNameMm ?? "Stop #" + item.StopId)</div>
+                                            <div class="text-tertiary font-mono">@(item.StopNameEn) - @(item.RoadMm)</div>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1">
@@ -72,7 +72,7 @@
                                         <button type="button" disabled="@(index == fullRoute.OutboundStops.Count - 1)" @onclick='() => MoveStop("Outbound", index, 1)' class="px-2 py-1 border border-outline rounded bg-white hover:bg-surface-container disabled:opacity-30">
                                             @Lang.GetText("MoveDown")
                                         </button>
-                                        <button type="button" @onclick="() => RemoveRouteStop(item.RouteStopId)" class="px-2 py-1 text-red-700 hover:bg-red-50 border border-red-200 rounded">
+                                        <button type="button" @onclick="() => RemoveRouteStop(item.Id)" class="px-2 py-1 text-red-700 hover:bg-red-50 border border-red-200 rounded">
                                             x
                                         </button>
                                     </div>
@@ -109,8 +109,8 @@
                                     <div class="flex items-center gap-3">
                                         <span class="w-5 h-5 rounded bg-surface-container-high text-tertiary flex items-center justify-center font-mono font-bold">@(index + 1)</span>
                                         <div>
-                                            <div class="font-bold text-on-surface">@(item.BusStop?.NameMm ?? "Stop #" + item.BusStopId)</div>
-                                            <div class="text-tertiary font-mono">@(item.BusStop?.NameEn) - @(item.BusStop?.Road)</div>
+                                            <div class="font-bold text-on-surface">@(item.StopNameMm ?? "Stop #" + item.StopId)</div>
+                                            <div class="text-tertiary font-mono">@(item.StopNameEn) - @(item.RoadMm)</div>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1">
@@ -120,7 +120,7 @@
                                         <button type="button" disabled="@(index == fullRoute.ReturnStops.Count - 1)" @onclick='() => MoveStop("Return", index, 1)' class="px-2 py-1 border border-outline rounded bg-white hover:bg-surface-container disabled:opacity-30">
                                             @Lang.GetText("MoveDown")
                                         </button>
-                                        <button type="button" @onclick="() => RemoveRouteStop(item.RouteStopId)" class="px-2 py-1 text-red-700 hover:bg-red-50 border border-red-200 rounded">
+                                        <button type="button" @onclick="() => RemoveRouteStop(item.Id)" class="px-2 py-1 text-red-700 hover:bg-red-50 border border-red-200 rounded">
                                             x
                                         </button>
                                     </div>
@@ -153,10 +153,10 @@
                     @foreach (var stop in allBusStops)
                     {
                         <div class="flex items-center gap-2 p-1.5 hover:bg-white rounded text-xs">
-                            <input type="checkbox" id="@($"chk_{stop.BusStopId}")" checked="@selectedStopIds.Contains(stop.BusStopId)" @onchange='(e) => ToggleStopSelection(stop.BusStopId, e.Value)' class="h-4 w-4 rounded border-outline text-secondary" />
-                            <label for="@($"chk_{stop.BusStopId}")" class="flex-1 cursor-pointer">
+                            <input type="checkbox" id="@($"chk_{stop.StopId}")" checked="@selectedStopIds.Contains(stop.StopId)" @onchange='(e) => ToggleStopSelection(stop.StopId, e.Value)' class="h-4 w-4 rounded border-outline text-secondary" />
+                            <label for="@($"chk_{stop.StopId}")" class="flex-1 cursor-pointer">
                                 <span class="font-bold text-on-surface">@stop.NameMm</span>
-                                <span class="text-tertiary font-mono ml-1">(@stop.NameEn - @stop.Road)</span>
+                                <span class="text-tertiary font-mono ml-1">(@stop.NameEn - @stop.RoadMm)</span>
                             </label>
                         </div>
                     }
@@ -243,8 +243,8 @@
         list[currentIndex] = list[targetIndex];
         list[targetIndex] = temp;
 
-        var ids = list.Select(x => x.RouteStopId).ToList();
-        var req = new ReorderRouteStopsRequest(selectedBusLineId, direction, ids);
+        var items = list.Select((x, idx) => new ReorderItem(x.Id, idx + 1)).ToList();
+        var req = new ReorderRouteStopsRequest(selectedBusLineId, direction, items);
         await RouteStopService.ReorderRouteStopsAsync(req);
         await LoadRoute();
     }
@@ -272,7 +272,8 @@
     {
         if (selectedStopIds.Any())
         {
-            var req = new AssignRouteStopsRequest(selectedBusLineId, selectedStopIds.ToList(), assignDirection);
+            var items = selectedStopIds.Select((sId, idx) => new AssignRouteStopItem(sId, assignDirection, idx + 1, null)).ToList();
+            var req = new AssignRouteStopsRequest(selectedBusLineId, items);
             await RouteStopService.AssignRouteStopsAsync(req);
         }
         showAssignModal = false;

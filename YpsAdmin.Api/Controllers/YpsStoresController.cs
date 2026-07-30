@@ -24,7 +24,7 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetYpsStoreById(string id)
+        public async Task<IActionResult> GetYpsStoreById(int id)
         {
             var result = await _ypsStoreService.GetYpsStoreByIdAsync(id);
             if (result.IsFailure)
@@ -46,7 +46,7 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateYpsStore(string id, [FromBody] UpdateYpsStoreRequest request)
+        public async Task<IActionResult> UpdateYpsStore(int id, [FromBody] UpdateYpsStoreRequest request)
         {
             var result = await _ypsStoreService.UpdateYpsStoreAsync(id, request);
             if (result.IsFailure)
@@ -57,7 +57,7 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteYpsStore(string id)
+        public async Task<IActionResult> DeleteYpsStore(int id)
         {
             var result = await _ypsStoreService.DeleteYpsStoreAsync(id);
             if (result.IsFailure)
@@ -68,7 +68,7 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpPost("{id}/nearest-stops")]
-        public async Task<IActionResult> AssignNearestStops(string id, [FromBody] AssignNearestStopsRequest request)
+        public async Task<IActionResult> AssignNearestStops(int id, [FromBody] AssignNearestStopsRequest request)
         {
             var result = await _ypsStoreService.AssignNearestStopsAsync(id, request);
             if (result.IsFailure)
@@ -79,7 +79,7 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpPost("{id}/serving-bus-lines")]
-        public async Task<IActionResult> AssignServingBusLines(string id, [FromBody] AssignServingBusLinesRequest request)
+        public async Task<IActionResult> AssignServingBusLines(int id, [FromBody] AssignServingBusLinesRequest request)
         {
             var result = await _ypsStoreService.AssignServingBusLinesAsync(id, request);
             if (result.IsFailure)

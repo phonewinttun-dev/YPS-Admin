@@ -2,6 +2,7 @@
 @inject IYpsStoreService StoreService
 @inject IBusStopService BusStopService
 @inject IBusLineService BusLineService
+@inject ITownshipService TownshipService
 @inject LanguageService Lang
 
 <div class="space-y-6">
@@ -48,15 +49,15 @@
                         {
                             <tr class="hover:bg-surface transition-colors">
                                 <td class="p-3">
-                                    <div class="font-bold text-on-surface">@item.StoreName</div>
-                                    <div class="text-xs text-tertiary font-mono">ID: #@item.YpsStoreId</div>
+                                    <div class="font-bold text-on-surface">@item.NameMm</div>
+                                    <div class="text-xs text-tertiary font-mono">ID: #@item.StoreId</div>
                                 </td>
                                 <td class="p-3">
                                     <span class="inline-block px-2.5 py-0.5 text-xs font-semibold bg-surface-container-high text-on-surface rounded border border-outline-variant">@item.Category</span>
                                 </td>
-                                <td class="p-3 text-on-surface">@item.Township</td>
+                                <td class="p-3 text-on-surface">@item.TownshipNameMm</td>
                                 <td class="p-3 font-mono text-xs text-secondary">
-                                    @item.Latitude.ToString("F6"), @item.Longitude.ToString("F6")
+                                    @(item.Latitude?.ToString("F6") ?? "-"), @(item.Longitude?.ToString("F6") ?? "-")
                                 </td>
                                 <td class="p-3 text-right">
                                     <div class="flex items-center justify-end gap-1.5">
@@ -106,17 +107,32 @@
             </h3>
 
             <div class="space-y-3">
-                <div>
-                    <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("StoreName")</label>
-                    <input type="text" @bind="formStoreName" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary" />
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-tertiary mb-1">Name (MM)</label>
+                        <input type="text" @bind="formNameMm" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-tertiary mb-1">Name (EN)</label>
+                        <input type="text" @bind="formNameEn" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary font-mono" />
+                    </div>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("Category")</label>
                     <input type="text" @bind="formCategory" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary" />
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("TownshipMM")</label>
-                    <input type="text" @bind="formTownship" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary" />
+                    <label class="block text-xs font-medium text-tertiary mb-1">Township</label>
+                    <select @bind="formTownshipId" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary bg-white">
+                        <option value="">Select Township</option>
+                        @if (townships != null)
+                        {
+                            @foreach (var t in townships)
+                            {
+                                <option value="@t.TownshipId">@t.TownshipNameMm (@t.TownshipNameEn)</option>
+                            }
+                        }
+                    </select>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -148,7 +164,7 @@
     <div class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-md border border-outline-variant shadow-lg max-w-md w-full p-6 space-y-4">
             <h3 class="text-base font-bold text-on-surface border-b border-outline-variant pb-2">
-                @Lang.GetText("AssignStops") - @activeStore.StoreName
+                @Lang.GetText("AssignStops") - @activeStore.NameMm
             </h3>
 
             <div class="max-h-64 overflow-y-auto space-y-2 border border-outline-variant p-3 rounded bg-surface">
@@ -161,10 +177,10 @@
                     @foreach (var stop in allBusStops)
                     {
                         <div class="flex items-center gap-2 p-1.5 hover:bg-white rounded text-xs">
-                            <input type="checkbox" id="@($"store_stop_{stop.BusStopId}")" checked="@selectedStopIds.Contains(stop.BusStopId)" @onchange='(e) => ToggleStopSelection(stop.BusStopId, e.Value)' class="h-4 w-4 rounded border-outline text-secondary" />
-                            <label for="@($"store_stop_{stop.BusStopId}")" class="flex-1 cursor-pointer">
+                            <input type="checkbox" id="@($"store_stop_{stop.StopId}")" checked="@selectedStopIds.Contains(stop.StopId)" @onchange='(e) => ToggleStopSelection(stop.StopId, e.Value)' class="h-4 w-4 rounded border-outline text-secondary" />
+                            <label for="@($"store_stop_{stop.StopId}")" class="flex-1 cursor-pointer">
                                 <span class="font-bold text-on-surface">@stop.NameMm</span>
-                                <span class="text-tertiary font-mono ml-1">(@stop.Road)</span>
+                                <span class="text-tertiary font-mono ml-1">(@stop.RoadMm)</span>
                             </label>
                         </div>
                     }
@@ -189,7 +205,7 @@
     <div class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-md border border-outline-variant shadow-lg max-w-md w-full p-6 space-y-4">
             <h3 class="text-base font-bold text-on-surface border-b border-outline-variant pb-2">
-                @Lang.GetText("AssignBuses") - @activeStore.StoreName
+                @Lang.GetText("AssignBuses") - @activeStore.NameMm
             </h3>
 
             <div class="max-h-64 overflow-y-auto space-y-2 border border-outline-variant p-3 rounded bg-surface">
@@ -202,10 +218,10 @@
                     @foreach (var line in allBusLines)
                     {
                         <div class="flex items-center gap-2 p-1.5 hover:bg-white rounded text-xs">
-                            <input type="checkbox" id="@($"store_bus_{line.BusLineId}")" checked="@selectedBusLineIds.Contains(line.BusLineId)" @onchange='(e) => ToggleBusLineSelection(line.BusLineId, e.Value)' class="h-4 w-4 rounded border-outline text-secondary" />
-                            <label for="@($"store_bus_{line.BusLineId}")" class="flex-1 cursor-pointer">
-                                <span class="font-bold text-on-surface">@line.BusNumber</span>
-                                <span class="text-tertiary font-mono ml-1">(@line.RouteId)</span>
+                            <input type="checkbox" id="@($"store_bus_{line.BusNumber}")" checked="@selectedBusNumbers.Contains(line.BusNumber)" @onchange='(e) => ToggleBusLineSelection(line.BusNumber, e.Value)' class="h-4 w-4 rounded border-outline text-secondary" />
+                            <label for="@($"store_bus_{line.BusNumber}")" class="flex-1 cursor-pointer">
+                                <span class="font-bold text-on-surface">Bus #@line.BusNumber</span>
+                                <span class="text-tertiary font-mono ml-1">(Route #@line.RouteId)</span>
                             </label>
                         </div>
                     }
@@ -246,6 +262,7 @@
 
 @code {
     private PagedResult<YpsStoreDto>? stores;
+    private List<TownshipDto>? townships;
     private bool isLoading = true;
     private int pageNumber = 1;
     private int pageSize = 10;
@@ -254,11 +271,12 @@
     // Form Modal state
     private bool showFormModal = false;
     private int? editingId = null;
-    private string formStoreName = "";
+    private string formNameMm = "";
+    private string formNameEn = "";
     private string formCategory = "";
-    private string formTownship = "";
-    private double formLatitude = 16.8661;
-    private double formLongitude = 96.1951;
+    private int? formTownshipId = null;
+    private decimal formLatitude = 16.8661m;
+    private decimal formLongitude = 96.1951m;
 
     // Nearest Stops Modal
     private bool showStopsModal = false;
@@ -269,7 +287,7 @@
     // Serving Buses Modal
     private bool showBusesModal = false;
     private List<BusLineDto>? allBusLines;
-    private HashSet<int> selectedBusLineIds = new();
+    private HashSet<int> selectedBusNumbers = new();
 
     // Delete Modal
     private bool showDeleteModal = false;
@@ -278,6 +296,9 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+
+        var tRes = await TownshipService.GetTownshipsAsync(1, 200, null);
+        if (tRes != null && tRes.Data != null) townships = tRes.Data;
 
         var stopsRes = await BusStopService.GetBusStopsAsync(1, 500, null);
         if (stopsRes != null && stopsRes.Data != null) allBusStops = stopsRes.Data;
@@ -304,22 +325,24 @@
     private void OpenCreateModal()
     {
         editingId = null;
-        formStoreName = "";
+        formNameMm = "";
+        formNameEn = "";
         formCategory = "";
-        formTownship = "";
-        formLatitude = 16.8661;
-        formLongitude = 96.1951;
+        formTownshipId = null;
+        formLatitude = 16.8661m;
+        formLongitude = 96.1951m;
         showFormModal = true;
     }
 
     private void OpenEditModal(YpsStoreDto item)
     {
-        editingId = item.YpsStoreId;
-        formStoreName = item.StoreName;
-        formCategory = item.Category;
-        formTownship = item.Township;
-        formLatitude = item.Latitude;
-        formLongitude = item.Longitude;
+        editingId = item.StoreId;
+        formNameMm = item.NameMm;
+        formNameEn = item.NameEn ?? "";
+        formCategory = item.Category ?? "";
+        formTownshipId = item.TownshipId;
+        formLatitude = item.Latitude ?? 16.8661m;
+        formLongitude = item.Longitude ?? 96.1951m;
         showFormModal = true;
     }
 
@@ -329,12 +352,12 @@
     {
         if (editingId.HasValue)
         {
-            var req = new UpdateYpsStoreRequest(formStoreName, formCategory, formTownship, formLatitude, formLongitude);
+            var req = new UpdateYpsStoreRequest(formNameMm, formNameEn, formCategory, formTownshipId, formLatitude, formLongitude);
             await StoreService.UpdateAsync(editingId.Value, req);
         }
         else
         {
-            var req = new CreateYpsStoreRequest(formStoreName, formCategory, formTownship, formLatitude, formLongitude);
+            var req = new CreateYpsStoreRequest(null, formNameMm, formNameEn, formCategory, formTownshipId, formLatitude, formLongitude);
             await StoreService.CreateAsync(req);
         }
         showFormModal = false;
@@ -345,6 +368,13 @@
     {
         activeStore = item;
         selectedStopIds.Clear();
+        if (item.NearestStops != null)
+        {
+            foreach (var ns in item.NearestStops)
+            {
+                if (ns.MatchedStopId.HasValue) selectedStopIds.Add(ns.MatchedStopId.Value);
+            }
+        }
         showStopsModal = true;
     }
 
@@ -356,10 +386,14 @@
 
     private async Task SaveNearestStops()
     {
-        if (activeStore != null && selectedStopIds.Any())
+        if (activeStore != null)
         {
-            var req = new AssignNearestStopsRequest(selectedStopIds.ToList());
-            await StoreService.AssignNearestStopsAsync(activeStore.YpsStoreId, req);
+            var items = selectedStopIds.Select(sId => {
+                var s = allBusStops?.FirstOrDefault(x => x.StopId == sId);
+                return new AssignNearestStopItem(sId, s?.NameMm, s?.NameEn);
+            }).ToList();
+            var req = new AssignNearestStopsRequest(items);
+            await StoreService.AssignNearestStopsAsync(activeStore.StoreId, req);
         }
         showStopsModal = false;
         await LoadData();
@@ -368,22 +402,29 @@
     private void OpenAssignBusesModal(YpsStoreDto item)
     {
         activeStore = item;
-        selectedBusLineIds.Clear();
+        selectedBusNumbers.Clear();
+        if (item.ServingBusLines != null)
+        {
+            foreach (var b in item.ServingBusLines)
+            {
+                selectedBusNumbers.Add(b);
+            }
+        }
         showBusesModal = true;
     }
 
-    private void ToggleBusLineSelection(int busLineId, object? isChecked)
+    private void ToggleBusLineSelection(int busNumber, object? isChecked)
     {
-        if (isChecked is bool b && b) selectedBusLineIds.Add(busLineId);
-        else selectedBusLineIds.Remove(busLineId);
+        if (isChecked is bool b && b) selectedBusNumbers.Add(busNumber);
+        else selectedBusNumbers.Remove(busNumber);
     }
 
     private async Task SaveServingBuses()
     {
-        if (activeStore != null && selectedBusLineIds.Any())
+        if (activeStore != null)
         {
-            var req = new AssignServingBusLinesRequest(selectedBusLineIds.ToList());
-            await StoreService.AssignServingBusLinesAsync(activeStore.YpsStoreId, req);
+            var req = new AssignServingBusLinesRequest(selectedBusNumbers.ToList());
+            await StoreService.AssignServingBusLinesAsync(activeStore.StoreId, req);
         }
         showBusesModal = false;
         await LoadData();
@@ -391,7 +432,7 @@
 
     private void PromptDelete(YpsStoreDto item)
     {
-        deletingId = item.YpsStoreId;
+        deletingId = item.StoreId;
         showDeleteModal = true;
     }
 

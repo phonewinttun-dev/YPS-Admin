@@ -1,13 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace YpsAdmin.Database.AppDbContextModels;
 
-public partial class Tblbusline
+public partial class TblBusLine
 {
-    public string RouteId { get; set; } = null!;
+    public int RouteId { get; set; }
 
-    public string BusNumber { get; set; } = null!;
+    public int BusNumber { get; set; }
 
     public string? OutboundTitleMm { get; set; }
 
@@ -19,5 +19,7 @@ public partial class Tblbusline
 
     public bool? IsYpsAccepted { get; set; }
 
-    public virtual ICollection<Tblroutestop> Tblroutestops { get; set; } = new List<Tblroutestop>();
+    public virtual ICollection<TblRouteStop> TblRouteStops { get; set; } = new List<TblRouteStop>();
+
+    public virtual ICollection<TblYpsStoreServingBusLine> TblYpsStoreServingBusLines { get; set; } = new List<TblYpsStoreServingBusLine>();
 }

@@ -17,9 +17,8 @@ namespace YpsAdmin.Domain.Features.Store
 
         public async Task<PagedResult<YpsStoreDto>> GetYpsStoresAsync(YpsStoreQueryFilter filter)
         {
-            var query = _context.Tblypsstores.AsNoTracking().AsQueryable();
+            var query = _context.TblYpsStores.AsNoTracking().Include(s => s.Township).AsQueryable();
 
-            // Search by store name (MM or EN) if search term is provided
             if (!string.IsNullOrWhiteSpace(filter.SearchName))
             {
                 string search = filter.SearchName.Trim().ToLower();
@@ -28,13 +27,18 @@ namespace YpsAdmin.Domain.Features.Store
                     (s.NameEn != null && s.NameEn.ToLower().Contains(search)));
             }
 
+            if (filter.TownshipId.HasValue)
+            {
+                query = query.Where(s => s.TownshipId == filter.TownshipId.Value);
+            }
+
             int totalCount = await query.CountAsync();
 
             int skip = (filter.PageNumber - 1) * filter.PageSize;
 
             var stores = await query
-                .Include(s => s.TblypsstoreNeareststops)
-                .Include(s => s.TblypsstoreServingbuslines)
+                .Include(s => s.TblYpsStoreNearestStops)
+                .Include(s => s.TblYpsStoreServingBusLines)
                 .OrderBy(s => s.StoreId)
                 .Skip(skip)
                 .Take(filter.PageSize)
@@ -46,18 +50,19 @@ namespace YpsAdmin.Domain.Features.Store
                 NameMm = s.NameMm,
                 NameEn = s.NameEn,
                 Category = s.Category,
-                TownshipMm = s.TownshipMm,
-                TownshipEn = s.TownshipEn,
+                TownshipId = s.TownshipId,
+                TownshipNameMm = s.Township?.TownshipNameMm,
+                TownshipNameEn = s.Township?.TownshipNameEn,
                 Latitude = s.Latitude,
                 Longitude = s.Longitude,
-                NearestStops = s.TblypsstoreNeareststops.Select(ns => new NearestStopDto
+                NearestStops = s.TblYpsStoreNearestStops.Select(ns => new NearestStopDto
                 {
                     Id = ns.Id,
                     StopNameMm = ns.StopNameMm,
                     StopNameEn = ns.StopNameEn,
                     MatchedStopId = ns.MatchedStopId
                 }).ToList(),
-                ServingBusLines = s.TblypsstoreServingbuslines
+                ServingBusLines = s.TblYpsStoreServingBusLines
                     .Select(sl => sl.BusNumber)
                     .ToList()
             }).ToList();
@@ -66,12 +71,13 @@ namespace YpsAdmin.Domain.Features.Store
             return PagedResult<YpsStoreDto>.Success(dtos, pagination, "YPS stores retrieved successfully.");
         }
 
-        public async Task<Result<YpsStoreDto>> GetYpsStoreByIdAsync(string storeId)
+        public async Task<Result<YpsStoreDto>> GetYpsStoreByIdAsync(int storeId)
         {
-            var store = await _context.Tblypsstores
+            var store = await _context.TblYpsStores
                 .AsNoTracking()
-                .Include(s => s.TblypsstoreNeareststops)
-                .Include(s => s.TblypsstoreServingbuslines)
+                .Include(s => s.Township)
+                .Include(s => s.TblYpsStoreNearestStops)
+                .Include(s => s.TblYpsStoreServingBusLines)
                 .FirstOrDefaultAsync(s => s.StoreId == storeId);
 
             if (store == null)
@@ -85,18 +91,19 @@ namespace YpsAdmin.Domain.Features.Store
                 NameMm = store.NameMm,
                 NameEn = store.NameEn,
                 Category = store.Category,
-                TownshipMm = store.TownshipMm,
-                TownshipEn = store.TownshipEn,
+                TownshipId = store.TownshipId,
+                TownshipNameMm = store.Township?.TownshipNameMm,
+                TownshipNameEn = store.Township?.TownshipNameEn,
                 Latitude = store.Latitude,
                 Longitude = store.Longitude,
-                NearestStops = store.TblypsstoreNeareststops.Select(ns => new NearestStopDto
+                NearestStops = store.TblYpsStoreNearestStops.Select(ns => new NearestStopDto
                 {
                     Id = ns.Id,
                     StopNameMm = ns.StopNameMm,
                     StopNameEn = ns.StopNameEn,
                     MatchedStopId = ns.MatchedStopId
                 }).ToList(),
-                ServingBusLines = store.TblypsstoreServingbuslines
+                ServingBusLines = store.TblYpsStoreServingBusLines
                     .Select(sl => sl.BusNumber)
                     .ToList()
             };
@@ -106,18 +113,6 @@ namespace YpsAdmin.Domain.Features.Store
 
         public async Task<Result<YpsStoreDto>> CreateYpsStoreAsync(CreateYpsStoreRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.StoreId))
-            {
-                return Result<YpsStoreDto>.Failure("Store ID is required.");
-            }
-
-            bool exists = await _context.Tblypsstores.AnyAsync(s => s.StoreId == request.StoreId);
-            if (exists)
-            {
-                return Result<YpsStoreDto>.Failure($"A YPS store with Store ID '{request.StoreId}' already exists.");
-            }
-
-            // Convert Latitude and Longitude to PostGIS Point geometry (WGS84 SRID 4326)
             Point? geom = null;
             if (request.Latitude.HasValue && request.Longitude.HasValue)
             {
@@ -127,21 +122,38 @@ namespace YpsAdmin.Domain.Features.Store
                 };
             }
 
-            var store = new Tblypsstore
+            var store = new TblYpsStore
             {
-                StoreId = request.StoreId.Trim(),
                 NameMm = request.NameMm?.Trim() ?? string.Empty,
                 NameEn = request.NameEn?.Trim(),
                 Category = request.Category?.Trim(),
-                TownshipMm = request.TownshipMm?.Trim(),
-                TownshipEn = request.TownshipEn?.Trim(),
+                TownshipId = request.TownshipId,
                 Latitude = request.Latitude,
                 Longitude = request.Longitude,
                 Geom = geom
             };
 
-            _context.Tblypsstores.Add(store);
+            if (request.StoreId.HasValue && request.StoreId.Value > 0)
+            {
+                bool exists = await _context.TblYpsStores.AnyAsync(s => s.StoreId == request.StoreId.Value);
+                if (exists)
+                {
+                    return Result<YpsStoreDto>.Failure($"A YPS store with Store ID '{request.StoreId.Value}' already exists.");
+                }
+                store.StoreId = request.StoreId.Value;
+            }
+
+            _context.TblYpsStores.Add(store);
             await _context.SaveChangesAsync();
+
+            string? townshipNameMm = null;
+            string? townshipNameEn = null;
+            if (store.TownshipId.HasValue)
+            {
+                var township = await _context.TblTownships.FindAsync(store.TownshipId.Value);
+                townshipNameMm = township?.TownshipNameMm;
+                townshipNameEn = township?.TownshipNameEn;
+            }
 
             var dto = new YpsStoreDto
             {
@@ -149,8 +161,9 @@ namespace YpsAdmin.Domain.Features.Store
                 NameMm = store.NameMm,
                 NameEn = store.NameEn,
                 Category = store.Category,
-                TownshipMm = store.TownshipMm,
-                TownshipEn = store.TownshipEn,
+                TownshipId = store.TownshipId,
+                TownshipNameMm = townshipNameMm,
+                TownshipNameEn = townshipNameEn,
                 Latitude = store.Latitude,
                 Longitude = store.Longitude
             };
@@ -158,11 +171,12 @@ namespace YpsAdmin.Domain.Features.Store
             return Result<YpsStoreDto>.Success(dto, "YPS store created successfully.");
         }
 
-        public async Task<Result<YpsStoreDto>> UpdateYpsStoreAsync(string storeId, UpdateYpsStoreRequest request)
+        public async Task<Result<YpsStoreDto>> UpdateYpsStoreAsync(int storeId, UpdateYpsStoreRequest request)
         {
-            var store = await _context.Tblypsstores
-                .Include(s => s.TblypsstoreNeareststops)
-                .Include(s => s.TblypsstoreServingbuslines)
+            var store = await _context.TblYpsStores
+                .Include(s => s.Township)
+                .Include(s => s.TblYpsStoreNearestStops)
+                .Include(s => s.TblYpsStoreServingBusLines)
                 .FirstOrDefaultAsync(s => s.StoreId == storeId);
 
             if (store == null)
@@ -173,12 +187,10 @@ namespace YpsAdmin.Domain.Features.Store
             store.NameMm = request.NameMm?.Trim() ?? store.NameMm;
             store.NameEn = request.NameEn?.Trim();
             store.Category = request.Category?.Trim();
-            store.TownshipMm = request.TownshipMm?.Trim();
-            store.TownshipEn = request.TownshipEn?.Trim();
+            store.TownshipId = request.TownshipId;
             store.Latitude = request.Latitude;
             store.Longitude = request.Longitude;
 
-            // Update PostGIS Point geometry
             if (request.Latitude.HasValue && request.Longitude.HasValue)
             {
                 store.Geom = new Point((double)request.Longitude.Value, (double)request.Latitude.Value)
@@ -193,24 +205,34 @@ namespace YpsAdmin.Domain.Features.Store
 
             await _context.SaveChangesAsync();
 
+            string? townshipNameMm = null;
+            string? townshipNameEn = null;
+            if (store.TownshipId.HasValue)
+            {
+                var township = await _context.TblTownships.FindAsync(store.TownshipId.Value);
+                townshipNameMm = township?.TownshipNameMm;
+                townshipNameEn = township?.TownshipNameEn;
+            }
+
             var dto = new YpsStoreDto
             {
                 StoreId = store.StoreId,
                 NameMm = store.NameMm,
                 NameEn = store.NameEn,
                 Category = store.Category,
-                TownshipMm = store.TownshipMm,
-                TownshipEn = store.TownshipEn,
+                TownshipId = store.TownshipId,
+                TownshipNameMm = townshipNameMm,
+                TownshipNameEn = townshipNameEn,
                 Latitude = store.Latitude,
                 Longitude = store.Longitude,
-                NearestStops = store.TblypsstoreNeareststops.Select(ns => new NearestStopDto
+                NearestStops = store.TblYpsStoreNearestStops.Select(ns => new NearestStopDto
                 {
                     Id = ns.Id,
                     StopNameMm = ns.StopNameMm,
                     StopNameEn = ns.StopNameEn,
                     MatchedStopId = ns.MatchedStopId
                 }).ToList(),
-                ServingBusLines = store.TblypsstoreServingbuslines
+                ServingBusLines = store.TblYpsStoreServingBusLines
                     .Select(sl => sl.BusNumber)
                     .ToList()
             };
@@ -218,24 +240,24 @@ namespace YpsAdmin.Domain.Features.Store
             return Result<YpsStoreDto>.Success(dto, "YPS store updated successfully.");
         }
 
-        public async Task<Result<bool>> DeleteYpsStoreAsync(string storeId)
+        public async Task<Result<bool>> DeleteYpsStoreAsync(int storeId)
         {
-            var store = await _context.Tblypsstores.FirstOrDefaultAsync(s => s.StoreId == storeId);
+            var store = await _context.TblYpsStores.FirstOrDefaultAsync(s => s.StoreId == storeId);
             if (store == null)
             {
                 return Result<bool>.Failure($"YPS store with Store ID '{storeId}' was not found.");
             }
 
-            _context.Tblypsstores.Remove(store);
+            _context.TblYpsStores.Remove(store);
             await _context.SaveChangesAsync();
 
             return Result<bool>.Success(true, "YPS store deleted successfully.");
         }
 
-        public async Task<Result<bool>> AssignNearestStopsAsync(string storeId, AssignNearestStopsRequest request)
+        public async Task<Result<bool>> AssignNearestStopsAsync(int storeId, AssignNearestStopsRequest request)
         {
-            var store = await _context.Tblypsstores
-                .Include(s => s.TblypsstoreNeareststops)
+            var store = await _context.TblYpsStores
+                .Include(s => s.TblYpsStoreNearestStops)
                 .FirstOrDefaultAsync(s => s.StoreId == storeId);
 
             if (store == null)
@@ -243,22 +265,20 @@ namespace YpsAdmin.Domain.Features.Store
                 return Result<bool>.Failure($"YPS store with Store ID '{storeId}' was not found.");
             }
 
-            // Remove existing nearest stops
-            _context.TblypsstoreNeareststops.RemoveRange(store.TblypsstoreNeareststops);
+            _context.TblYpsStoreNearestStops.RemoveRange(store.TblYpsStoreNearestStops);
 
-            // Add new nearest stops
             if (request.NearestStops != null && request.NearestStops.Count > 0)
             {
                 foreach (var item in request.NearestStops)
                 {
-                    var nearestStop = new TblypsstoreNeareststop
+                    var nearestStop = new TblYpsStoreNearestStop
                     {
                         StoreId = storeId,
                         MatchedStopId = item.MatchedStopId,
                         StopNameMm = item.StopNameMm,
                         StopNameEn = item.StopNameEn
                     };
-                    _context.TblypsstoreNeareststops.Add(nearestStop);
+                    _context.TblYpsStoreNearestStops.Add(nearestStop);
                 }
             }
 
@@ -266,10 +286,10 @@ namespace YpsAdmin.Domain.Features.Store
             return Result<bool>.Success(true, "Nearest bus stops assigned to YPS store successfully.");
         }
 
-        public async Task<Result<bool>> AssignServingBusLinesAsync(string storeId, AssignServingBusLinesRequest request)
+        public async Task<Result<bool>> AssignServingBusLinesAsync(int storeId, AssignServingBusLinesRequest request)
         {
-            var store = await _context.Tblypsstores
-                .Include(s => s.TblypsstoreServingbuslines)
+            var store = await _context.TblYpsStores
+                .Include(s => s.TblYpsStoreServingBusLines)
                 .FirstOrDefaultAsync(s => s.StoreId == storeId);
 
             if (store == null)
@@ -277,23 +297,22 @@ namespace YpsAdmin.Domain.Features.Store
                 return Result<bool>.Failure($"YPS store with Store ID '{storeId}' was not found.");
             }
 
-            // Remove existing serving bus lines
-            _context.TblypsstoreServingbuslines.RemoveRange(store.TblypsstoreServingbuslines);
+            _context.TblYpsStoreServingBusLines.RemoveRange(store.TblYpsStoreServingBusLines);
 
-            // Add new serving bus lines
             if (request.BusNumbers != null && request.BusNumbers.Count > 0)
             {
                 foreach (var busNumber in request.BusNumbers)
                 {
-                    if (!string.IsNullOrWhiteSpace(busNumber))
+                    // Find RouteId if bus number matches a bus line
+                    var busLine = await _context.TblBusLines.FirstOrDefaultAsync(b => b.BusNumber == busNumber);
+
+                    var servingBusLine = new TblYpsStoreServingBusLine
                     {
-                        var servingBusLine = new TblypsstoreServingbusline
-                        {
-                            StoreId = storeId,
-                            BusNumber = busNumber.Trim()
-                        };
-                        _context.TblypsstoreServingbuslines.Add(servingBusLine);
-                    }
+                        StoreId = storeId,
+                        BusNumber = busNumber,
+                        RouteId = busLine?.RouteId
+                    };
+                    _context.TblYpsStoreServingBusLines.Add(servingBusLine);
                 }
             }
 

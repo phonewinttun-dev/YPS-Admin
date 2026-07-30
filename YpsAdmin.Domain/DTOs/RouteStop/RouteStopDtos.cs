@@ -3,22 +3,23 @@ namespace YpsAdmin.Domain.DTOs.RouteStop
     public class RouteStopDto
     {
         public int Id { get; set; }
-        public string RouteId { get; set; } = null!;
-        public string? StopId { get; set; }
+        public int RouteId { get; set; }
+        public int? StopId { get; set; }
         public string Direction { get; set; } = null!;
         public int StopOrder { get; set; }
         public string? StopType { get; set; }
         public string? StopNameMm { get; set; }
         public string? StopNameEn { get; set; }
-        public string? TownshipMm { get; set; }
-        public string? TownshipEn { get; set; }
+        public int? TownshipId { get; set; }
+        public string? TownshipNameMm { get; set; }
+        public string? TownshipNameEn { get; set; }
         public string? RoadMm { get; set; }
         public string? RoadEn { get; set; }
     }
 
     public class AssignRouteStopItem
     {
-        public string StopId { get; set; } = null!;
+        public int? StopId { get; set; }
         public string Direction { get; set; } = "Outbound"; // Outbound or Return
         public int StopOrder { get; set; }
         public string? StopType { get; set; }
@@ -26,7 +27,7 @@ namespace YpsAdmin.Domain.DTOs.RouteStop
 
     public class AssignRouteStopsRequest
     {
-        public string RouteId { get; set; } = null!;
+        public int RouteId { get; set; }
         public List<AssignRouteStopItem> Stops { get; set; } = new();
     }
 
@@ -38,15 +39,15 @@ namespace YpsAdmin.Domain.DTOs.RouteStop
 
     public class ReorderRouteStopsRequest
     {
-        public string RouteId { get; set; } = null!;
+        public int RouteId { get; set; }
         public string Direction { get; set; } = "Outbound";
         public List<ReorderItem> Items { get; set; } = new();
     }
 
     public class FullRouteResponseDto
     {
-        public string RouteId { get; set; } = null!;
-        public string BusNumber { get; set; } = null!;
+        public int RouteId { get; set; }
+        public int BusNumber { get; set; }
         public string? OutboundTitleMm { get; set; }
         public string? OutboundTitleEn { get; set; }
         public string? ReturnTitleMm { get; set; }

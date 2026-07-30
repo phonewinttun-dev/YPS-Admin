@@ -4,8 +4,8 @@ namespace YpsAdmin.Domain.DTOs.BusLine
 {
     public class BusLineDto
     {
-        public string RouteId { get; set; } = null!;
-        public string BusNumber { get; set; } = null!;
+        public int RouteId { get; set; }
+        public int BusNumber { get; set; }
         public string? OutboundTitleMm { get; set; }
         public string? OutboundTitleEn { get; set; }
         public string? ReturnTitleMm { get; set; }
@@ -15,8 +15,8 @@ namespace YpsAdmin.Domain.DTOs.BusLine
 
     public class CreateBusLineRequest
     {
-        public string RouteId { get; set; } = null!;
-        public string BusNumber { get; set; } = null!;
+        public int RouteId { get; set; }
+        public int BusNumber { get; set; }
         public string? OutboundTitleMm { get; set; }
         public string? OutboundTitleEn { get; set; }
         public string? ReturnTitleMm { get; set; }
@@ -26,7 +26,7 @@ namespace YpsAdmin.Domain.DTOs.BusLine
 
     public class UpdateBusLineRequest
     {
-        public string BusNumber { get; set; } = null!;
+        public int BusNumber { get; set; }
         public string? OutboundTitleMm { get; set; }
         public string? OutboundTitleEn { get; set; }
         public string? ReturnTitleMm { get; set; }

@@ -14,10 +14,10 @@ namespace YpsAdmin.Domain.Features.RouteStop
             _context = context;
         }
 
-        public async Task<Result<FullRouteResponseDto>> GetFullRouteAsync(string routeId)
+        public async Task<Result<FullRouteResponseDto>> GetFullRouteAsync(int routeId)
         {
             // Find bus line
-            var busLine = await _context.Tblbuslines
+            var busLine = await _context.TblBusLines
                 .AsNoTracking()
                 .FirstOrDefaultAsync(b => b.RouteId == routeId);
 
@@ -26,10 +26,11 @@ namespace YpsAdmin.Domain.Features.RouteStop
                 return Result<FullRouteResponseDto>.Failure($"Bus line with Route ID '{routeId}' was not found.");
             }
 
-            // Get all route stops for this bus line including Stop details
-            var routeStops = await _context.Tblroutestops
+            // Get all route stops for this bus line including Stop and Township details
+            var routeStops = await _context.TblRouteStops
                 .AsNoTracking()
                 .Include(rs => rs.Stop)
+                    .ThenInclude(s => s!.Township)
                 .Where(rs => rs.RouteId == routeId)
                 .ToListAsync();
 
@@ -47,8 +48,9 @@ namespace YpsAdmin.Domain.Features.RouteStop
                     StopType = rs.StopType,
                     StopNameMm = rs.Stop?.NameMm,
                     StopNameEn = rs.Stop?.NameEn,
-                    TownshipMm = rs.Stop?.TownshipMm,
-                    TownshipEn = rs.Stop?.TownshipEn,
+                    TownshipId = rs.Stop?.TownshipId,
+                    TownshipNameMm = rs.Stop?.Township?.TownshipNameMm,
+                    TownshipNameEn = rs.Stop?.Township?.TownshipNameEn,
                     RoadMm = rs.Stop?.RoadMm,
                     RoadEn = rs.Stop?.RoadEn
                 })
@@ -68,8 +70,9 @@ namespace YpsAdmin.Domain.Features.RouteStop
                     StopType = rs.StopType,
                     StopNameMm = rs.Stop?.NameMm,
                     StopNameEn = rs.Stop?.NameEn,
-                    TownshipMm = rs.Stop?.TownshipMm,
-                    TownshipEn = rs.Stop?.TownshipEn,
+                    TownshipId = rs.Stop?.TownshipId,
+                    TownshipNameMm = rs.Stop?.Township?.TownshipNameMm,
+                    TownshipNameEn = rs.Stop?.Township?.TownshipNameEn,
                     RoadMm = rs.Stop?.RoadMm,
                     RoadEn = rs.Stop?.RoadEn
                 })
@@ -92,8 +95,7 @@ namespace YpsAdmin.Domain.Features.RouteStop
 
         public async Task<Result<bool>> AssignStopsToRouteAsync(AssignRouteStopsRequest request)
         {
-            // Validate Route ID
-            var busLineExists = await _context.Tblbuslines.AnyAsync(b => b.RouteId == request.RouteId);
+            var busLineExists = await _context.TblBusLines.AnyAsync(b => b.RouteId == request.RouteId);
             if (!busLineExists)
             {
                 return Result<bool>.Failure($"Bus line with Route ID '{request.RouteId}' was not found.");
@@ -104,20 +106,18 @@ namespace YpsAdmin.Domain.Features.RouteStop
                 return Result<bool>.Failure("At least one stop must be provided.");
             }
 
-            // Create new route stop entities
             foreach (var item in request.Stops)
             {
-                // Verify stop exists if StopId is provided
-                if (!string.IsNullOrWhiteSpace(item.StopId))
+                if (item.StopId.HasValue)
                 {
-                    bool stopExists = await _context.Tblbusstops.AnyAsync(s => s.StopId == item.StopId);
+                    bool stopExists = await _context.TblBusStops.AnyAsync(s => s.StopId == item.StopId.Value);
                     if (!stopExists)
                     {
-                        return Result<bool>.Failure($"Bus stop with Stop ID '{item.StopId}' was not found.");
+                        return Result<bool>.Failure($"Bus stop with Stop ID '{item.StopId.Value}' was not found.");
                     }
                 }
 
-                var routeStop = new Tblroutestop
+                var routeStop = new TblRouteStop
                 {
                     RouteId = request.RouteId,
                     StopId = item.StopId,
@@ -126,7 +126,7 @@ namespace YpsAdmin.Domain.Features.RouteStop
                     StopType = item.StopType
                 };
 
-                _context.Tblroutestops.Add(routeStop);
+                _context.TblRouteStops.Add(routeStop);
             }
 
             await _context.SaveChangesAsync();
@@ -142,7 +142,7 @@ namespace YpsAdmin.Domain.Features.RouteStop
 
             foreach (var item in request.Items)
             {
-                var routeStop = await _context.Tblroutestops.FirstOrDefaultAsync(rs => rs.Id == item.RouteStopId);
+                var routeStop = await _context.TblRouteStops.FirstOrDefaultAsync(rs => rs.Id == item.RouteStopId);
                 if (routeStop != null)
                 {
                     routeStop.StopOrder = item.NewStopOrder;
@@ -155,13 +155,13 @@ namespace YpsAdmin.Domain.Features.RouteStop
 
         public async Task<Result<bool>> RemoveRouteStopAsync(int routeStopId)
         {
-            var routeStop = await _context.Tblroutestops.FirstOrDefaultAsync(rs => rs.Id == routeStopId);
+            var routeStop = await _context.TblRouteStops.FirstOrDefaultAsync(rs => rs.Id == routeStopId);
             if (routeStop == null)
             {
                 return Result<bool>.Failure($"Route stop record with ID {routeStopId} was not found.");
             }
 
-            _context.Tblroutestops.Remove(routeStop);
+            _context.TblRouteStops.Remove(routeStop);
             await _context.SaveChangesAsync();
 
             return Result<bool>.Success(true, "Route stop removed successfully.");

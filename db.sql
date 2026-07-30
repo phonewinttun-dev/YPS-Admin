@@ -70,10 +70,3 @@ CREATE TABLE "TblYpsStore_ServingBusLine" (
     CONSTRAINT "FK_YpsStore_Serving_Route" FOREIGN KEY ("RouteId") REFERENCES "TblBusLine"("RouteId") ON DELETE SET NULL,
     CONSTRAINT "UQ_YpsStore_Serving" UNIQUE ("StoreId", "RouteId")
 );
-
-CREATE INDEX "idx_route_stops_route_id" ON "TblRouteStop"("RouteId");
-CREATE INDEX "idx_route_stops_stop_id" ON "TblRouteStop"("StopId");
-CREATE INDEX "idx_yps_nearest_store_id" ON "TblYpsStore_NearestStop"("StoreId");
-CREATE INDEX "idx_yps_serving_store_id" ON "TblYpsStore_ServingBusLine"("StoreId");
-CREATE INDEX "idx_yps_serving_route_id" ON "TblYpsStore_ServingBusLine"("RouteId");
-CREATE INDEX "idx_yps_stores_geom" ON "TblYpsStore" USING GIST ("Geom");

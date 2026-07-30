@@ -7,31 +7,31 @@ namespace YpsAdmin.Domain.DTOs.Store
         public int Id { get; set; }
         public string? StopNameMm { get; set; }
         public string? StopNameEn { get; set; }
-        public string? MatchedStopId { get; set; }
+        public int? MatchedStopId { get; set; }
     }
 
     public class YpsStoreDto
     {
-        public string StoreId { get; set; } = null!;
+        public int StoreId { get; set; }
         public string NameMm { get; set; } = null!;
         public string? NameEn { get; set; }
         public string? Category { get; set; }
-        public string? TownshipMm { get; set; }
-        public string? TownshipEn { get; set; }
+        public int? TownshipId { get; set; }
+        public string? TownshipNameMm { get; set; }
+        public string? TownshipNameEn { get; set; }
         public decimal? Latitude { get; set; }
         public decimal? Longitude { get; set; }
         public List<NearestStopDto> NearestStops { get; set; } = new();
-        public List<string> ServingBusLines { get; set; } = new();
+        public List<int> ServingBusLines { get; set; } = new();
     }
 
     public class CreateYpsStoreRequest
     {
-        public string StoreId { get; set; } = null!;
+        public int? StoreId { get; set; }
         public string NameMm { get; set; } = null!;
         public string? NameEn { get; set; }
         public string? Category { get; set; }
-        public string? TownshipMm { get; set; }
-        public string? TownshipEn { get; set; }
+        public int? TownshipId { get; set; }
         public decimal? Latitude { get; set; }
         public decimal? Longitude { get; set; }
     }
@@ -41,15 +41,14 @@ namespace YpsAdmin.Domain.DTOs.Store
         public string NameMm { get; set; } = null!;
         public string? NameEn { get; set; }
         public string? Category { get; set; }
-        public string? TownshipMm { get; set; }
-        public string? TownshipEn { get; set; }
+        public int? TownshipId { get; set; }
         public decimal? Latitude { get; set; }
         public decimal? Longitude { get; set; }
     }
 
     public class AssignNearestStopItem
     {
-        public string? MatchedStopId { get; set; }
+        public int? MatchedStopId { get; set; }
         public string? StopNameMm { get; set; }
         public string? StopNameEn { get; set; }
     }
@@ -61,11 +60,12 @@ namespace YpsAdmin.Domain.DTOs.Store
 
     public class AssignServingBusLinesRequest
     {
-        public List<string> BusNumbers { get; set; } = new();
+        public List<int> BusNumbers { get; set; } = new();
     }
 
     public class YpsStoreQueryFilter : PaginationRequest
     {
         public string? SearchName { get; set; }
+        public int? TownshipId { get; set; }
     }
 }

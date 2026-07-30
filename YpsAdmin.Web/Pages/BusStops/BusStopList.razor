@@ -1,5 +1,6 @@
 @page "/bus-stops"
 @inject IBusStopService BusStopService
+@inject ITownshipService TownshipService
 @inject LanguageService Lang
 
 <div class="space-y-6">
@@ -45,16 +46,16 @@
                         @foreach (var item in busStops.Data)
                         {
                             <tr class="hover:bg-surface transition-colors">
-                                <td class="p-3 font-mono font-medium text-secondary">@item.StopId</td>
+                                <td class="p-3 font-mono font-medium text-secondary">#@item.StopId</td>
                                 <td class="p-3">
                                     <div class="font-semibold text-on-surface">@item.NameMm</div>
                                     <div class="text-xs text-tertiary font-mono">@item.NameEn</div>
                                 </td>
                                 <td class="p-3">
-                                    <div class="text-on-surface">@item.TownshipMm</div>
-                                    <div class="text-xs text-tertiary font-mono">@item.TownshipEn</div>
+                                    <div class="text-on-surface">@item.TownshipNameMm</div>
+                                    <div class="text-xs text-tertiary font-mono">@item.TownshipNameEn</div>
                                 </td>
-                                <td class="p-3 text-on-surface">@item.Road</td>
+                                <td class="p-3 text-on-surface">@item.RoadMm</td>
                                 <td class="p-3 text-right">
                                     <div class="flex items-center justify-end gap-2">
                                         <button type="button" @onclick="() => OpenEditModal(item)" class="px-2.5 py-1 text-xs font-medium text-secondary border border-secondary/30 rounded hover:bg-secondary/10 transition-colors">
@@ -97,10 +98,6 @@
             </h3>
 
             <div class="space-y-3">
-                <div>
-                    <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("StopId")</label>
-                    <input type="text" @bind="formStopId" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary font-mono" />
-                </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("StopNameMM")</label>
@@ -111,19 +108,28 @@
                         <input type="text" @bind="formNameEn" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary font-mono" />
                     </div>
                 </div>
+                <div>
+                    <label class="block text-xs font-medium text-tertiary mb-1">Township</label>
+                    <select @bind="formTownshipId" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary bg-white">
+                        <option value="">Select Township</option>
+                        @if (townships != null)
+                        {
+                            @foreach (var t in townships)
+                            {
+                                <option value="@t.TownshipId">@t.TownshipNameMm (@t.TownshipNameEn)</option>
+                            }
+                        }
+                    </select>
+                </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("TownshipMM")</label>
-                        <input type="text" @bind="formTownshipMm" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary" />
+                        <label class="block text-xs font-medium text-tertiary mb-1">Road (MM)</label>
+                        <input type="text" @bind="formRoadMm" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary" />
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("TownshipEN")</label>
-                        <input type="text" @bind="formTownshipEn" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary font-mono" />
+                        <label class="block text-xs font-medium text-tertiary mb-1">Road (EN)</label>
+                        <input type="text" @bind="formRoadEn" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary font-mono" />
                     </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("Road")</label>
-                    <input type="text" @bind="formRoad" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary" />
                 </div>
             </div>
 
@@ -161,6 +167,7 @@
 
 @code {
     private PagedResult<BusStopDto>? busStops;
+    private List<TownshipDto>? townships;
     private bool isLoading = true;
     private int pageNumber = 1;
     private int pageSize = 10;
@@ -169,12 +176,11 @@
     // Form Modal state
     private bool showFormModal = false;
     private int? editingId = null;
-    private string formStopId = "";
     private string formNameMm = "";
     private string formNameEn = "";
-    private string formTownshipMm = "";
-    private string formTownshipEn = "";
-    private string formRoad = "";
+    private int? formTownshipId = null;
+    private string formRoadMm = "";
+    private string formRoadEn = "";
 
     // Delete Modal state
     private bool showDeleteModal = false;
@@ -183,6 +189,8 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+        var tRes = await TownshipService.GetTownshipsAsync(1, 200, null);
+        if (tRes != null && tRes.Data != null) townships = tRes.Data;
     }
 
     private async Task LoadData()
@@ -218,24 +226,22 @@
     private void OpenCreateModal()
     {
         editingId = null;
-        formStopId = "";
         formNameMm = "";
         formNameEn = "";
-        formTownshipMm = "";
-        formTownshipEn = "";
-        formRoad = "";
+        formTownshipId = null;
+        formRoadMm = "";
+        formRoadEn = "";
         showFormModal = true;
     }
 
     private void OpenEditModal(BusStopDto item)
     {
-        editingId = item.BusStopId;
-        formStopId = item.StopId;
+        editingId = item.StopId;
         formNameMm = item.NameMm;
-        formNameEn = item.NameEn;
-        formTownshipMm = item.TownshipMm;
-        formTownshipEn = item.TownshipEn;
-        formRoad = item.Road;
+        formNameEn = item.NameEn ?? "";
+        formTownshipId = item.TownshipId;
+        formRoadMm = item.RoadMm ?? "";
+        formRoadEn = item.RoadEn ?? "";
         showFormModal = true;
     }
 
@@ -248,12 +254,12 @@
     {
         if (editingId.HasValue)
         {
-            var req = new UpdateBusStopRequest(formStopId, formNameMm, formNameEn, formTownshipMm, formTownshipEn, formRoad);
+            var req = new UpdateBusStopRequest(formNameMm, formNameEn, formTownshipId, formRoadMm, formRoadEn);
             await BusStopService.UpdateAsync(editingId.Value, req);
         }
         else
         {
-            var req = new CreateBusStopRequest(formStopId, formNameMm, formNameEn, formTownshipMm, formTownshipEn, formRoad);
+            var req = new CreateBusStopRequest(null, formNameMm, formNameEn, formTownshipId, formRoadMm, formRoadEn);
             await BusStopService.CreateAsync(req);
         }
         showFormModal = false;
@@ -262,7 +268,7 @@
 
     private void PromptDelete(BusStopDto item)
     {
-        deletingId = item.BusStopId;
+        deletingId = item.StopId;
         showDeleteModal = true;
     }
 

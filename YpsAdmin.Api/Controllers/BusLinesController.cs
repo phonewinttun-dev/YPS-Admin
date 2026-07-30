@@ -17,14 +17,14 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetBusLines([FromQuery] BusLineQueryFilter filter)
+        public async Task<IActionResult> GetBusLines([FromQuery] PaginationRequest filter)
         {
             var result = await _busLineService.GetBusLinesAsync(filter);
             return Ok(result);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetBusLineById(string id)
+        public async Task<IActionResult> GetBusLineById(int id)
         {
             var result = await _busLineService.GetBusLineByIdAsync(id);
             if (result.IsFailure)
@@ -46,7 +46,7 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateBusLine(string id, [FromBody] UpdateBusLineRequest request)
+        public async Task<IActionResult> UpdateBusLine(int id, [FromBody] UpdateBusLineRequest request)
         {
             var result = await _busLineService.UpdateBusLineAsync(id, request);
             if (result.IsFailure)
@@ -57,7 +57,7 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteBusLine(string id)
+        public async Task<IActionResult> DeleteBusLine(int id)
         {
             var result = await _busLineService.DeleteBusLineAsync(id);
             if (result.IsFailure)

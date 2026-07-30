@@ -16,7 +16,7 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpGet("bus-line/{busLineId}")]
-        public async Task<IActionResult> GetFullRoute(string busLineId)
+        public async Task<IActionResult> GetFullRoute(int busLineId)
         {
             var result = await _routeStopService.GetFullRouteAsync(busLineId);
             if (result.IsFailure)

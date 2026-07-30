@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,211 +6,153 @@ namespace YpsAdmin.Database.AppDbContextModels;
 
 public partial class AppDbContext : DbContext
 {
+    public AppDbContext()
+    {
+    }
+
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
     {
     }
 
-    public virtual DbSet<Tblbusline> Tblbuslines { get; set; }
+    public virtual DbSet<TblBusLine> TblBusLines { get; set; }
 
-    public virtual DbSet<Tblbusstop> Tblbusstops { get; set; }
+    public virtual DbSet<TblBusStop> TblBusStops { get; set; }
 
-    public virtual DbSet<Tblroutestop> Tblroutestops { get; set; }
+    public virtual DbSet<TblRouteStop> TblRouteStops { get; set; }
 
-    public virtual DbSet<Tblypsstore> Tblypsstores { get; set; }
+    public virtual DbSet<TblTownship> TblTownships { get; set; }
 
-    public virtual DbSet<TblypsstoreNeareststop> TblypsstoreNeareststops { get; set; }
+    public virtual DbSet<TblYpsStore> TblYpsStores { get; set; }
 
-    public virtual DbSet<TblypsstoreServingbusline> TblypsstoreServingbuslines { get; set; }
+    public virtual DbSet<TblYpsStoreNearestStop> TblYpsStoreNearestStops { get; set; }
+
+    public virtual DbSet<TblYpsStoreServingBusLine> TblYpsStoreServingBusLines { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasPostgresExtension("postgis");
 
-        modelBuilder.Entity<Tblbusline>(entity =>
+        modelBuilder.Entity<TblBusLine>(entity =>
         {
-            entity.HasKey(e => e.RouteId).HasName("tblbusline_pkey");
+            entity.HasKey(e => e.RouteId).HasName("TblBusLine_pkey");
 
-            entity.ToTable("tblbusline");
+            entity.ToTable("TblBusLine");
 
-            entity.Property(e => e.RouteId)
-                .HasMaxLength(50)
-                .HasColumnName("route_id");
-            entity.Property(e => e.BusNumber)
-                .HasMaxLength(50)
-                .HasColumnName("bus_number");
-            entity.Property(e => e.IsYpsAccepted)
-                .HasDefaultValue(false)
-                .HasColumnName("is_yps_accepted");
-            entity.Property(e => e.OutboundTitleEn)
-                .HasMaxLength(255)
-                .HasColumnName("outbound_title_en");
-            entity.Property(e => e.OutboundTitleMm)
-                .HasMaxLength(255)
-                .HasColumnName("outbound_title_mm");
-            entity.Property(e => e.ReturnTitleEn)
-                .HasMaxLength(255)
-                .HasColumnName("return_title_en");
-            entity.Property(e => e.ReturnTitleMm)
-                .HasMaxLength(255)
-                .HasColumnName("return_title_mm");
+            entity.Property(e => e.RouteId).ValueGeneratedNever();
+            entity.Property(e => e.IsYpsAccepted).HasDefaultValue(false);
+            entity.Property(e => e.OutboundTitleEn).HasMaxLength(255);
+            entity.Property(e => e.OutboundTitleMm).HasMaxLength(255);
+            entity.Property(e => e.ReturnTitleEn).HasMaxLength(255);
+            entity.Property(e => e.ReturnTitleMm).HasMaxLength(255);
         });
 
-        modelBuilder.Entity<Tblbusstop>(entity =>
+        modelBuilder.Entity<TblBusStop>(entity =>
         {
-            entity.HasKey(e => e.StopId).HasName("tblbusstop_pkey");
+            entity.HasKey(e => e.StopId).HasName("TblBusStop_pkey");
 
-            entity.ToTable("tblbusstop");
+            entity.ToTable("TblBusStop");
 
-            entity.Property(e => e.StopId)
-                .HasMaxLength(50)
-                .HasColumnName("stop_id");
-            entity.Property(e => e.NameEn)
-                .HasMaxLength(255)
-                .HasColumnName("name_en");
-            entity.Property(e => e.NameMm)
-                .HasMaxLength(255)
-                .HasColumnName("name_mm");
-            entity.Property(e => e.RoadEn)
-                .HasMaxLength(255)
-                .HasColumnName("road_en");
-            entity.Property(e => e.RoadMm)
-                .HasMaxLength(255)
-                .HasColumnName("road_mm");
-            entity.Property(e => e.TotalServingBusLines)
-                .HasDefaultValue(0)
-                .HasColumnName("total_serving_bus_lines");
-            entity.Property(e => e.TownshipEn)
-                .HasMaxLength(255)
-                .HasColumnName("township_en");
-            entity.Property(e => e.TownshipMm)
-                .HasMaxLength(255)
-                .HasColumnName("township_mm");
+            entity.Property(e => e.NameEn).HasMaxLength(255);
+            entity.Property(e => e.NameMm).HasMaxLength(255);
+            entity.Property(e => e.RoadEn).HasMaxLength(255);
+            entity.Property(e => e.RoadMm).HasMaxLength(255);
+            entity.Property(e => e.TotalServingBusLines).HasDefaultValue(0);
+
+            entity.HasOne(d => d.Township).WithMany(p => p.TblBusStops)
+                .HasForeignKey(d => d.TownshipId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("TblBusStop_TownshipId_fkey");
         });
 
-        modelBuilder.Entity<Tblroutestop>(entity =>
+        modelBuilder.Entity<TblRouteStop>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("tblroutestop_pkey");
+            entity.HasKey(e => e.Id).HasName("TblRouteStop_pkey");
 
-            entity.ToTable("tblroutestop");
+            entity.ToTable("TblRouteStop");
 
-            entity.HasIndex(e => e.RouteId, "idx_route_stops_route_id");
+            entity.HasIndex(e => new { e.RouteId, e.Direction, e.StopOrder }, "UQ_RouteStop_Order").IsUnique();
 
-            entity.HasIndex(e => e.StopId, "idx_route_stops_stop_id");
+            entity.Property(e => e.Direction).HasMaxLength(20);
+            entity.Property(e => e.StopType).HasMaxLength(50);
 
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Direction)
-                .HasMaxLength(20)
-                .HasColumnName("direction");
-            entity.Property(e => e.RouteId)
-                .HasMaxLength(50)
-                .HasColumnName("route_id");
-            entity.Property(e => e.StopId)
-                .HasMaxLength(50)
-                .HasColumnName("stop_id");
-            entity.Property(e => e.StopOrder).HasColumnName("stop_order");
-            entity.Property(e => e.StopType)
-                .HasMaxLength(50)
-                .HasColumnName("stop_type");
-
-            entity.HasOne(d => d.Route).WithMany(p => p.Tblroutestops)
+            entity.HasOne(d => d.Route).WithMany(p => p.TblRouteStops)
                 .HasForeignKey(d => d.RouteId)
-                .HasConstraintName("fk_route");
+                .HasConstraintName("FK_RouteStop_Route");
 
-            entity.HasOne(d => d.Stop).WithMany(p => p.Tblroutestops)
+            entity.HasOne(d => d.Stop).WithMany(p => p.TblRouteStops)
                 .HasForeignKey(d => d.StopId)
                 .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("fk_stop");
+                .HasConstraintName("FK_RouteStop_Stop");
         });
 
-        modelBuilder.Entity<Tblypsstore>(entity =>
+        modelBuilder.Entity<TblTownship>(entity =>
         {
-            entity.HasKey(e => e.StoreId).HasName("tblypsstore_pkey");
+            entity.HasKey(e => e.TownshipId).HasName("TblTownship_pkey");
 
-            entity.ToTable("tblypsstore");
+            entity.ToTable("TblTownship");
 
-            entity.HasIndex(e => e.Geom, "idx_yps_stores_geom").HasMethod("gist");
-
-            entity.Property(e => e.StoreId)
-                .HasMaxLength(50)
-                .HasColumnName("store_id");
-            entity.Property(e => e.Category)
-                .HasMaxLength(100)
-                .HasColumnName("category");
-            entity.Property(e => e.Geom)
-                .HasColumnType("geometry(Point,4326)")
-                .HasColumnName("geom");
-            entity.Property(e => e.Latitude)
-                .HasPrecision(10, 7)
-                .HasColumnName("latitude");
-            entity.Property(e => e.Longitude)
-                .HasPrecision(10, 7)
-                .HasColumnName("longitude");
-            entity.Property(e => e.NameEn)
-                .HasMaxLength(255)
-                .HasColumnName("name_en");
-            entity.Property(e => e.NameMm)
-                .HasMaxLength(255)
-                .HasColumnName("name_mm");
-            entity.Property(e => e.TownshipEn)
-                .HasMaxLength(255)
-                .HasColumnName("township_en");
-            entity.Property(e => e.TownshipMm)
-                .HasMaxLength(255)
-                .HasColumnName("township_mm");
+            entity.Property(e => e.DeleteFlag).HasDefaultValue(false);
+            entity.Property(e => e.TownshipNameEn).HasMaxLength(255);
+            entity.Property(e => e.TownshipNameMm).HasMaxLength(255);
         });
 
-        modelBuilder.Entity<TblypsstoreNeareststop>(entity =>
+        modelBuilder.Entity<TblYpsStore>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("tblypsstore_neareststop_pkey");
+            entity.HasKey(e => e.StoreId).HasName("TblYpsStore_pkey");
 
-            entity.ToTable("tblypsstore_neareststop");
+            entity.ToTable("TblYpsStore");
 
-            entity.HasIndex(e => e.StoreId, "idx_yps_nearest_store_id");
+            entity.Property(e => e.Category).HasMaxLength(100);
+            entity.Property(e => e.Geom).HasColumnType("geometry(Point,4326)");
+            entity.Property(e => e.Latitude).HasPrecision(10, 7);
+            entity.Property(e => e.Longitude).HasPrecision(10, 7);
+            entity.Property(e => e.NameEn).HasMaxLength(255);
+            entity.Property(e => e.NameMm).HasMaxLength(255);
 
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.MatchedStopId)
-                .HasMaxLength(50)
-                .HasColumnName("matched_stop_id");
-            entity.Property(e => e.StopNameEn)
-                .HasMaxLength(255)
-                .HasColumnName("stop_name_en");
-            entity.Property(e => e.StopNameMm)
-                .HasMaxLength(255)
-                .HasColumnName("stop_name_mm");
-            entity.Property(e => e.StoreId)
-                .HasMaxLength(50)
-                .HasColumnName("store_id");
+            entity.HasOne(d => d.Township).WithMany(p => p.TblYpsStores)
+                .HasForeignKey(d => d.TownshipId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("TblYpsStore_TownshipId_fkey");
+        });
 
-            entity.HasOne(d => d.MatchedStop).WithMany(p => p.TblypsstoreNeareststops)
+        modelBuilder.Entity<TblYpsStoreNearestStop>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("TblYpsStore_NearestStop_pkey");
+
+            entity.ToTable("TblYpsStore_NearestStop");
+
+            entity.HasIndex(e => new { e.StoreId, e.MatchedStopId }, "UQ_YpsStore_Nearest").IsUnique();
+
+            entity.Property(e => e.StopNameEn).HasMaxLength(255);
+            entity.Property(e => e.StopNameMm).HasMaxLength(255);
+
+            entity.HasOne(d => d.MatchedStop).WithMany(p => p.TblYpsStoreNearestStops)
                 .HasForeignKey(d => d.MatchedStopId)
                 .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("fk_matched_stop");
+                .HasConstraintName("FK_YpsStore_Nearest_Stop");
 
-            entity.HasOne(d => d.Store).WithMany(p => p.TblypsstoreNeareststops)
+            entity.HasOne(d => d.Store).WithMany(p => p.TblYpsStoreNearestStops)
                 .HasForeignKey(d => d.StoreId)
-                .HasConstraintName("fk_store_nearest");
+                .HasConstraintName("FK_YpsStore_Nearest_Store");
         });
 
-        modelBuilder.Entity<TblypsstoreServingbusline>(entity =>
+        modelBuilder.Entity<TblYpsStoreServingBusLine>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("tblypsstore_servingbusline_pkey");
+            entity.HasKey(e => e.Id).HasName("TblYpsStore_ServingBusLine_pkey");
 
-            entity.ToTable("tblypsstore_servingbusline");
+            entity.ToTable("TblYpsStore_ServingBusLine");
 
-            entity.HasIndex(e => e.StoreId, "idx_yps_serving_store_id");
+            entity.HasIndex(e => new { e.StoreId, e.RouteId }, "UQ_YpsStore_Serving").IsUnique();
 
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.BusNumber)
-                .HasMaxLength(50)
-                .HasColumnName("bus_number");
-            entity.Property(e => e.StoreId)
-                .HasMaxLength(50)
-                .HasColumnName("store_id");
+            entity.HasOne(d => d.Route).WithMany(p => p.TblYpsStoreServingBusLines)
+                .HasForeignKey(d => d.RouteId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_YpsStore_Serving_Route");
 
-            entity.HasOne(d => d.Store).WithMany(p => p.TblypsstoreServingbuslines)
+            entity.HasOne(d => d.Store).WithMany(p => p.TblYpsStoreServingBusLines)
                 .HasForeignKey(d => d.StoreId)
-                .HasConstraintName("fk_store_serving");
+                .HasConstraintName("FK_YpsStore_Serving_Store");
         });
 
         OnModelCreatingPartial(modelBuilder);

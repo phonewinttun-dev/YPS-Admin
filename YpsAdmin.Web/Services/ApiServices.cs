@@ -4,24 +4,32 @@ using YpsAdmin.Shared;
 namespace YpsAdmin.Web.Services;
 
 // DTOs matching API specs
-public record BusLineDto(int BusLineId, string RouteId, string BusNumber, string OutboundTitles, string ReturnTitles, bool YpsAccepted);
-public record CreateBusLineRequest(string RouteId, string BusNumber, string OutboundTitles, string ReturnTitles, bool YpsAccepted);
-public record UpdateBusLineRequest(string RouteId, string BusNumber, string OutboundTitles, string ReturnTitles, bool YpsAccepted);
+public record BusLineDto(int RouteId, int BusNumber, string? OutboundTitleMm, string? OutboundTitleEn, string? ReturnTitleMm, string? ReturnTitleEn, bool IsYpsAccepted);
+public record CreateBusLineRequest(int RouteId, int BusNumber, string? OutboundTitleMm, string? OutboundTitleEn, string? ReturnTitleMm, string? ReturnTitleEn, bool IsYpsAccepted);
+public record UpdateBusLineRequest(int BusNumber, string? OutboundTitleMm, string? OutboundTitleEn, string? ReturnTitleMm, string? ReturnTitleEn, bool IsYpsAccepted);
 
-public record BusStopDto(int BusStopId, string StopId, string NameMm, string NameEn, string TownshipMm, string TownshipEn, string Road);
-public record CreateBusStopRequest(string StopId, string NameMm, string NameEn, string TownshipMm, string TownshipEn, string Road);
-public record UpdateBusStopRequest(string StopId, string NameMm, string NameEn, string TownshipMm, string TownshipEn, string Road);
+public record BusStopDto(int StopId, string NameMm, string? NameEn, int? TownshipId, string? TownshipNameMm, string? TownshipNameEn, string? RoadMm, string? RoadEn, int TotalServingBusLines);
+public record CreateBusStopRequest(int? StopId, string NameMm, string? NameEn, int? TownshipId, string? RoadMm, string? RoadEn);
+public record UpdateBusStopRequest(string NameMm, string? NameEn, int? TownshipId, string? RoadMm, string? RoadEn);
 
-public record RouteStopDto(int RouteStopId, int BusLineId, int BusStopId, string Direction, int StopOrder, BusStopDto? BusStop);
-public record FullRouteResponseDto(int BusLineId, string BusNumber, List<RouteStopDto> OutboundStops, List<RouteStopDto> ReturnStops);
-public record AssignRouteStopsRequest(int BusLineId, List<int> BusStopIds, string Direction);
-public record ReorderRouteStopsRequest(int BusLineId, string Direction, List<int> RouteStopIds);
+public record RouteStopDto(int Id, int RouteId, int? StopId, string Direction, int StopOrder, string? StopType, string? StopNameMm, string? StopNameEn, int? TownshipId, string? TownshipNameMm, string? TownshipNameEn, string? RoadMm, string? RoadEn);
+public record FullRouteResponseDto(int RouteId, int BusNumber, string? OutboundTitleMm, string? OutboundTitleEn, string? ReturnTitleMm, string? ReturnTitleEn, List<RouteStopDto> OutboundStops, List<RouteStopDto> ReturnStops);
+public record AssignRouteStopItem(int? StopId, string Direction, int StopOrder, string? StopType);
+public record AssignRouteStopsRequest(int RouteId, List<AssignRouteStopItem> Stops);
+public record ReorderItem(int RouteStopId, int NewStopOrder);
+public record ReorderRouteStopsRequest(int RouteId, string Direction, List<ReorderItem> Items);
 
-public record YpsStoreDto(int YpsStoreId, string StoreName, string Category, string Township, double Latitude, double Longitude, List<string> NearestStops, List<string> ServingBusLines);
-public record CreateYpsStoreRequest(string StoreName, string Category, string Township, double Latitude, double Longitude);
-public record UpdateYpsStoreRequest(string StoreName, string Category, string Township, double Latitude, double Longitude);
-public record AssignNearestStopsRequest(List<int> BusStopIds);
-public record AssignServingBusLinesRequest(List<int> BusLineIds);
+public record NearestStopDto(int Id, string? StopNameMm, string? StopNameEn, int? MatchedStopId);
+public record YpsStoreDto(int StoreId, string NameMm, string? NameEn, string? Category, int? TownshipId, string? TownshipNameMm, string? TownshipNameEn, decimal? Latitude, decimal? Longitude, List<NearestStopDto> NearestStops, List<int> ServingBusLines);
+public record CreateYpsStoreRequest(int? StoreId, string NameMm, string? NameEn, string? Category, int? TownshipId, decimal? Latitude, decimal? Longitude);
+public record UpdateYpsStoreRequest(string NameMm, string? NameEn, string? Category, int? TownshipId, decimal? Latitude, decimal? Longitude);
+public record AssignNearestStopItem(int? MatchedStopId, string? StopNameMm, string? StopNameEn);
+public record AssignNearestStopsRequest(List<AssignNearestStopItem> NearestStops);
+public record AssignServingBusLinesRequest(List<int> BusNumbers);
+
+public record TownshipDto(int TownshipId, string TownshipNameMm, string? TownshipNameEn, bool DeleteFlag);
+public record CreateTownshipRequest(string TownshipNameMm, string? TownshipNameEn);
+public record UpdateTownshipRequest(string TownshipNameMm, string? TownshipNameEn);
 
 // Services Interfaces
 public interface IBusLineService
@@ -35,7 +43,7 @@ public interface IBusLineService
 
 public interface IBusStopService
 {
-    Task<PagedResult<BusStopDto>?> GetBusStopsAsync(int pageNumber, int pageSize, string? searchStopName);
+    Task<PagedResult<BusStopDto>?> GetBusStopsAsync(int pageNumber, int pageSize, string? searchStopName, int? townshipId = null);
     Task<Result<BusStopDto>?> GetByIdAsync(int id);
     Task<Result<BusStopDto>?> CreateAsync(CreateBusStopRequest request);
     Task<Result<BusStopDto>?> UpdateAsync(int id, UpdateBusStopRequest request);
@@ -52,13 +60,22 @@ public interface IRouteStopService
 
 public interface IYpsStoreService
 {
-    Task<PagedResult<YpsStoreDto>?> GetStoresAsync(int pageNumber, int pageSize, string? searchName);
+    Task<PagedResult<YpsStoreDto>?> GetStoresAsync(int pageNumber, int pageSize, string? searchName, int? townshipId = null);
     Task<Result<YpsStoreDto>?> GetByIdAsync(int id);
     Task<Result<YpsStoreDto>?> CreateAsync(CreateYpsStoreRequest request);
     Task<Result<YpsStoreDto>?> UpdateAsync(int id, UpdateYpsStoreRequest request);
     Task<Result<bool>?> DeleteAsync(int id);
     Task<Result<bool>?> AssignNearestStopsAsync(int id, AssignNearestStopsRequest request);
     Task<Result<bool>?> AssignServingBusLinesAsync(int id, AssignServingBusLinesRequest request);
+}
+
+public interface ITownshipService
+{
+    Task<PagedResult<TownshipDto>?> GetTownshipsAsync(int pageNumber, int pageSize, string? searchName);
+    Task<Result<TownshipDto>?> GetByIdAsync(int id);
+    Task<Result<TownshipDto>?> CreateAsync(CreateTownshipRequest request);
+    Task<Result<TownshipDto>?> UpdateAsync(int id, UpdateTownshipRequest request);
+    Task<Result<bool>?> DeleteAsync(int id);
 }
 
 // Service Implementations
@@ -100,10 +117,11 @@ public class BusStopService : IBusStopService
     private readonly HttpClient _http;
     public BusStopService(HttpClient http) => _http = http;
 
-    public Task<PagedResult<BusStopDto>?> GetBusStopsAsync(int pageNumber, int pageSize, string? searchStopName)
+    public Task<PagedResult<BusStopDto>?> GetBusStopsAsync(int pageNumber, int pageSize, string? searchStopName, int? townshipId = null)
     {
         var url = $"/api/bus-stops?pageNumber={pageNumber}&pageSize={pageSize}";
         if (!string.IsNullOrWhiteSpace(searchStopName)) url += $"&searchStopName={Uri.EscapeDataString(searchStopName)}";
+        if (townshipId.HasValue) url += $"&townshipId={townshipId.Value}";
         return _http.GetFromJsonAsync<PagedResult<BusStopDto>>(url);
     }
 
@@ -162,10 +180,11 @@ public class YpsStoreService : IYpsStoreService
     private readonly HttpClient _http;
     public YpsStoreService(HttpClient http) => _http = http;
 
-    public Task<PagedResult<YpsStoreDto>?> GetStoresAsync(int pageNumber, int pageSize, string? searchName)
+    public Task<PagedResult<YpsStoreDto>?> GetStoresAsync(int pageNumber, int pageSize, string? searchName, int? townshipId = null)
     {
         var url = $"/api/yps-stores?pageNumber={pageNumber}&pageSize={pageSize}";
         if (!string.IsNullOrWhiteSpace(searchName)) url += $"&searchName={Uri.EscapeDataString(searchName)}";
+        if (townshipId.HasValue) url += $"&townshipId={townshipId.Value}";
         return _http.GetFromJsonAsync<PagedResult<YpsStoreDto>>(url);
     }
 
@@ -198,6 +217,39 @@ public class YpsStoreService : IYpsStoreService
     public async Task<Result<bool>?> AssignServingBusLinesAsync(int id, AssignServingBusLinesRequest request)
     {
         var resp = await _http.PostAsJsonAsync($"/api/yps-stores/{id}/serving-bus-lines", request);
+        return await resp.Content.ReadFromJsonAsync<Result<bool>>();
+    }
+}
+
+public class TownshipService : ITownshipService
+{
+    private readonly HttpClient _http;
+    public TownshipService(HttpClient http) => _http = http;
+
+    public Task<PagedResult<TownshipDto>?> GetTownshipsAsync(int pageNumber, int pageSize, string? searchName)
+    {
+        var url = $"/api/townships?pageNumber={pageNumber}&pageSize={pageSize}";
+        if (!string.IsNullOrWhiteSpace(searchName)) url += $"&searchName={Uri.EscapeDataString(searchName)}";
+        return _http.GetFromJsonAsync<PagedResult<TownshipDto>>(url);
+    }
+
+    public Task<Result<TownshipDto>?> GetByIdAsync(int id) => _http.GetFromJsonAsync<Result<TownshipDto>>($"/api/townships/{id}");
+
+    public async Task<Result<TownshipDto>?> CreateAsync(CreateTownshipRequest request)
+    {
+        var resp = await _http.PostAsJsonAsync("/api/townships", request);
+        return await resp.Content.ReadFromJsonAsync<Result<TownshipDto>>();
+    }
+
+    public async Task<Result<TownshipDto>?> UpdateAsync(int id, UpdateTownshipRequest request)
+    {
+        var resp = await _http.PutAsJsonAsync($"/api/townships/{id}", request);
+        return await resp.Content.ReadFromJsonAsync<Result<TownshipDto>>();
+    }
+
+    public async Task<Result<bool>?> DeleteAsync(int id)
+    {
+        var resp = await _http.DeleteAsync($"/api/townships/{id}");
         return await resp.Content.ReadFromJsonAsync<Result<bool>>();
     }
 }

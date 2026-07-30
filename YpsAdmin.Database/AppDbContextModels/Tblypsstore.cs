@@ -1,12 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using NetTopologySuite.Geometries;
 
 namespace YpsAdmin.Database.AppDbContextModels;
 
-public partial class Tblypsstore
+public partial class TblYpsStore
 {
-    public string StoreId { get; set; } = null!;
+    public int StoreId { get; set; }
 
     public string NameMm { get; set; } = null!;
 
@@ -14,9 +14,7 @@ public partial class Tblypsstore
 
     public string? Category { get; set; }
 
-    public string? TownshipMm { get; set; }
-
-    public string? TownshipEn { get; set; }
+    public int? TownshipId { get; set; }
 
     public decimal? Latitude { get; set; }
 
@@ -24,7 +22,9 @@ public partial class Tblypsstore
 
     public Point? Geom { get; set; }
 
-    public virtual ICollection<TblypsstoreNeareststop> TblypsstoreNeareststops { get; set; } = new List<TblypsstoreNeareststop>();
+    public virtual ICollection<TblYpsStoreNearestStop> TblYpsStoreNearestStops { get; set; } = new List<TblYpsStoreNearestStop>();
 
-    public virtual ICollection<TblypsstoreServingbusline> TblypsstoreServingbuslines { get; set; } = new List<TblypsstoreServingbusline>();
+    public virtual ICollection<TblYpsStoreServingBusLine> TblYpsStoreServingBusLines { get; set; } = new List<TblYpsStoreServingBusLine>();
+
+    public virtual TblTownship? Township { get; set; }
 }

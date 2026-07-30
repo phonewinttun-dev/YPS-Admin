@@ -7,6 +7,7 @@ using YpsAdmin.Domain.Features.BusLine;
 using YpsAdmin.Domain.Features.BusStop;
 using YpsAdmin.Domain.Features.RouteStop;
 using YpsAdmin.Domain.Features.Store;
+using YpsAdmin.Domain.Features.Township;
 
 namespace YpsAdmin.Domain.Features
 {
@@ -25,6 +26,7 @@ namespace YpsAdmin.Domain.Features
             builder.Services.AddScoped<IBusStopService, BusStopService>();
             builder.Services.AddScoped<IRouteStopService, RouteStopService>();
             builder.Services.AddScoped<IYpsStoreService, YpsStoreService>();
+            builder.Services.AddScoped<ITownshipService, TownshipService>();
         }
     }
 }

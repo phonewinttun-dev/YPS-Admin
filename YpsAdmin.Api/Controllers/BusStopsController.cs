@@ -24,7 +24,7 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetBusStopById(string id)
+        public async Task<IActionResult> GetBusStopById(int id)
         {
             var result = await _busStopService.GetBusStopByIdAsync(id);
             if (result.IsFailure)
@@ -46,7 +46,7 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateBusStop(string id, [FromBody] UpdateBusStopRequest request)
+        public async Task<IActionResult> UpdateBusStop(int id, [FromBody] UpdateBusStopRequest request)
         {
             var result = await _busStopService.UpdateBusStopAsync(id, request);
             if (result.IsFailure)
@@ -57,7 +57,7 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteBusStop(string id)
+        public async Task<IActionResult> DeleteBusStop(int id)
         {
             var result = await _busStopService.DeleteBusStopAsync(id);
             if (result.IsFailure)

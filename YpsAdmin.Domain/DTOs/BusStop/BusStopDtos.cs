@@ -4,11 +4,12 @@ namespace YpsAdmin.Domain.DTOs.BusStop
 {
     public class BusStopDto
     {
-        public string StopId { get; set; } = null!;
+        public int StopId { get; set; }
         public string NameMm { get; set; } = null!;
         public string? NameEn { get; set; }
-        public string? TownshipMm { get; set; }
-        public string? TownshipEn { get; set; }
+        public int? TownshipId { get; set; }
+        public string? TownshipNameMm { get; set; }
+        public string? TownshipNameEn { get; set; }
         public string? RoadMm { get; set; }
         public string? RoadEn { get; set; }
         public int TotalServingBusLines { get; set; }
@@ -16,11 +17,10 @@ namespace YpsAdmin.Domain.DTOs.BusStop
 
     public class CreateBusStopRequest
     {
-        public string StopId { get; set; } = null!;
+        public int? StopId { get; set; }
         public string NameMm { get; set; } = null!;
         public string? NameEn { get; set; }
-        public string? TownshipMm { get; set; }
-        public string? TownshipEn { get; set; }
+        public int? TownshipId { get; set; }
         public string? RoadMm { get; set; }
         public string? RoadEn { get; set; }
     }
@@ -29,8 +29,7 @@ namespace YpsAdmin.Domain.DTOs.BusStop
     {
         public string NameMm { get; set; } = null!;
         public string? NameEn { get; set; }
-        public string? TownshipMm { get; set; }
-        public string? TownshipEn { get; set; }
+        public int? TownshipId { get; set; }
         public string? RoadMm { get; set; }
         public string? RoadEn { get; set; }
     }
@@ -38,5 +37,6 @@ namespace YpsAdmin.Domain.DTOs.BusStop
     public class BusStopQueryFilter : PaginationRequest
     {
         public string? SearchStopName { get; set; }
+        public int? TownshipId { get; set; }
     }
 }
