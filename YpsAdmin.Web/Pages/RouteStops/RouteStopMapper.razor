@@ -1,0 +1,281 @@
+@page "/route-stops"
+@inject IRouteStopService RouteStopService
+@inject IBusLineService BusLineService
+@inject IBusStopService BusStopService
+@inject LanguageService Lang
+
+<div class="space-y-6">
+    <!-- Header & Bus Line Selector -->
+    <div class="bg-white p-4 rounded-md border border-outline-variant flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-lg font-bold text-on-surface">@Lang.GetText("NavRouteMapping")</h2>
+        </div>
+
+        <div class="w-full sm:w-72">
+            <select @onchange="OnBusLineSelected" class="w-full h-10 px-3 text-sm border border-outline rounded-md focus:outline-none focus:border-secondary bg-white">
+                <option value="0">@Lang.GetText("SelectBusLine")</option>
+                @if (busLineList != null)
+                {
+                    @foreach (var line in busLineList)
+                    {
+                        <option value="@line.BusLineId">@line.BusNumber - @line.RouteId</option>
+                    }
+                }
+            </select>
+        </div>
+    </div>
+
+    @if (selectedBusLineId > 0)
+    {
+        @if (isLoading)
+        {
+            <div class="p-8 text-center text-sm text-tertiary">Loading route mappings...</div>
+        }
+        else if (fullRoute != null)
+        {
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Outbound Route Column -->
+                <div class="bg-white rounded-md border border-outline-variant p-4 space-y-4">
+                    <div class="flex items-center justify-between border-b border-outline-variant pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 bg-secondary rounded-full inline-block"></span>
+                            <h3 class="font-bold text-sm text-on-surface">@Lang.GetText("OutboundTitle") (@fullRoute.OutboundStops.Count)</h3>
+                        </div>
+                        <button type="button" @onclick='() => OpenAssignModal("Outbound")' class="px-3 py-1 text-xs font-semibold bg-secondary/10 text-secondary rounded border border-secondary/20 hover:bg-secondary/20">
+                            + @Lang.GetText("AssignStops")
+                        </button>
+                    </div>
+
+                    <div class="space-y-2">
+                        @if (!fullRoute.OutboundStops.Any())
+                        {
+                            <p class="text-xs text-tertiary p-4 text-center">No outbound stops assigned yet.</p>
+                        }
+                        else
+                        {
+                            @for (int i = 0; i < fullRoute.OutboundStops.Count; i++)
+                            {
+                                var index = i;
+                                var item = fullRoute.OutboundStops[i];
+                                <div class="flex items-center justify-between p-3 bg-surface rounded border border-outline-variant text-xs">
+                                    <div class="flex items-center gap-3">
+                                        <span class="w-5 h-5 rounded bg-surface-container-high text-tertiary flex items-center justify-center font-mono font-bold">@(index + 1)</span>
+                                        <div>
+                                            <div class="font-bold text-on-surface">@(item.BusStop?.NameMm ?? "Stop #" + item.BusStopId)</div>
+                                            <div class="text-tertiary font-mono">@(item.BusStop?.NameEn) - @(item.BusStop?.Road)</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <button type="button" disabled="@(index == 0)" @onclick='() => MoveStop("Outbound", index, -1)' class="px-2 py-1 border border-outline rounded bg-white hover:bg-surface-container disabled:opacity-30">
+                                            @Lang.GetText("MoveUp")
+                                        </button>
+                                        <button type="button" disabled="@(index == fullRoute.OutboundStops.Count - 1)" @onclick='() => MoveStop("Outbound", index, 1)' class="px-2 py-1 border border-outline rounded bg-white hover:bg-surface-container disabled:opacity-30">
+                                            @Lang.GetText("MoveDown")
+                                        </button>
+                                        <button type="button" @onclick="() => RemoveRouteStop(item.RouteStopId)" class="px-2 py-1 text-red-700 hover:bg-red-50 border border-red-200 rounded">
+                                            x
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <!-- Return Route Column -->
+                <div class="bg-white rounded-md border border-outline-variant p-4 space-y-4">
+                    <div class="flex items-center justify-between border-b border-outline-variant pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 bg-primary rounded-full inline-block"></span>
+                            <h3 class="font-bold text-sm text-on-surface">@Lang.GetText("ReturnTitle") (@fullRoute.ReturnStops.Count)</h3>
+                        </div>
+                        <button type="button" @onclick='() => OpenAssignModal("Return")' class="px-3 py-1 text-xs font-semibold bg-primary-container text-on-primary-container rounded border border-primary/20 hover:bg-primary-container/80">
+                            + @Lang.GetText("AssignStops")
+                        </button>
+                    </div>
+
+                    <div class="space-y-2">
+                        @if (!fullRoute.ReturnStops.Any())
+                        {
+                            <p class="text-xs text-tertiary p-4 text-center">No return stops assigned yet.</p>
+                        }
+                        else
+                        {
+                            @for (int i = 0; i < fullRoute.ReturnStops.Count; i++)
+                            {
+                                var index = i;
+                                var item = fullRoute.ReturnStops[i];
+                                <div class="flex items-center justify-between p-3 bg-surface rounded border border-outline-variant text-xs">
+                                    <div class="flex items-center gap-3">
+                                        <span class="w-5 h-5 rounded bg-surface-container-high text-tertiary flex items-center justify-center font-mono font-bold">@(index + 1)</span>
+                                        <div>
+                                            <div class="font-bold text-on-surface">@(item.BusStop?.NameMm ?? "Stop #" + item.BusStopId)</div>
+                                            <div class="text-tertiary font-mono">@(item.BusStop?.NameEn) - @(item.BusStop?.Road)</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <button type="button" disabled="@(index == 0)" @onclick='() => MoveStop("Return", index, -1)' class="px-2 py-1 border border-outline rounded bg-white hover:bg-surface-container disabled:opacity-30">
+                                            @Lang.GetText("MoveUp")
+                                        </button>
+                                        <button type="button" disabled="@(index == fullRoute.ReturnStops.Count - 1)" @onclick='() => MoveStop("Return", index, 1)' class="px-2 py-1 border border-outline rounded bg-white hover:bg-surface-container disabled:opacity-30">
+                                            @Lang.GetText("MoveDown")
+                                        </button>
+                                        <button type="button" @onclick="() => RemoveRouteStop(item.RouteStopId)" class="px-2 py-1 text-red-700 hover:bg-red-50 border border-red-200 rounded">
+                                            x
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<!-- Assign Bus Stops Modal -->
+@if (showAssignModal)
+{
+    <div class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-md border border-outline-variant shadow-lg max-w-md w-full p-6 space-y-4">
+            <h3 class="text-base font-bold text-on-surface border-b border-outline-variant pb-2">
+                @Lang.GetText("AssignStops") (@assignDirection)
+            </h3>
+
+            <div class="max-h-64 overflow-y-auto space-y-2 border border-outline-variant p-3 rounded bg-surface">
+                @if (allBusStops == null || !allBusStops.Any())
+                {
+                    <p class="text-xs text-tertiary">No bus stops available.</p>
+                }
+                else
+                {
+                    @foreach (var stop in allBusStops)
+                    {
+                        <div class="flex items-center gap-2 p-1.5 hover:bg-white rounded text-xs">
+                            <input type="checkbox" id="@($"chk_{stop.BusStopId}")" checked="@selectedStopIds.Contains(stop.BusStopId)" @onchange='(e) => ToggleStopSelection(stop.BusStopId, e.Value)' class="h-4 w-4 rounded border-outline text-secondary" />
+                            <label for="@($"chk_{stop.BusStopId}")" class="flex-1 cursor-pointer">
+                                <span class="font-bold text-on-surface">@stop.NameMm</span>
+                                <span class="text-tertiary font-mono ml-1">(@stop.NameEn - @stop.Road)</span>
+                            </label>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-outline-variant">
+                <button type="button" @onclick="() => showAssignModal = false" class="px-4 py-1.5 text-xs font-medium border border-outline rounded hover:bg-surface-container">
+                    @Lang.GetText("Cancel")
+                </button>
+                <button type="button" @onclick="SaveAssignedStops" class="px-4 py-1.5 text-xs font-semibold bg-secondary text-white rounded hover:bg-secondary/90">
+                    @Lang.GetText("Save")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<BusLineDto>? busLineList;
+    private int selectedBusLineId = 0;
+    private FullRouteResponseDto? fullRoute;
+    private bool isLoading = false;
+
+    // Assign modal state
+    private bool showAssignModal = false;
+    private string assignDirection = "Outbound";
+    private List<BusStopDto>? allBusStops;
+    private HashSet<int> selectedStopIds = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var res = await BusLineService.GetBusLinesAsync(1, 100, null);
+        if (res != null && res.Data != null)
+        {
+            busLineList = res.Data;
+        }
+
+        var stopsRes = await BusStopService.GetBusStopsAsync(1, 500, null);
+        if (stopsRes != null && stopsRes.Data != null)
+        {
+            allBusStops = stopsRes.Data;
+        }
+    }
+
+    private async Task OnBusLineSelected(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int id))
+        {
+            selectedBusLineId = id;
+            if (id > 0)
+            {
+                await LoadRoute();
+            }
+        }
+    }
+
+    private async Task LoadRoute()
+    {
+        isLoading = true;
+        try
+        {
+            var res = await RouteStopService.GetFullRouteAsync(selectedBusLineId);
+            if (res != null && res.IsSuccess)
+            {
+                fullRoute = res.Data;
+            }
+        }
+        catch { }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task MoveStop(string direction, int currentIndex, int delta)
+    {
+        if (fullRoute == null) return;
+        var list = direction == "Outbound" ? fullRoute.OutboundStops : fullRoute.ReturnStops;
+        int targetIndex = currentIndex + delta;
+        if (targetIndex < 0 || targetIndex >= list.Count) return;
+
+        var temp = list[currentIndex];
+        list[currentIndex] = list[targetIndex];
+        list[targetIndex] = temp;
+
+        var ids = list.Select(x => x.RouteStopId).ToList();
+        var req = new ReorderRouteStopsRequest(selectedBusLineId, direction, ids);
+        await RouteStopService.ReorderRouteStopsAsync(req);
+        await LoadRoute();
+    }
+
+    private async Task RemoveRouteStop(int routeStopId)
+    {
+        await RouteStopService.DeleteRouteStopAsync(routeStopId);
+        await LoadRoute();
+    }
+
+    private void OpenAssignModal(string direction)
+    {
+        assignDirection = direction;
+        selectedStopIds.Clear();
+        showAssignModal = true;
+    }
+
+    private void ToggleStopSelection(int busStopId, object? isChecked)
+    {
+        if (isChecked is bool b && b) selectedStopIds.Add(busStopId);
+        else selectedStopIds.Remove(busStopId);
+    }
+
+    private async Task SaveAssignedStops()
+    {
+        if (selectedStopIds.Any())
+        {
+            var req = new AssignRouteStopsRequest(selectedBusLineId, selectedStopIds.ToList(), assignDirection);
+            await RouteStopService.AssignRouteStopsAsync(req);
+        }
+        showAssignModal = false;
+        await LoadRoute();
+    }
+}
