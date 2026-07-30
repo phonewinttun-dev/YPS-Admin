@@ -35,7 +35,6 @@
                 <table class="w-full text-left text-sm border-collapse">
                     <thead>
                         <tr class="bg-surface-container border-b border-outline-variant text-xs font-semibold text-tertiary uppercase tracking-wider">
-                            <th class="p-3">@Lang.GetText("StopId")</th>
                             <th class="p-3">@Lang.GetText("StopNameMM") / (EN)</th>
                             <th class="p-3">@Lang.GetText("TownshipMM") / (EN)</th>
                             <th class="p-3">@Lang.GetText("Road")</th>
@@ -46,7 +45,6 @@
                         @foreach (var item in busStops.Data)
                         {
                             <tr class="hover:bg-surface transition-colors">
-                                <td class="p-3 font-mono font-medium text-secondary">#@item.StopId</td>
                                 <td class="p-3">
                                     <div class="font-semibold text-on-surface">@item.NameMm</div>
                                     <div class="text-xs text-tertiary font-mono">@item.NameEn</div>

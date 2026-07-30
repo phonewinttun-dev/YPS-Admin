@@ -101,11 +101,20 @@ namespace YpsAdmin.Domain.Features.RouteStop
                 return Result<bool>.Failure($"Bus line with Route ID '{request.RouteId}' was not found.");
             }
 
-            if (request.Stops == null || request.Stops.Count == 0)
+            if (request.Stops == null)
             {
-                return Result<bool>.Failure("At least one stop must be provided.");
+                request.Stops = new List<AssignRouteStopItem>();
             }
 
+            string direction = request.Stops.FirstOrDefault()?.Direction ?? "Outbound";
+
+            // Remove existing stops for this route and direction to prevent duplicate order / key conflicts
+            var existingStops = await _context.TblRouteStops
+                .Where(rs => rs.RouteId == request.RouteId && rs.Direction.ToLower() == direction.ToLower())
+                .ToListAsync();
+            _context.TblRouteStops.RemoveRange(existingStops);
+
+            int order = 1;
             foreach (var item in request.Stops)
             {
                 if (item.StopId.HasValue)
@@ -121,12 +130,13 @@ namespace YpsAdmin.Domain.Features.RouteStop
                 {
                     RouteId = request.RouteId,
                     StopId = item.StopId,
-                    Direction = string.IsNullOrWhiteSpace(item.Direction) ? "Outbound" : item.Direction.Trim(),
-                    StopOrder = item.StopOrder,
+                    Direction = string.IsNullOrWhiteSpace(item.Direction) ? direction : item.Direction.Trim(),
+                    StopOrder = item.StopOrder > 0 ? item.StopOrder : order,
                     StopType = item.StopType
                 };
 
                 _context.TblRouteStops.Add(routeStop);
+                order++;
             }
 
             await _context.SaveChangesAsync();

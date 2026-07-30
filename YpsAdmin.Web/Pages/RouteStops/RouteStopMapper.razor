@@ -18,7 +18,7 @@
                 {
                     @foreach (var line in busLineList)
                     {
-                        <option value="@line.RouteId">@line.BusNumber - Route #@line.RouteId</option>
+                        <option value="@line.RouteId">Bus #@line.BusNumber</option>
                     }
                 }
             </select>
@@ -61,7 +61,7 @@
                                     <div class="flex items-center gap-3">
                                         <span class="w-5 h-5 rounded bg-surface-container-high text-tertiary flex items-center justify-center font-mono font-bold">@(index + 1)</span>
                                         <div>
-                                            <div class="font-bold text-on-surface">@(item.StopNameMm ?? "Stop #" + item.StopId)</div>
+                                            <div class="font-bold text-on-surface">@(item.StopNameMm ?? "Bus Stop")</div>
                                             <div class="text-tertiary font-mono">@(item.StopNameEn) - @(item.RoadMm)</div>
                                         </div>
                                     </div>
@@ -109,7 +109,7 @@
                                     <div class="flex items-center gap-3">
                                         <span class="w-5 h-5 rounded bg-surface-container-high text-tertiary flex items-center justify-center font-mono font-bold">@(index + 1)</span>
                                         <div>
-                                            <div class="font-bold text-on-surface">@(item.StopNameMm ?? "Stop #" + item.StopId)</div>
+                                            <div class="font-bold text-on-surface">@(item.StopNameMm ?? "Bus Stop")</div>
                                             <div class="text-tertiary font-mono">@(item.StopNameEn) - @(item.RoadMm)</div>
                                         </div>
                                     </div>
@@ -143,24 +143,28 @@
                 @Lang.GetText("AssignStops") (@assignDirection)
             </h3>
 
-            <div class="max-h-64 overflow-y-auto space-y-2 border border-outline-variant p-3 rounded bg-surface">
-                @if (allBusStops == null || !allBusStops.Any())
-                {
-                    <p class="text-xs text-tertiary">No bus stops available.</p>
-                }
-                else
-                {
-                    @foreach (var stop in allBusStops)
+            <div class="space-y-2">
+                <input type="text" @bind="modalSearchQuery" @bind:event="oninput" placeholder="Search bus stops..." class="w-full h-9 px-3 text-xs border border-outline rounded focus:outline-none focus:border-secondary" />
+
+                <div class="max-h-64 overflow-y-auto space-y-2 border border-outline-variant p-3 rounded bg-surface">
+                    @if (filteredBusStops == null || !filteredBusStops.Any())
                     {
-                        <div class="flex items-center gap-2 p-1.5 hover:bg-white rounded text-xs">
-                            <input type="checkbox" id="@($"chk_{stop.StopId}")" checked="@selectedStopIds.Contains(stop.StopId)" @onchange='(e) => ToggleStopSelection(stop.StopId, e.Value)' class="h-4 w-4 rounded border-outline text-secondary" />
-                            <label for="@($"chk_{stop.StopId}")" class="flex-1 cursor-pointer">
-                                <span class="font-bold text-on-surface">@stop.NameMm</span>
-                                <span class="text-tertiary font-mono ml-1">(@stop.NameEn - @stop.RoadMm)</span>
-                            </label>
-                        </div>
+                        <p class="text-xs text-tertiary">No bus stops found.</p>
                     }
-                }
+                    else
+                    {
+                        @foreach (var stop in filteredBusStops)
+                        {
+                            <div class="flex items-center gap-2 p-1.5 hover:bg-white rounded text-xs">
+                                <input type="checkbox" id="@($"chk_{stop.StopId}")" checked="@selectedStopIds.Contains(stop.StopId)" @onchange='(e) => ToggleStopSelection(stop.StopId, e.Value)' class="h-4 w-4 rounded border-outline text-secondary" />
+                                <label for="@($"chk_{stop.StopId}")" class="flex-1 cursor-pointer">
+                                    <span class="font-bold text-on-surface">@stop.NameMm</span>
+                                    <span class="text-tertiary font-mono ml-1">(@stop.NameEn - @stop.RoadMm)</span>
+                                </label>
+                            </div>
+                        }
+                    }
+                </div>
             </div>
 
             <div class="flex items-center justify-end gap-3 pt-3 border-t border-outline-variant">
@@ -186,6 +190,13 @@
     private string assignDirection = "Outbound";
     private List<BusStopDto>? allBusStops;
     private HashSet<int> selectedStopIds = new();
+    private string modalSearchQuery = "";
+
+    private IEnumerable<BusStopDto>? filteredBusStops => string.IsNullOrWhiteSpace(modalSearchQuery)
+        ? allBusStops
+        : allBusStops?.Where(s => s.NameMm.Contains(modalSearchQuery, StringComparison.OrdinalIgnoreCase) ||
+                                  (s.NameEn != null && s.NameEn.Contains(modalSearchQuery, StringComparison.OrdinalIgnoreCase)) ||
+                                  (s.RoadMm != null && s.RoadMm.Contains(modalSearchQuery, StringComparison.OrdinalIgnoreCase)));
 
     protected override async Task OnInitializedAsync()
     {
@@ -258,7 +269,16 @@
     private void OpenAssignModal(string direction)
     {
         assignDirection = direction;
+        modalSearchQuery = "";
         selectedStopIds.Clear();
+        if (fullRoute != null)
+        {
+            var currentStops = direction == "Outbound" ? fullRoute.OutboundStops : fullRoute.ReturnStops;
+            foreach (var s in currentStops)
+            {
+                if (s.StopId.HasValue) selectedStopIds.Add(s.StopId.Value);
+            }
+        }
         showAssignModal = true;
     }
 
@@ -270,12 +290,9 @@
 
     private async Task SaveAssignedStops()
     {
-        if (selectedStopIds.Any())
-        {
-            var items = selectedStopIds.Select((sId, idx) => new AssignRouteStopItem(sId, assignDirection, idx + 1, null)).ToList();
-            var req = new AssignRouteStopsRequest(selectedBusLineId, items);
-            await RouteStopService.AssignRouteStopsAsync(req);
-        }
+        var items = selectedStopIds.Select((sId, idx) => new AssignRouteStopItem(sId, assignDirection, idx + 1, null)).ToList();
+        var req = new AssignRouteStopsRequest(selectedBusLineId, items);
+        await RouteStopService.AssignRouteStopsAsync(req);
         showAssignModal = false;
         await LoadRoute();
     }

@@ -50,7 +50,10 @@
                             <tr class="hover:bg-surface transition-colors">
                                 <td class="p-3">
                                     <div class="font-bold text-on-surface">@item.NameMm</div>
-                                    <div class="text-xs text-tertiary font-mono">ID: #@item.StoreId</div>
+                                    @if (!string.IsNullOrEmpty(item.NameEn))
+                                    {
+                                        <div class="text-xs text-tertiary font-mono">@item.NameEn</div>
+                                    }
                                 </td>
                                 <td class="p-3">
                                     <span class="inline-block px-2.5 py-0.5 text-xs font-semibold bg-surface-container-high text-on-surface rounded border border-outline-variant">@item.Category</span>
@@ -221,7 +224,10 @@
                             <input type="checkbox" id="@($"store_bus_{line.BusNumber}")" checked="@selectedBusNumbers.Contains(line.BusNumber)" @onchange='(e) => ToggleBusLineSelection(line.BusNumber, e.Value)' class="h-4 w-4 rounded border-outline text-secondary" />
                             <label for="@($"store_bus_{line.BusNumber}")" class="flex-1 cursor-pointer">
                                 <span class="font-bold text-on-surface">Bus #@line.BusNumber</span>
-                                <span class="text-tertiary font-mono ml-1">(Route #@line.RouteId)</span>
+                                @if (!string.IsNullOrEmpty(line.OutboundTitleMm))
+                                {
+                                    <span class="text-tertiary ml-1">(@line.OutboundTitleMm)</span>
+                                }
                             </label>
                         </div>
                     }
