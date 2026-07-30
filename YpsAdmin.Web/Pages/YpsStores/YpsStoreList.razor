@@ -1,0 +1,407 @@
+@page "/yps-stores"
+@inject IYpsStoreService StoreService
+@inject IBusStopService BusStopService
+@inject IBusLineService BusLineService
+@inject LanguageService Lang
+
+<div class="space-y-6">
+    <!-- Header Controls -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-md border border-outline-variant">
+        <div>
+            <h2 class="text-lg font-bold text-on-surface">@Lang.GetText("NavYpsStores")</h2>
+        </div>
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+            <div class="flex items-center gap-2 flex-1 sm:w-64">
+                <input type="text" @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleSearch" placeholder="@Lang.GetText("Search")..." class="w-full h-10 px-3 py-2 text-sm border border-outline rounded-md focus:outline-none focus:border-secondary" />
+            </div>
+            <button type="button" @onclick="OpenCreateModal" class="h-10 px-4 bg-secondary text-white text-sm font-semibold rounded-md hover:bg-secondary/90 transition-colors whitespace-nowrap">
+                + @Lang.GetText("Add")
+            </button>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="bg-white rounded-md border border-outline-variant overflow-hidden">
+        @if (isLoading)
+        {
+            <div class="p-8 text-center text-sm text-tertiary">Loading...</div>
+        }
+        else if (stores == null || stores.Data == null || !stores.Data.Any())
+        {
+            <div class="p-8 text-center text-sm text-tertiary">No YPS stores found.</div>
+        }
+        else
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm border-collapse">
+                    <thead>
+                        <tr class="bg-surface-container border-b border-outline-variant text-xs font-semibold text-tertiary uppercase tracking-wider">
+                            <th class="p-3">@Lang.GetText("StoreName")</th>
+                            <th class="p-3">@Lang.GetText("Category")</th>
+                            <th class="p-3">@Lang.GetText("TownshipMM")</th>
+                            <th class="p-3 font-mono">@Lang.GetText("Coordinates")</th>
+                            <th class="p-3 text-right">@Lang.GetText("Actions")</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-outline-variant">
+                        @foreach (var item in stores.Data)
+                        {
+                            <tr class="hover:bg-surface transition-colors">
+                                <td class="p-3">
+                                    <div class="font-bold text-on-surface">@item.StoreName</div>
+                                    <div class="text-xs text-tertiary font-mono">ID: #@item.YpsStoreId</div>
+                                </td>
+                                <td class="p-3">
+                                    <span class="inline-block px-2.5 py-0.5 text-xs font-semibold bg-surface-container-high text-on-surface rounded border border-outline-variant">@item.Category</span>
+                                </td>
+                                <td class="p-3 text-on-surface">@item.Township</td>
+                                <td class="p-3 font-mono text-xs text-secondary">
+                                    @item.Latitude.ToString("F6"), @item.Longitude.ToString("F6")
+                                </td>
+                                <td class="p-3 text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <button type="button" @onclick="() => OpenAssignStopsModal(item)" class="px-2 py-1 text-xs font-medium text-secondary border border-secondary/30 rounded hover:bg-secondary/10">
+                                            @Lang.GetText("AssignStops")
+                                        </button>
+                                        <button type="button" @onclick="() => OpenAssignBusesModal(item)" class="px-2 py-1 text-xs font-medium text-secondary border border-secondary/30 rounded hover:bg-secondary/10">
+                                            @Lang.GetText("AssignBuses")
+                                        </button>
+                                        <button type="button" @onclick="() => OpenEditModal(item)" class="px-2 py-1 text-xs font-medium border border-outline rounded hover:bg-surface-container">
+                                            @Lang.GetText("Edit")
+                                        </button>
+                                        <button type="button" @onclick="() => PromptDelete(item)" class="px-2 py-1 text-xs font-medium text-red-700 border border-red-200 rounded hover:bg-red-50">
+                                            @Lang.GetText("Delete")
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="p-3 border-t border-outline-variant bg-surface-container flex items-center justify-between">
+                <span class="text-xs text-tertiary">Page @pageNumber of @stores.Pagination.TotalPages (@stores.Pagination.TotalCount items)</span>
+                <div class="flex items-center gap-2">
+                    <button type="button" disabled="@(!stores.Pagination.HasPreviousPage)" @onclick="PreviousPage" class="px-3 py-1 text-xs font-medium bg-white border border-outline rounded disabled:opacity-40 hover:bg-surface-container-high">
+                        @Lang.GetText("Previous")
+                    </button>
+                    <button type="button" disabled="@(!stores.Pagination.HasNextPage)" @onclick="NextPage" class="px-3 py-1 text-xs font-medium bg-white border border-outline rounded disabled:opacity-40 hover:bg-surface-container-high">
+                        @Lang.GetText("Next")
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Create / Edit Modal -->
+@if (showFormModal)
+{
+    <div class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-md border border-outline-variant shadow-lg max-w-md w-full p-6 space-y-4">
+            <h3 class="text-base font-bold text-on-surface border-b border-outline-variant pb-2">
+                @(editingId.HasValue ? Lang.GetText("Edit") : Lang.GetText("Add")) @Lang.GetText("NavYpsStores")
+            </h3>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("StoreName")</label>
+                    <input type="text" @bind="formStoreName" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("Category")</label>
+                    <input type="text" @bind="formCategory" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("TownshipMM")</label>
+                    <input type="text" @bind="formTownship" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary" />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-tertiary mb-1">Latitude</label>
+                        <input type="number" step="any" @bind="formLatitude" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary font-mono" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-tertiary mb-1">Longitude</label>
+                        <input type="number" step="any" @bind="formLongitude" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary font-mono" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-outline-variant">
+                <button type="button" @onclick="CloseFormModal" class="px-4 py-1.5 text-xs font-medium border border-outline rounded hover:bg-surface-container">
+                    @Lang.GetText("Cancel")
+                </button>
+                <button type="button" @onclick="SaveStore" class="px-4 py-1.5 text-xs font-semibold bg-secondary text-white rounded hover:bg-secondary/90">
+                    @Lang.GetText("Save")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Link Nearest Bus Stops Modal -->
+@if (showStopsModal && activeStore != null)
+{
+    <div class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-md border border-outline-variant shadow-lg max-w-md w-full p-6 space-y-4">
+            <h3 class="text-base font-bold text-on-surface border-b border-outline-variant pb-2">
+                @Lang.GetText("AssignStops") - @activeStore.StoreName
+            </h3>
+
+            <div class="max-h-64 overflow-y-auto space-y-2 border border-outline-variant p-3 rounded bg-surface">
+                @if (allBusStops == null || !allBusStops.Any())
+                {
+                    <p class="text-xs text-tertiary">No bus stops available.</p>
+                }
+                else
+                {
+                    @foreach (var stop in allBusStops)
+                    {
+                        <div class="flex items-center gap-2 p-1.5 hover:bg-white rounded text-xs">
+                            <input type="checkbox" id="@($"store_stop_{stop.BusStopId}")" checked="@selectedStopIds.Contains(stop.BusStopId)" @onchange='(e) => ToggleStopSelection(stop.BusStopId, e.Value)' class="h-4 w-4 rounded border-outline text-secondary" />
+                            <label for="@($"store_stop_{stop.BusStopId}")" class="flex-1 cursor-pointer">
+                                <span class="font-bold text-on-surface">@stop.NameMm</span>
+                                <span class="text-tertiary font-mono ml-1">(@stop.Road)</span>
+                            </label>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-outline-variant">
+                <button type="button" @onclick="() => showStopsModal = false" class="px-4 py-1.5 text-xs font-medium border border-outline rounded hover:bg-surface-container">
+                    @Lang.GetText("Cancel")
+                </button>
+                <button type="button" @onclick="SaveNearestStops" class="px-4 py-1.5 text-xs font-semibold bg-secondary text-white rounded hover:bg-secondary/90">
+                    @Lang.GetText("Save")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Link Serving Bus Lines Modal -->
+@if (showBusesModal && activeStore != null)
+{
+    <div class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-md border border-outline-variant shadow-lg max-w-md w-full p-6 space-y-4">
+            <h3 class="text-base font-bold text-on-surface border-b border-outline-variant pb-2">
+                @Lang.GetText("AssignBuses") - @activeStore.StoreName
+            </h3>
+
+            <div class="max-h-64 overflow-y-auto space-y-2 border border-outline-variant p-3 rounded bg-surface">
+                @if (allBusLines == null || !allBusLines.Any())
+                {
+                    <p class="text-xs text-tertiary">No bus lines available.</p>
+                }
+                else
+                {
+                    @foreach (var line in allBusLines)
+                    {
+                        <div class="flex items-center gap-2 p-1.5 hover:bg-white rounded text-xs">
+                            <input type="checkbox" id="@($"store_bus_{line.BusLineId}")" checked="@selectedBusLineIds.Contains(line.BusLineId)" @onchange='(e) => ToggleBusLineSelection(line.BusLineId, e.Value)' class="h-4 w-4 rounded border-outline text-secondary" />
+                            <label for="@($"store_bus_{line.BusLineId}")" class="flex-1 cursor-pointer">
+                                <span class="font-bold text-on-surface">@line.BusNumber</span>
+                                <span class="text-tertiary font-mono ml-1">(@line.RouteId)</span>
+                            </label>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-outline-variant">
+                <button type="button" @onclick="() => showBusesModal = false" class="px-4 py-1.5 text-xs font-medium border border-outline rounded hover:bg-surface-container">
+                    @Lang.GetText("Cancel")
+                </button>
+                <button type="button" @onclick="SaveServingBuses" class="px-4 py-1.5 text-xs font-semibold bg-secondary text-white rounded hover:bg-secondary/90">
+                    @Lang.GetText("Save")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Delete Modal -->
+@if (showDeleteModal)
+{
+    <div class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-md border border-outline-variant shadow-lg max-w-sm w-full p-6 space-y-4">
+            <h3 class="text-base font-bold text-red-700">@Lang.GetText("ConfirmDeleteTitle")</h3>
+            <p class="text-xs text-tertiary">@Lang.GetText("ConfirmDeleteMessage")</p>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" @onclick="() => showDeleteModal = false" class="px-4 py-1.5 text-xs font-medium border border-outline rounded hover:bg-surface-container">
+                    @Lang.GetText("Cancel")
+                </button>
+                <button type="button" @onclick="ConfirmDelete" class="px-4 py-1.5 text-xs font-semibold bg-red-700 text-white rounded hover:bg-red-800">
+                    @Lang.GetText("Confirm")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private PagedResult<YpsStoreDto>? stores;
+    private bool isLoading = true;
+    private int pageNumber = 1;
+    private int pageSize = 10;
+    private string searchQuery = "";
+
+    // Form Modal state
+    private bool showFormModal = false;
+    private int? editingId = null;
+    private string formStoreName = "";
+    private string formCategory = "";
+    private string formTownship = "";
+    private double formLatitude = 16.8661;
+    private double formLongitude = 96.1951;
+
+    // Nearest Stops Modal
+    private bool showStopsModal = false;
+    private YpsStoreDto? activeStore;
+    private List<BusStopDto>? allBusStops;
+    private HashSet<int> selectedStopIds = new();
+
+    // Serving Buses Modal
+    private bool showBusesModal = false;
+    private List<BusLineDto>? allBusLines;
+    private HashSet<int> selectedBusLineIds = new();
+
+    // Delete Modal
+    private bool showDeleteModal = false;
+    private int? deletingId = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+
+        var stopsRes = await BusStopService.GetBusStopsAsync(1, 500, null);
+        if (stopsRes != null && stopsRes.Data != null) allBusStops = stopsRes.Data;
+
+        var busesRes = await BusLineService.GetBusLinesAsync(1, 200, null);
+        if (busesRes != null && busesRes.Data != null) allBusLines = busesRes.Data;
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            stores = await StoreService.GetStoresAsync(pageNumber, pageSize, searchQuery);
+        }
+        catch { }
+        finally { isLoading = false; }
+    }
+
+    private async Task HandleSearch() { pageNumber = 1; await LoadData(); }
+    private async Task PreviousPage() { if (pageNumber > 1) { pageNumber--; await LoadData(); } }
+    private async Task NextPage() { if (stores != null && stores.Pagination.HasNextPage) { pageNumber++; await LoadData(); } }
+
+    private void OpenCreateModal()
+    {
+        editingId = null;
+        formStoreName = "";
+        formCategory = "";
+        formTownship = "";
+        formLatitude = 16.8661;
+        formLongitude = 96.1951;
+        showFormModal = true;
+    }
+
+    private void OpenEditModal(YpsStoreDto item)
+    {
+        editingId = item.YpsStoreId;
+        formStoreName = item.StoreName;
+        formCategory = item.Category;
+        formTownship = item.Township;
+        formLatitude = item.Latitude;
+        formLongitude = item.Longitude;
+        showFormModal = true;
+    }
+
+    private void CloseFormModal() => showFormModal = false;
+
+    private async Task SaveStore()
+    {
+        if (editingId.HasValue)
+        {
+            var req = new UpdateYpsStoreRequest(formStoreName, formCategory, formTownship, formLatitude, formLongitude);
+            await StoreService.UpdateAsync(editingId.Value, req);
+        }
+        else
+        {
+            var req = new CreateYpsStoreRequest(formStoreName, formCategory, formTownship, formLatitude, formLongitude);
+            await StoreService.CreateAsync(req);
+        }
+        showFormModal = false;
+        await LoadData();
+    }
+
+    private void OpenAssignStopsModal(YpsStoreDto item)
+    {
+        activeStore = item;
+        selectedStopIds.Clear();
+        showStopsModal = true;
+    }
+
+    private void ToggleStopSelection(int busStopId, object? isChecked)
+    {
+        if (isChecked is bool b && b) selectedStopIds.Add(busStopId);
+        else selectedStopIds.Remove(busStopId);
+    }
+
+    private async Task SaveNearestStops()
+    {
+        if (activeStore != null && selectedStopIds.Any())
+        {
+            var req = new AssignNearestStopsRequest(selectedStopIds.ToList());
+            await StoreService.AssignNearestStopsAsync(activeStore.YpsStoreId, req);
+        }
+        showStopsModal = false;
+        await LoadData();
+    }
+
+    private void OpenAssignBusesModal(YpsStoreDto item)
+    {
+        activeStore = item;
+        selectedBusLineIds.Clear();
+        showBusesModal = true;
+    }
+
+    private void ToggleBusLineSelection(int busLineId, object? isChecked)
+    {
+        if (isChecked is bool b && b) selectedBusLineIds.Add(busLineId);
+        else selectedBusLineIds.Remove(busLineId);
+    }
+
+    private async Task SaveServingBuses()
+    {
+        if (activeStore != null && selectedBusLineIds.Any())
+        {
+            var req = new AssignServingBusLinesRequest(selectedBusLineIds.ToList());
+            await StoreService.AssignServingBusLinesAsync(activeStore.YpsStoreId, req);
+        }
+        showBusesModal = false;
+        await LoadData();
+    }
+
+    private void PromptDelete(YpsStoreDto item)
+    {
+        deletingId = item.YpsStoreId;
+        showDeleteModal = true;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (deletingId.HasValue)
+        {
+            await StoreService.DeleteAsync(deletingId.Value);
+            showDeleteModal = false;
+            await LoadData();
+        }
+    }
+}
