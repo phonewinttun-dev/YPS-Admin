@@ -1,0 +1,79 @@
+@inherits LayoutComponentBase
+@inject LanguageService Lang
+@implements IDisposable
+
+<div class="min-h-screen flex flex-col md:flex-row bg-surface text-on-surface font-sans">
+    <!-- Sidebar Navigation -->
+    <aside class="w-full md:w-64 bg-white border-r border-outline-variant flex flex-col justify-between shrink-0">
+        <div>
+            <!-- Header Brand -->
+            <div class="p-4 border-b border-outline-variant flex items-center justify-between">
+                <a href="/" class="flex items-center gap-2 text-primary font-bold text-lg tracking-tight">
+                    <span class="inline-block w-4 h-4 bg-primary-container border border-primary rounded-xs"></span>
+                    <span>@Lang.GetText("AppTitle")</span>
+                </a>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="p-3 space-y-1">
+                <NavLink href="bus-lines" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-on-surface hover:bg-surface-container transition-colors" Match="NavLinkMatch.Prefix">
+                    <span>@Lang.GetText("NavBusLines")</span>
+                </NavLink>
+                <NavLink href="bus-stops" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-on-surface hover:bg-surface-container transition-colors" Match="NavLinkMatch.Prefix">
+                    <span>@Lang.GetText("NavBusStops")</span>
+                </NavLink>
+                <NavLink href="route-stops" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-on-surface hover:bg-surface-container transition-colors" Match="NavLinkMatch.Prefix">
+                    <span>@Lang.GetText("NavRouteMapping")</span>
+                </NavLink>
+                <NavLink href="yps-stores" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-on-surface hover:bg-surface-container transition-colors" Match="NavLinkMatch.Prefix">
+                    <span>@Lang.GetText("NavYpsStores")</span>
+                </NavLink>
+            </nav>
+        </div>
+
+        <!-- Footer & Language Switcher -->
+        <div class="p-4 border-t border-outline-variant bg-surface-container">
+            <div class="text-xs text-tertiary mb-2 font-mono">LANGUAGE / ဘာသာစကား</div>
+            <div class="flex items-center gap-2">
+                <button type="button" @onclick='() => SetLang("en")' class="flex-1 py-1.5 px-3 text-xs font-semibold rounded border transition-colors @(Lang.CurrentLanguage == "en" ? "bg-secondary text-white border-secondary" : "bg-white text-on-surface border-outline-variant hover:bg-surface-container-high")">
+                    English
+                </button>
+                <button type="button" @onclick='() => SetLang("my")' class="flex-1 py-1.5 px-3 text-xs font-semibold rounded border transition-colors @(Lang.CurrentLanguage == "my" ? "bg-secondary text-white border-secondary" : "bg-white text-on-surface border-outline-variant hover:bg-surface-container-high")">
+                    မြန်မာ
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col min-w-0">
+        <!-- Top App Bar -->
+        <header class="h-14 bg-white border-b border-outline-variant px-6 flex items-center justify-between">
+            <h1 class="text-base font-semibold text-on-surface">@Lang.GetText("AppTitle")</h1>
+            <div class="text-xs font-mono text-tertiary">v1.0.0</div>
+        </header>
+
+        <!-- Dynamic Body Page -->
+        <div class="p-6 flex-1 overflow-y-auto">
+            @Body
+        </div>
+    </main>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        Lang.OnLanguageChanged += StateHasChanged;
+        await Lang.InitializeAsync();
+    }
+
+    private async Task SetLang(string langCode)
+    {
+        await Lang.SetLanguageAsync(langCode);
+    }
+
+    public void Dispose()
+    {
+        Lang.OnLanguageChanged -= StateHasChanged;
+    }
+}
