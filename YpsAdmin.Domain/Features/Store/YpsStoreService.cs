@@ -265,25 +265,46 @@ namespace YpsAdmin.Domain.Features.Store
                 return Result<bool>.Failure($"YPS store with Store ID '{storeId}' was not found.");
             }
 
-            _context.TblYpsStoreNearestStops.RemoveRange(store.TblYpsStoreNearestStops);
-
-            if (request.NearestStops != null && request.NearestStops.Count > 0)
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                foreach (var item in request.NearestStops)
+                if (store.TblYpsStoreNearestStops.Count > 0)
                 {
-                    var nearestStop = new TblYpsStoreNearestStop
-                    {
-                        StoreId = storeId,
-                        MatchedStopId = item.MatchedStopId,
-                        StopNameMm = item.StopNameMm,
-                        StopNameEn = item.StopNameEn
-                    };
-                    _context.TblYpsStoreNearestStops.Add(nearestStop);
+                    _context.TblYpsStoreNearestStops.RemoveRange(store.TblYpsStoreNearestStops);
+                    await _context.SaveChangesAsync();
                 }
-            }
 
-            await _context.SaveChangesAsync();
-            return Result<bool>.Success(true, "Nearest bus stops assigned to YPS store successfully.");
+                if (request.NearestStops != null && request.NearestStops.Count > 0)
+                {
+                    // Deduplicate input stops by MatchedStopId to prevent unique constraint UQ_YpsStore_Nearest violations
+                    var distinctStops = request.NearestStops
+                        .GroupBy(ns => ns.MatchedStopId)
+                        .Select(g => g.First())
+                        .ToList();
+
+                    foreach (var item in distinctStops)
+                    {
+                        var nearestStop = new TblYpsStoreNearestStop
+                        {
+                            StoreId = storeId,
+                            MatchedStopId = item.MatchedStopId,
+                            StopNameMm = item.StopNameMm,
+                            StopNameEn = item.StopNameEn
+                        };
+                        _context.TblYpsStoreNearestStops.Add(nearestStop);
+                    }
+
+                    await _context.SaveChangesAsync();
+                }
+
+                await transaction.CommitAsync();
+                return Result<bool>.Success(true, "Nearest bus stops assigned to YPS store successfully.");
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return Result<bool>.Failure($"Failed to assign nearest stops: {ex.Message}");
+            }
         }
 
         public async Task<Result<bool>> AssignServingBusLinesAsync(int storeId, AssignServingBusLinesRequest request)
@@ -297,27 +318,66 @@ namespace YpsAdmin.Domain.Features.Store
                 return Result<bool>.Failure($"YPS store with Store ID '{storeId}' was not found.");
             }
 
-            _context.TblYpsStoreServingBusLines.RemoveRange(store.TblYpsStoreServingBusLines);
-
-            if (request.BusNumbers != null && request.BusNumbers.Count > 0)
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                foreach (var busNumber in request.BusNumbers)
+                if (store.TblYpsStoreServingBusLines.Count > 0)
                 {
-                    // Find RouteId if bus number matches a bus line
-                    var busLine = await _context.TblBusLines.FirstOrDefaultAsync(b => b.BusNumber == busNumber);
-
-                    var servingBusLine = new TblYpsStoreServingBusLine
-                    {
-                        StoreId = storeId,
-                        BusNumber = busNumber,
-                        RouteId = busLine?.RouteId
-                    };
-                    _context.TblYpsStoreServingBusLines.Add(servingBusLine);
+                    _context.TblYpsStoreServingBusLines.RemoveRange(store.TblYpsStoreServingBusLines);
+                    await _context.SaveChangesAsync();
                 }
-            }
 
-            await _context.SaveChangesAsync();
-            return Result<bool>.Success(true, "Serving bus lines assigned to YPS store successfully.");
+                if (request.BusNumbers != null && request.BusNumbers.Count > 0)
+                {
+                    var distinctBusNumbers = request.BusNumbers.Distinct().ToList();
+
+                    // Batch fetch matching RouteIds for all requested bus numbers to avoid N+1 queries
+                    var busLines = await _context.TblBusLines
+                        .Where(b => distinctBusNumbers.Contains(b.BusNumber))
+                        .ToListAsync();
+
+                    var busLineDict = busLines
+                        .GroupBy(b => b.BusNumber)
+                        .ToDictionary(g => g.Key, g => g.First().RouteId);
+
+                    // Track added route IDs to enforce unique index constraint UQ_YpsStore_Serving (StoreId, RouteId)
+                    var addedRouteIds = new HashSet<int>();
+
+                    foreach (var busNumber in distinctBusNumbers)
+                    {
+                        busLineDict.TryGetValue(busNumber, out int routeIdVal);
+                        int? routeId = routeIdVal > 0 ? routeIdVal : null;
+
+                        if (routeId.HasValue && addedRouteIds.Contains(routeId.Value))
+                        {
+                            continue; // Skip duplicate RouteId mapping for this store
+                        }
+
+                        if (routeId.HasValue)
+                        {
+                            addedRouteIds.Add(routeId.Value);
+                        }
+
+                        var servingBusLine = new TblYpsStoreServingBusLine
+                        {
+                            StoreId = storeId,
+                            BusNumber = busNumber,
+                            RouteId = routeId
+                        };
+                        _context.TblYpsStoreServingBusLines.Add(servingBusLine);
+                    }
+
+                    await _context.SaveChangesAsync();
+                }
+
+                await transaction.CommitAsync();
+                return Result<bool>.Success(true, "Serving bus lines assigned to YPS store successfully.");
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return Result<bool>.Failure($"Failed to assign serving bus lines: {ex.Message}");
+            }
         }
     }
 }
