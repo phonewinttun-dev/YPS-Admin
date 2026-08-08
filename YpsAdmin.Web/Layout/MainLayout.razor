@@ -2,43 +2,69 @@
 @inject LanguageService Lang
 @implements IDisposable
 
+<a href="#main-content" class="sr-only-focusable fixed top-2 left-2 z-50 bg-secondary text-white px-4 py-2 rounded-md font-medium text-xs shadow-md focus:not-sr-only focus:outline-none focus:ring-2 focus:ring-secondary">
+    Skip to main content
+</a>
+
+<ToastNotification />
+
 <div class="min-h-screen flex flex-col md:flex-row bg-surface text-on-surface font-sans">
     <!-- Sidebar Navigation -->
-    <aside class="w-full md:w-64 bg-white border-r border-outline-variant flex flex-col justify-between shrink-0">
+    <aside class="w-full md:w-64 bg-white border-r border-outline-variant flex flex-col justify-between shrink-0 shadow-2xs">
         <div>
             <!-- Header Brand -->
             <div class="p-4 border-b border-outline-variant flex items-center justify-between">
-                <a href="/" class="flex items-center gap-2 text-primary font-bold text-lg tracking-tight">
+                <a href="/" class="flex items-center gap-2 text-primary font-bold text-lg tracking-tight hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50 rounded-xs">
                     <span class="inline-block w-4 h-4 bg-primary-container border border-primary rounded-xs"></span>
                     <span>@Lang.GetText("AppTitle")</span>
                 </a>
             </div>
 
             <!-- Navigation Links -->
-            <nav class="p-3 space-y-1">
-                <NavLink href="bus-lines" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-on-surface hover:bg-surface-container transition-colors" Match="NavLinkMatch.Prefix">
+            <nav class="p-3 space-y-1" aria-label="Main Navigation">
+                <NavLink href="bus-lines" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-on-surface hover:bg-surface-container transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50" Match="NavLinkMatch.Prefix">
+                    <svg class="w-4 h-4 text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                    </svg>
                     <span>@Lang.GetText("NavBusLines")</span>
                 </NavLink>
-                <NavLink href="bus-stops" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-on-surface hover:bg-surface-container transition-colors" Match="NavLinkMatch.Prefix">
+
+                <NavLink href="bus-stops" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-on-surface hover:bg-surface-container transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50" Match="NavLinkMatch.Prefix">
+                    <svg class="w-4 h-4 text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
                     <span>@Lang.GetText("NavBusStops")</span>
                 </NavLink>
-                <NavLink href="route-stops" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-on-surface hover:bg-surface-container transition-colors" Match="NavLinkMatch.Prefix">
+
+                <NavLink href="route-stops" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-on-surface hover:bg-surface-container transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50" Match="NavLinkMatch.Prefix">
+                    <svg class="w-4 h-4 text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.818V8.049a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                    </svg>
                     <span>@Lang.GetText("NavRouteMapping")</span>
                 </NavLink>
-                <NavLink href="yps-stores" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-on-surface hover:bg-surface-container transition-colors" Match="NavLinkMatch.Prefix">
+
+                <NavLink href="yps-stores" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-on-surface hover:bg-surface-container transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50" Match="NavLinkMatch.Prefix">
+                    <svg class="w-4 h-4 text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                    </svg>
                     <span>@Lang.GetText("NavYpsStores")</span>
                 </NavLink>
             </nav>
         </div>
 
         <!-- Footer & Language Switcher -->
-        <div class="p-4 border-t border-outline-variant bg-surface-container">
-            <div class="text-xs text-tertiary mb-2 font-mono">LANGUAGE / ဘာသာစကား</div>
+        <div class="p-4 border-t border-outline-variant bg-surface-container/50">
+            <div class="text-xs text-tertiary mb-2 font-mono tracking-wider uppercase">Language / ဘာသာစကား</div>
             <div class="flex items-center gap-2">
-                <button type="button" @onclick='() => SetLang("en")' class="flex-1 py-1.5 px-3 text-xs font-semibold rounded border transition-colors @(Lang.CurrentLanguage == "en" ? "bg-secondary text-white border-secondary" : "bg-white text-on-surface border-outline-variant hover:bg-surface-container-high")">
+                <button type="button" 
+                        @onclick='() => SetLang("en")' 
+                        class="flex-1 min-h-[38px] py-1.5 px-3 text-xs font-semibold rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50 @(Lang.CurrentLanguage == "en" ? "bg-secondary text-white border-secondary shadow-2xs" : "bg-white text-on-surface border-outline-variant hover:bg-surface-container")">
                     English
                 </button>
-                <button type="button" @onclick='() => SetLang("my")' class="flex-1 py-1.5 px-3 text-xs font-semibold rounded border transition-colors @(Lang.CurrentLanguage == "my" ? "bg-secondary text-white border-secondary" : "bg-white text-on-surface border-outline-variant hover:bg-surface-container-high")">
+                <button type="button" 
+                        @onclick='() => SetLang("my")' 
+                        class="flex-1 min-h-[38px] py-1.5 px-3 text-xs font-semibold rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50 @(Lang.CurrentLanguage == "my" ? "bg-secondary text-white border-secondary shadow-2xs" : "bg-white text-on-surface border-outline-variant hover:bg-surface-container")">
                     မြန်မာ
                 </button>
             </div>
@@ -46,10 +72,10 @@
     </aside>
 
     <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col min-w-0">
-        <!-- Top App Bar -->
-        <header class="h-14 bg-white border-b border-outline-variant px-6 flex items-center justify-between">
-            <h1 class="text-base font-semibold text-on-surface">@Lang.GetText("AppTitle")</h1>
+    <main id="main-content" class="flex-1 flex flex-col min-w-0" tabindex="-1">
+        <!-- Top App Bar with Persistent Breadcrumb -->
+        <header class="h-14 bg-white border-b border-outline-variant px-6 flex items-center justify-between shadow-2xs">
+            <Breadcrumb />
             <div class="text-xs font-mono text-tertiary">v1.0.0</div>
         </header>
 
