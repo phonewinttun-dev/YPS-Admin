@@ -24,5 +24,6 @@ builder.Services.AddScoped<IBusStopService, BusStopService>();
 builder.Services.AddScoped<IRouteStopService, RouteStopService>();
 builder.Services.AddScoped<IYpsStoreService, YpsStoreService>();
 builder.Services.AddScoped<ITownshipService, TownshipService>();
+builder.Services.AddScoped<IToastService, ToastService>();
 
 await builder.Build().RunAsync();
