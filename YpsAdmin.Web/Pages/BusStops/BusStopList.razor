@@ -102,17 +102,7 @@
                 <!-- Pagination -->
                 @if (busStops != null && busStops.Pagination != null)
                 {
-                    <div class="p-3.5 border-t border-outline-variant bg-surface-container/40 flex flex-col sm:flex-row items-center justify-between gap-3">
-                        <span class="text-xs text-tertiary font-mono">Page @pageNumber of @busStops.Pagination.TotalPages (@busStops.Pagination.TotalCount items)</span>
-                        <div class="flex items-center gap-2">
-                            <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Disabled="@(!busStops.Pagination.HasPreviousPage)" OnClick="PreviousPage">
-                                @Lang.GetText("Previous")
-                            </Button>
-                            <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Disabled="@(!busStops.Pagination.HasNextPage)" OnClick="NextPage">
-                                @Lang.GetText("Next")
-                            </Button>
-                        </div>
-                    </div>
+                    <Pagination PageNumber="@pageNumber" TotalPages="@busStops.Pagination.TotalPages" TotalCount="@busStops.Pagination.TotalCount" PageSize="@pageSize" PageChanged="OnPageChanged" />
                 }
             </ChildContent>
         </StateView>
@@ -262,8 +252,7 @@
     }
 
     private async Task HandleSearch() { pageNumber = 1; await LoadData(); }
-    private async Task PreviousPage() { if (pageNumber > 1) { pageNumber--; await LoadData(); } }
-    private async Task NextPage() { if (busStops != null && busStops.Pagination.HasNextPage) { pageNumber++; await LoadData(); } }
+    private async Task OnPageChanged(int newPage) { pageNumber = newPage; await LoadData(); }
 
     private void OpenCreateModal()
     {

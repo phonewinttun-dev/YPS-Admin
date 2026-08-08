@@ -1,0 +1,114 @@
+@namespace YpsAdmin.Web.Components
+
+@if (TotalPages > 0)
+{
+    <div class="p-3.5 border-t border-outline-variant bg-surface-container/40 flex flex-col sm:flex-row items-center justify-between gap-3 select-none">
+        <!-- Item Range Summary -->
+        <div class="text-xs text-tertiary font-mono">
+            Showing <span class="font-semibold text-on-surface">@StartItem</span> to <span class="font-semibold text-on-surface">@EndItem</span> of <span class="font-semibold text-on-surface">@TotalCount</span> entries
+        </div>
+
+        <!-- Numbered Page Controls -->
+        <div class="flex items-center gap-1.5" aria-label="Pagination">
+            <!-- Previous Button -->
+            <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Icon" Disabled="@(!HasPreviousPage)" OnClick="() => ChangePage(PageNumber - 1)" Title="Previous Page">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+            </Button>
+
+            <!-- Page Number Buttons -->
+            @foreach (var pageItem in GetPageNumbers())
+            {
+                if (pageItem == -1)
+                {
+                    <span class="px-2 text-xs text-tertiary font-mono">...</span>
+                }
+                else
+                {
+                    var p = pageItem;
+                    var isActive = p == PageNumber;
+                    <button type="button"
+                            @onclick="() => ChangePage(p)"
+                            class="@GetPageButtonClass(isActive)"
+                            aria-current="@(isActive ? "page" : null)">
+                        @p
+                    </button>
+                }
+            }
+
+            <!-- Next Button -->
+            <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Icon" Disabled="@(!HasNextPage)" OnClick="() => ChangePage(PageNumber + 1)" Title="Next Page">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </Button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int PageNumber { get; set; } = 1;
+    [Parameter] public int TotalPages { get; set; } = 1;
+    [Parameter] public int TotalCount { get; set; } = 0;
+    [Parameter] public int PageSize { get; set; } = 10;
+    [Parameter] public EventCallback<int> PageChanged { get; set; }
+
+    private bool HasPreviousPage => PageNumber > 1;
+    private bool HasNextPage => PageNumber < TotalPages;
+
+    private int StartItem => TotalCount == 0 ? 0 : (PageNumber - 1) * PageSize + 1;
+    private int EndItem => Math.Min(PageNumber * PageSize, TotalCount);
+
+    private async Task ChangePage(int newPage)
+    {
+        if (newPage >= 1 && newPage <= TotalPages && newPage != PageNumber)
+        {
+            await PageChanged.InvokeAsync(newPage);
+        }
+    }
+
+    private IEnumerable<int> GetPageNumbers()
+    {
+        if (TotalPages <= 7)
+        {
+            for (int i = 1; i <= TotalPages; i++)
+            {
+                yield return i;
+            }
+            yield break;
+        }
+
+        yield return 1;
+
+        if (PageNumber > 3)
+        {
+            yield return -1; // Ellipsis
+        }
+
+        int start = Math.Max(2, PageNumber - 1);
+        int end = Math.Min(TotalPages - 1, PageNumber + 1);
+
+        for (int i = start; i <= end; i++)
+        {
+            yield return i;
+        }
+
+        if (PageNumber < TotalPages - 2)
+        {
+            yield return -1; // Ellipsis
+        }
+
+        yield return TotalPages;
+    }
+
+    private string GetPageButtonClass(bool isActive)
+    {
+        var baseClass = "min-w-[34px] h-8 px-2.5 text-xs font-semibold rounded-md border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50 font-mono select-none cursor-pointer";
+        if (isActive)
+        {
+            return $"{baseClass} bg-secondary text-white border-secondary shadow-2xs";
+        }
+        return $"{baseClass} bg-white text-on-surface border-outline-variant hover:bg-surface-container";
+    }
+}

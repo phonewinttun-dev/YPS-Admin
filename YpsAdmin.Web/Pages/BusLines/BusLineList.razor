@@ -62,7 +62,7 @@
                                 {
                                     <tr class="hover:bg-surface-container/30 transition-colors">
                                         <td class="p-3.5 font-bold font-mono text-secondary text-base">
-                                            Bus #@item.BusNumber
+                                            @item.BusNumber
                                         </td>
                                         <td class="p-3.5 text-on-surface max-w-xs truncate">
                                             @item.OutboundTitleMm
@@ -108,17 +108,7 @@
                 <!-- Pagination -->
                 @if (busLines != null && busLines.Pagination != null)
                 {
-                    <div class="p-3.5 border-t border-outline-variant bg-surface-container/40 flex flex-col sm:flex-row items-center justify-between gap-3">
-                        <span class="text-xs text-tertiary font-mono">Page @pageNumber of @busLines.Pagination.TotalPages (@busLines.Pagination.TotalCount items)</span>
-                        <div class="flex items-center gap-2">
-                            <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Disabled="@(!busLines.Pagination.HasPreviousPage)" OnClick="PreviousPage">
-                                @Lang.GetText("Previous")
-                            </Button>
-                            <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Disabled="@(!busLines.Pagination.HasNextPage)" OnClick="NextPage">
-                                @Lang.GetText("Next")
-                            </Button>
-                        </div>
-                    </div>
+                    <Pagination PageNumber="@pageNumber" TotalPages="@busLines.Pagination.TotalPages" TotalCount="@busLines.Pagination.TotalCount" PageSize="@pageSize" PageChanged="OnPageChanged" />
                 }
             </ChildContent>
         </StateView>
@@ -258,8 +248,7 @@
     }
 
     private async Task HandleSearch() { pageNumber = 1; await LoadData(); }
-    private async Task PreviousPage() { if (pageNumber > 1) { pageNumber--; await LoadData(); } }
-    private async Task NextPage() { if (busLines != null && busLines.Pagination.HasNextPage) { pageNumber++; await LoadData(); } }
+    private async Task OnPageChanged(int newPage) { pageNumber = newPage; await LoadData(); }
 
     private void OpenCreateModal()
     {
@@ -321,13 +310,13 @@
             {
                 var req = new UpdateBusLineRequest(formBusNumber, formOutboundTitleMm, formOutboundTitleEn, formReturnTitleMm, formReturnTitleEn, formYpsAccepted);
                 await BusLineService.UpdateAsync(editingId.Value, req);
-                Toast.ShowSuccess($"Bus Line #{formBusNumber} updated successfully.");
+                Toast.ShowSuccess($"Bus Line {formBusNumber} updated successfully.");
             }
             else
             {
                 var req = new CreateBusLineRequest(formBusNumber, formBusNumber, formOutboundTitleMm, formOutboundTitleEn, formReturnTitleMm, formReturnTitleEn, formYpsAccepted);
                 await BusLineService.CreateAsync(req);
-                Toast.ShowSuccess($"Bus Line #{formBusNumber} created successfully.");
+                Toast.ShowSuccess($"Bus Line {formBusNumber} created successfully.");
             }
             showFormModal = false;
             await LoadData();

@@ -104,17 +104,7 @@
                 <!-- Pagination -->
                 @if (stores != null && stores.Pagination != null)
                 {
-                    <div class="p-3.5 border-t border-outline-variant bg-surface-container/40 flex flex-col sm:flex-row items-center justify-between gap-3">
-                        <span class="text-xs text-tertiary font-mono">Page @pageNumber of @stores.Pagination.TotalPages (@stores.Pagination.TotalCount items)</span>
-                        <div class="flex items-center gap-2">
-                            <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Disabled="@(!stores.Pagination.HasPreviousPage)" OnClick="PreviousPage">
-                                @Lang.GetText("Previous")
-                            </Button>
-                            <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Disabled="@(!stores.Pagination.HasNextPage)" OnClick="NextPage">
-                                @Lang.GetText("Next")
-                            </Button>
-                        </div>
-                    </div>
+                    <Pagination PageNumber="@pageNumber" TotalPages="@stores.Pagination.TotalPages" TotalCount="@stores.Pagination.TotalCount" PageSize="@pageSize" PageChanged="OnPageChanged" />
                 }
             </ChildContent>
         </StateView>
@@ -245,7 +235,7 @@
                     <div class="flex items-center gap-2.5 p-2 hover:bg-white rounded-md text-xs transition-colors border border-transparent hover:border-outline-variant">
                         <input type="checkbox" id="@($"store_bus_{line.BusNumber}")" checked="@selectedBusNumbers.Contains(line.BusNumber)" @onchange='(e) => ToggleBusLineSelection(line.BusNumber, e.Value)' class="h-4 w-4 rounded border-outline text-secondary focus:ring-secondary/50" />
                         <label for="@($"store_bus_{line.BusNumber}")" class="flex-1 cursor-pointer select-none">
-                            <span class="font-bold text-secondary">Bus #@line.BusNumber</span>
+                            <span class="font-bold text-secondary">Bus @line.BusNumber</span>
                             @if (!string.IsNullOrEmpty(line.OutboundTitleMm))
                             {
                                 <span class="text-tertiary ml-1.5">(@line.OutboundTitleMm)</span>
@@ -363,8 +353,7 @@
     }
 
     private async Task HandleSearch() { pageNumber = 1; await LoadData(); }
-    private async Task PreviousPage() { if (pageNumber > 1) { pageNumber--; await LoadData(); } }
-    private async Task NextPage() { if (stores != null && stores.Pagination.HasNextPage) { pageNumber++; await LoadData(); } }
+    private async Task OnPageChanged(int newPage) { pageNumber = newPage; await LoadData(); }
 
     private void OpenCreateModal()
     {
