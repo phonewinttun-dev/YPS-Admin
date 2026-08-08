@@ -200,13 +200,18 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var res = await BusLineService.GetBusLinesAsync(1, 100, null);
+        var busesTask = BusLineService.GetBusLinesAsync(1, 100, null);
+        var stopsTask = BusStopService.GetBusStopsAsync(1, 500, null);
+
+        await Task.WhenAll(busesTask, stopsTask);
+
+        var res = await busesTask;
         if (res != null && res.Data != null)
         {
             busLineList = res.Data;
         }
 
-        var stopsRes = await BusStopService.GetBusStopsAsync(1, 500, null);
+        var stopsRes = await stopsTask;
         if (stopsRes != null && stopsRes.Data != null)
         {
             allBusStops = stopsRes.Data;

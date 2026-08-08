@@ -301,15 +301,20 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadData();
+        var loadDataTask = LoadData();
+        var townshipsTask = TownshipService.GetTownshipsAsync(1, 200, null);
+        var stopsTask = BusStopService.GetBusStopsAsync(1, 500, null);
+        var busesTask = BusLineService.GetBusLinesAsync(1, 200, null);
 
-        var tRes = await TownshipService.GetTownshipsAsync(1, 200, null);
+        await Task.WhenAll(loadDataTask, townshipsTask, stopsTask, busesTask);
+
+        var tRes = await townshipsTask;
         if (tRes != null && tRes.Data != null) townships = tRes.Data;
 
-        var stopsRes = await BusStopService.GetBusStopsAsync(1, 500, null);
+        var stopsRes = await stopsTask;
         if (stopsRes != null && stopsRes.Data != null) allBusStops = stopsRes.Data;
 
-        var busesRes = await BusLineService.GetBusLinesAsync(1, 200, null);
+        var busesRes = await busesTask;
         if (busesRes != null && busesRes.Data != null) allBusLines = busesRes.Data;
     }
 

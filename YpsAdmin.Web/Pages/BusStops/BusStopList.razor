@@ -186,8 +186,12 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadData();
-        var tRes = await TownshipService.GetTownshipsAsync(1, 200, null);
+        var loadDataTask = LoadData();
+        var townshipsTask = TownshipService.GetTownshipsAsync(1, 200, null);
+
+        await Task.WhenAll(loadDataTask, townshipsTask);
+
+        var tRes = await townshipsTask;
         if (tRes != null && tRes.Data != null) townships = tRes.Data;
     }
 

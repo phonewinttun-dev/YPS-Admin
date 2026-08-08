@@ -16,26 +16,27 @@ namespace YpsAdmin.Domain.Features.BusStop
 
         public async Task<PagedResult<BusStopDto>> GetBusStopsAsync(BusStopQueryFilter filter, CancellationToken cancellationToken = default)
         {
-            var query = _context.TblBusStops.AsNoTracking().Include(s => s.Township).AsQueryable();
+            var baseQuery = _context.TblBusStops.AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(filter.SearchStopName))
             {
-                string search = filter.SearchStopName.Trim().ToLower();
-                query = query.Where(s =>
-                    s.NameMm.ToLower().Contains(search) ||
-                    (s.NameEn != null && s.NameEn.ToLower().Contains(search)));
+                string search = $"%{filter.SearchStopName.Trim()}%";
+                baseQuery = baseQuery.Where(s =>
+                    EF.Functions.ILike(s.NameMm, search) ||
+                    (s.NameEn != null && EF.Functions.ILike(s.NameEn, search)));
             }
 
             if (filter.TownshipId.HasValue)
             {
-                query = query.Where(s => s.TownshipId == filter.TownshipId.Value);
+                baseQuery = baseQuery.Where(s => s.TownshipId == filter.TownshipId.Value);
             }
 
-            int totalCount = await query.CountAsync(cancellationToken);
+            int totalCount = await baseQuery.CountAsync(cancellationToken);
 
             int skip = (filter.PageNumber - 1) * filter.PageSize;
 
-            var items = await query
+            var items = await baseQuery
+                .Include(s => s.Township)
                 .OrderBy(s => s.StopId)
                 .Skip(skip)
                 .Take(filter.PageSize)

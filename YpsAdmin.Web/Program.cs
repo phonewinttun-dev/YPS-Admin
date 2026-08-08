@@ -7,10 +7,9 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-var isHttps = builder.HostEnvironment.BaseAddress.StartsWith("https", StringComparison.OrdinalIgnoreCase);
-var apiBaseUrl = isHttps
-    ? (builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7119/")
-    : (builder.Configuration["ApiBaseUrlHttp"] ?? "http://localhost:5214/");
+var apiBaseUrl = builder.Configuration["ApiBaseUrl"] 
+    ?? builder.Configuration["ApiBaseUrlHttp"] 
+    ?? "http://localhost:5214/";
 
 var timeoutSeconds = int.TryParse(builder.Configuration["ApiTimeoutSeconds"], out int sec) ? sec : 30;
 

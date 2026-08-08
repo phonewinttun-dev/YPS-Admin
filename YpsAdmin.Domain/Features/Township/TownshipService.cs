@@ -20,10 +20,10 @@ namespace YpsAdmin.Domain.Features.Township
 
             if (!string.IsNullOrWhiteSpace(filter.SearchName))
             {
-                string search = filter.SearchName.Trim().ToLower();
+                string search = $"%{filter.SearchName.Trim()}%";
                 query = query.Where(t =>
-                    t.TownshipNameMm.ToLower().Contains(search) ||
-                    (t.TownshipNameEn != null && t.TownshipNameEn.ToLower().Contains(search)));
+                    EF.Functions.ILike(t.TownshipNameMm, search) ||
+                    (t.TownshipNameEn != null && EF.Functions.ILike(t.TownshipNameEn, search)));
             }
 
             int totalCount = await query.CountAsync(cancellationToken);

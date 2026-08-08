@@ -17,28 +17,30 @@ namespace YpsAdmin.Domain.Features.Store
 
         public async Task<PagedResult<YpsStoreDto>> GetYpsStoresAsync(YpsStoreQueryFilter filter, CancellationToken cancellationToken = default)
         {
-            var query = _context.TblYpsStores.AsNoTracking().Include(s => s.Township).AsQueryable();
+            var baseQuery = _context.TblYpsStores.AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(filter.SearchName))
             {
-                string search = filter.SearchName.Trim().ToLower();
-                query = query.Where(s =>
-                    s.NameMm.ToLower().Contains(search) ||
-                    (s.NameEn != null && s.NameEn.ToLower().Contains(search)));
+                string search = $"%{filter.SearchName.Trim()}%";
+                baseQuery = baseQuery.Where(s =>
+                    EF.Functions.ILike(s.NameMm, search) ||
+                    (s.NameEn != null && EF.Functions.ILike(s.NameEn, search)));
             }
 
             if (filter.TownshipId.HasValue)
             {
-                query = query.Where(s => s.TownshipId == filter.TownshipId.Value);
+                baseQuery = baseQuery.Where(s => s.TownshipId == filter.TownshipId.Value);
             }
 
-            int totalCount = await query.CountAsync(cancellationToken);
+            int totalCount = await baseQuery.CountAsync(cancellationToken);
 
             int skip = (filter.PageNumber - 1) * filter.PageSize;
 
-            var stores = await query
+            var stores = await baseQuery
+                .Include(s => s.Township)
                 .Include(s => s.TblYpsStoreNearestStops)
                 .Include(s => s.TblYpsStoreServingBusLines)
+                .AsSplitQuery()
                 .OrderBy(s => s.StoreId)
                 .Skip(skip)
                 .Take(filter.PageSize)
@@ -78,6 +80,7 @@ namespace YpsAdmin.Domain.Features.Store
                 .Include(s => s.Township)
                 .Include(s => s.TblYpsStoreNearestStops)
                 .Include(s => s.TblYpsStoreServingBusLines)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(s => s.StoreId == storeId, cancellationToken);
 
             if (store == null)
