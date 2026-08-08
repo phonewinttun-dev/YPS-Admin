@@ -1,177 +1,221 @@
 @page "/bus-stops"
 @inject IBusStopService BusStopService
 @inject ITownshipService TownshipService
+@inject IToastService Toast
 @inject LanguageService Lang
 
 <div class="space-y-6">
     <!-- Header Controls -->
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-md border border-outline-variant">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-lg border border-outline-variant shadow-2xs">
         <div>
-            <h2 class="text-lg font-bold text-on-surface">@Lang.GetText("NavBusStops")</h2>
+            <h2 class="text-lg font-bold text-on-surface tracking-tight">@Lang.GetText("NavBusStops")</h2>
+            <p class="text-xs text-tertiary">Manage bus stop stations, townships, roads, and locations.</p>
         </div>
         <div class="flex items-center gap-3 w-full sm:w-auto">
-            <div class="flex items-center gap-2 flex-1 sm:w-64">
-                <input type="text" @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleSearch" placeholder="@Lang.GetText("Search")..." class="w-full h-10 px-3 py-2 text-sm border border-outline rounded-md focus:outline-none focus:border-secondary" />
+            <div class="relative flex-1 sm:w-64">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-tertiary">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+                <input type="text"
+                       @bind="searchQuery"
+                       @bind:event="oninput"
+                       @onkeyup="HandleSearch"
+                       placeholder="@Lang.GetText("Search")..."
+                       class="w-full h-10 pl-9 pr-3 text-sm border border-outline-variant rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all" />
             </div>
-            <button type="button" @onclick="OpenCreateModal" class="h-10 px-4 bg-secondary text-white text-sm font-semibold rounded-md hover:bg-secondary/90 transition-colors whitespace-nowrap">
-                + @Lang.GetText("Add")
-            </button>
+
+            <Button Variant="ButtonVariant.Default" Size="ButtonSize.Md" OnClick="OpenCreateModal">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                @Lang.GetText("Add")
+            </Button>
         </div>
     </div>
 
-    <!-- Data Table -->
-    <div class="bg-white rounded-md border border-outline-variant overflow-hidden">
-        @if (isLoading)
-        {
-            <div class="p-8 text-center text-sm text-tertiary">Loading...</div>
-        }
-        else if (busStops == null || busStops.Data == null || !busStops.Data.Any())
-        {
-            <div class="p-8 text-center text-sm text-tertiary">No bus stops found.</div>
-        }
-        else
-        {
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm border-collapse">
-                    <thead>
-                        <tr class="bg-surface-container border-b border-outline-variant text-xs font-semibold text-tertiary uppercase tracking-wider">
-                            <th class="p-3">@Lang.GetText("StopNameMM") / (EN)</th>
-                            <th class="p-3">@Lang.GetText("TownshipMM") / (EN)</th>
-                            <th class="p-3">@Lang.GetText("Road")</th>
-                            <th class="p-3 text-right">@Lang.GetText("Actions")</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-outline-variant">
-                        @foreach (var item in busStops.Data)
-                        {
-                            <tr class="hover:bg-surface transition-colors">
-                                <td class="p-3">
-                                    <div class="font-semibold text-on-surface">@item.NameMm</div>
-                                    <div class="text-xs text-tertiary font-mono">@item.NameEn</div>
-                                </td>
-                                <td class="p-3">
-                                    <div class="text-on-surface">@item.TownshipNameMm</div>
-                                    <div class="text-xs text-tertiary font-mono">@item.TownshipNameEn</div>
-                                </td>
-                                <td class="p-3 text-on-surface">@item.RoadMm</td>
-                                <td class="p-3 text-right">
-                                    <div class="flex items-center justify-end gap-2">
-                                        <button type="button" @onclick="() => OpenEditModal(item)" class="px-2.5 py-1 text-xs font-medium text-secondary border border-secondary/30 rounded hover:bg-secondary/10 transition-colors">
-                                            @Lang.GetText("Edit")
-                                        </button>
-                                        <button type="button" @onclick="() => PromptDelete(item)" class="px-2.5 py-1 text-xs font-medium text-red-700 border border-red-200 rounded hover:bg-red-50 transition-colors">
-                                            @Lang.GetText("Delete")
-                                        </button>
-                                    </div>
-                                </td>
+    <!-- Data Table & State Wrapper -->
+    <div class="bg-white rounded-lg border border-outline-variant shadow-2xs overflow-hidden">
+        <StateView IsLoading="@isLoading"
+                   HasError="@hasError"
+                   ErrorMessage="@errorMessage"
+                   OnRetry="LoadData"
+                   IsEmpty="@(busStops == null || busStops.Data == null || !busStops.Data.Any())"
+                   EmptyTitle="No bus stops found"
+                   EmptyDescription="Try searching for a different stop name or road name.">
+            <ChildContent>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead>
+                            <tr class="bg-surface-container/60 border-b border-outline-variant text-xs font-semibold text-tertiary uppercase tracking-wider">
+                                <th class="p-3.5">@Lang.GetText("StopNameMM") / (EN)</th>
+                                <th class="p-3.5">@Lang.GetText("TownshipMM") / (EN)</th>
+                                <th class="p-3.5">@Lang.GetText("Road")</th>
+                                <th class="p-3.5 text-right">@Lang.GetText("Actions")</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="p-3 border-t border-outline-variant bg-surface-container flex items-center justify-between">
-                <span class="text-xs text-tertiary">Page @pageNumber of @busStops.Pagination.TotalPages (@busStops.Pagination.TotalCount items)</span>
-                <div class="flex items-center gap-2">
-                    <button type="button" disabled="@(!busStops.Pagination.HasPreviousPage)" @onclick="PreviousPage" class="px-3 py-1 text-xs font-medium bg-white border border-outline rounded disabled:opacity-40 hover:bg-surface-container-high transition-colors">
-                        @Lang.GetText("Previous")
-                    </button>
-                    <button type="button" disabled="@(!busStops.Pagination.HasNextPage)" @onclick="NextPage" class="px-3 py-1 text-xs font-medium bg-white border border-outline rounded disabled:opacity-40 hover:bg-surface-container-high transition-colors">
-                        @Lang.GetText("Next")
-                    </button>
+                        </thead>
+                        <tbody class="divide-y divide-outline-variant">
+                            @if (busStops != null && busStops.Data != null)
+                            {
+                                @foreach (var item in busStops.Data)
+                                {
+                                    <tr class="hover:bg-surface-container/30 transition-colors">
+                                        <td class="p-3.5">
+                                            <div class="font-semibold text-on-surface">@item.NameMm</div>
+                                            @if (!string.IsNullOrEmpty(item.NameEn))
+                                            {
+                                                <div class="text-xs text-tertiary font-mono mt-0.5">@item.NameEn</div>
+                                            }
+                                        </td>
+                                        <td class="p-3.5">
+                                            <div class="text-on-surface">@item.TownshipNameMm</div>
+                                            @if (!string.IsNullOrEmpty(item.TownshipNameEn))
+                                            {
+                                                <div class="text-xs text-tertiary font-mono mt-0.5">@item.TownshipNameEn</div>
+                                            }
+                                        </td>
+                                        <td class="p-3.5 text-on-surface">
+                                            @item.RoadMm
+                                            @if (!string.IsNullOrEmpty(item.RoadEn))
+                                            {
+                                                <span class="text-xs text-tertiary font-mono block">@item.RoadEn</span>
+                                            }
+                                        </td>
+                                        <td class="p-3.5 text-right">
+                                            <div class="flex items-center justify-end gap-1.5">
+                                                <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick="() => OpenEditModal(item)">
+                                                    @Lang.GetText("Edit")
+                                                </Button>
+                                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Sm" Class="text-error hover:bg-red-50 hover:text-error" OnClick="() => PromptDelete(item)">
+                                                    @Lang.GetText("Delete")
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-        }
+
+                <!-- Pagination -->
+                @if (busStops != null && busStops.Pagination != null)
+                {
+                    <div class="p-3.5 border-t border-outline-variant bg-surface-container/40 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <span class="text-xs text-tertiary font-mono">Page @pageNumber of @busStops.Pagination.TotalPages (@busStops.Pagination.TotalCount items)</span>
+                        <div class="flex items-center gap-2">
+                            <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Disabled="@(!busStops.Pagination.HasPreviousPage)" OnClick="PreviousPage">
+                                @Lang.GetText("Previous")
+                            </Button>
+                            <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Disabled="@(!busStops.Pagination.HasNextPage)" OnClick="NextPage">
+                                @Lang.GetText("Next")
+                            </Button>
+                        </div>
+                    </div>
+                }
+            </ChildContent>
+        </StateView>
     </div>
 </div>
 
 <!-- Create / Edit Form Modal -->
-@if (showFormModal)
-{
-    <div class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-md border border-outline-variant shadow-lg max-w-md w-full p-6 space-y-4">
-            <h3 class="text-base font-bold text-on-surface border-b border-outline-variant pb-2">
-                @(editingId.HasValue ? Lang.GetText("Edit") : Lang.GetText("Add")) @Lang.GetText("NavBusStops")
-            </h3>
+<ModalDialog IsOpen="@showFormModal"
+             IsOpenChanged="v => showFormModal = v"
+             Title="@(editingId.HasValue ? $"{Lang.GetText("Edit")} {Lang.GetText("NavBusStops")}" : $"{Lang.GetText("Add")} {Lang.GetText("NavBusStops")}")"
+             Description="Enter bus stop details and assign township and road locations.">
+    <ChildContent>
+        @if (!string.IsNullOrEmpty(formValidationError))
+        {
+            <div class="p-3 bg-red-50 border border-red-200 rounded-md text-xs text-red-700 flex items-center gap-2">
+                <svg class="w-4 h-4 shrink-0 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>@formValidationError</span>
+            </div>
+        }
 
-            <div class="space-y-3">
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("StopNameMM")</label>
-                        <input type="text" @bind="formNameMm" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary" />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("StopNameEN")</label>
-                        <input type="text" @bind="formNameEn" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary font-mono" />
-                    </div>
+        <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-on-surface mb-1">@Lang.GetText("StopNameMM") *</label>
+                    <input type="text" @bind="formNameMm" class="w-full h-9 px-3 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary @(!string.IsNullOrEmpty(formNameMmError) ? "border-red-500 bg-red-50/20" : "border-outline-variant")" />
+                    @if (!string.IsNullOrEmpty(formNameMmError))
+                    {
+                        <p class="text-2xs text-red-600 mt-1">@formNameMmError</p>
+                    }
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-tertiary mb-1">Township</label>
-                    <select @bind="formTownshipId" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary bg-white">
-                        <option value="">Select Township</option>
-                        @if (townships != null)
-                        {
-                            @foreach (var t in townships)
-                            {
-                                <option value="@t.TownshipId">@t.TownshipNameMm (@t.TownshipNameEn)</option>
-                            }
-                        }
-                    </select>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-tertiary mb-1">Road (MM)</label>
-                        <input type="text" @bind="formRoadMm" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary" />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-tertiary mb-1">Road (EN)</label>
-                        <input type="text" @bind="formRoadEn" class="w-full h-9 px-3 text-sm border border-outline rounded focus:outline-none focus:border-secondary font-mono" />
-                    </div>
+                    <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("StopNameEN")</label>
+                    <input type="text" @bind="formNameEn" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono" />
                 </div>
             </div>
-
-            <div class="flex items-center justify-end gap-3 pt-3 border-t border-outline-variant">
-                <button type="button" @onclick="CloseFormModal" class="px-4 py-1.5 text-xs font-medium border border-outline rounded hover:bg-surface-container transition-colors">
-                    @Lang.GetText("Cancel")
-                </button>
-                <button type="button" @onclick="SaveBusStop" class="px-4 py-1.5 text-xs font-semibold bg-secondary text-white rounded hover:bg-secondary/90 transition-colors">
-                    @Lang.GetText("Save")
-                </button>
+            <div>
+                <label class="block text-xs font-medium text-tertiary mb-1">Township</label>
+                <select @bind="formTownshipId" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary bg-white">
+                    <option value="">Select Township</option>
+                    @if (townships != null)
+                    {
+                        @foreach (var t in townships)
+                        {
+                            <option value="@t.TownshipId">@t.TownshipNameMm (@t.TownshipNameEn)</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-tertiary mb-1">Road (MM)</label>
+                    <input type="text" @bind="formRoadMm" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-tertiary mb-1">Road (EN)</label>
+                    <input type="text" @bind="formRoadEn" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono" />
+                </div>
             </div>
         </div>
-    </div>
-}
+    </ChildContent>
+    <Footer>
+        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick="CloseFormModal">
+            @Lang.GetText("Cancel")
+        </Button>
+        <Button Variant="ButtonVariant.Default" Size="ButtonSize.Sm" IsLoading="@isSaving" OnClick="SaveBusStop">
+            @Lang.GetText("Save")
+        </Button>
+    </Footer>
+</ModalDialog>
 
 <!-- Delete Confirmation Modal -->
-@if (showDeleteModal)
-{
-    <div class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-md border border-outline-variant shadow-lg max-w-sm w-full p-6 space-y-4">
-            <h3 class="text-base font-bold text-red-700">@Lang.GetText("ConfirmDeleteTitle")</h3>
-            <p class="text-xs text-tertiary">@Lang.GetText("ConfirmDeleteMessage")</p>
-
-            <div class="flex items-center justify-end gap-3 pt-2">
-                <button type="button" @onclick="() => showDeleteModal = false" class="px-4 py-1.5 text-xs font-medium border border-outline rounded hover:bg-surface-container">
-                    @Lang.GetText("Cancel")
-                </button>
-                <button type="button" @onclick="ConfirmDelete" class="px-4 py-1.5 text-xs font-semibold bg-red-700 text-white rounded hover:bg-red-800">
-                    @Lang.GetText("Confirm")
-                </button>
-            </div>
-        </div>
-    </div>
-}
+<ModalDialog IsOpen="@showDeleteModal"
+             IsOpenChanged="v => showDeleteModal = v"
+             Title="@Lang.GetText("ConfirmDeleteTitle")"
+             Description="@Lang.GetText("ConfirmDeleteMessage")">
+    <ChildContent>
+        <p class="text-xs text-tertiary">This will remove the bus stop and unassign it from any route mappings.</p>
+    </ChildContent>
+    <Footer>
+        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick="() => showDeleteModal = false">
+            @Lang.GetText("Cancel")
+        </Button>
+        <Button Variant="ButtonVariant.Destructive" Size="ButtonSize.Sm" IsLoading="@isSaving" OnClick="ConfirmDelete">
+            @Lang.GetText("Confirm")
+        </Button>
+    </Footer>
+</ModalDialog>
 
 @code {
     private PagedResult<BusStopDto>? busStops;
     private List<TownshipDto>? townships;
     private bool isLoading = true;
+    private bool hasError = false;
+    private string? errorMessage = null;
+    private bool isSaving = false;
+
     private int pageNumber = 1;
     private int pageSize = 10;
     private string searchQuery = "";
 
-    // Form Modal state
+    // Form Modal state & validation
     private bool showFormModal = false;
     private int? editingId = null;
     private string formNameMm = "";
@@ -179,6 +223,8 @@
     private int? formTownshipId = null;
     private string formRoadMm = "";
     private string formRoadEn = "";
+    private string formValidationError = "";
+    private string formNameMmError = "";
 
     // Delete Modal state
     private bool showDeleteModal = false;
@@ -198,32 +244,26 @@
     private async Task LoadData()
     {
         isLoading = true;
+        hasError = false;
+        errorMessage = null;
         try
         {
             busStops = await BusStopService.GetBusStopsAsync(pageNumber, pageSize, searchQuery);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            hasError = true;
+            errorMessage = ex.Message;
+        }
         finally
         {
             isLoading = false;
         }
     }
 
-    private async Task HandleSearch()
-    {
-        pageNumber = 1;
-        await LoadData();
-    }
-
-    private async Task PreviousPage()
-    {
-        if (pageNumber > 1) { pageNumber--; await LoadData(); }
-    }
-
-    private async Task NextPage()
-    {
-        if (busStops != null && busStops.Pagination.HasNextPage) { pageNumber++; await LoadData(); }
-    }
+    private async Task HandleSearch() { pageNumber = 1; await LoadData(); }
+    private async Task PreviousPage() { if (pageNumber > 1) { pageNumber--; await LoadData(); } }
+    private async Task NextPage() { if (busStops != null && busStops.Pagination.HasNextPage) { pageNumber++; await LoadData(); } }
 
     private void OpenCreateModal()
     {
@@ -233,6 +273,8 @@
         formTownshipId = null;
         formRoadMm = "";
         formRoadEn = "";
+        formValidationError = "";
+        formNameMmError = "";
         showFormModal = true;
     }
 
@@ -244,28 +286,51 @@
         formTownshipId = item.TownshipId;
         formRoadMm = item.RoadMm ?? "";
         formRoadEn = item.RoadEn ?? "";
+        formValidationError = "";
+        formNameMmError = "";
         showFormModal = true;
     }
 
-    private void CloseFormModal()
-    {
-        showFormModal = false;
-    }
+    private void CloseFormModal() => showFormModal = false;
 
     private async Task SaveBusStop()
     {
-        if (editingId.HasValue)
+        formValidationError = "";
+        formNameMmError = "";
+
+        if (string.IsNullOrWhiteSpace(formNameMm))
         {
-            var req = new UpdateBusStopRequest(formNameMm, formNameEn, formTownshipId, formRoadMm, formRoadEn);
-            await BusStopService.UpdateAsync(editingId.Value, req);
+            formNameMmError = "Stop Name (MM) is required.";
+            formValidationError = "Please fix validation errors before saving.";
+            return;
         }
-        else
+
+        isSaving = true;
+        try
         {
-            var req = new CreateBusStopRequest(null, formNameMm, formNameEn, formTownshipId, formRoadMm, formRoadEn);
-            await BusStopService.CreateAsync(req);
+            if (editingId.HasValue)
+            {
+                var req = new UpdateBusStopRequest(formNameMm, formNameEn, formTownshipId, formRoadMm, formRoadEn);
+                await BusStopService.UpdateAsync(editingId.Value, req);
+                Toast.ShowSuccess("Bus stop details updated successfully.");
+            }
+            else
+            {
+                var req = new CreateBusStopRequest(null, formNameMm, formNameEn, formTownshipId, formRoadMm, formRoadEn);
+                await BusStopService.CreateAsync(req);
+                Toast.ShowSuccess("New bus stop added successfully.");
+            }
+            showFormModal = false;
+            await LoadData();
         }
-        showFormModal = false;
-        await LoadData();
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Failed to save bus stop: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
     }
 
     private void PromptDelete(BusStopDto item)
@@ -276,11 +341,22 @@
 
     private async Task ConfirmDelete()
     {
-        if (deletingId.HasValue)
+        if (!deletingId.HasValue) return;
+        isSaving = true;
+        try
         {
             await BusStopService.DeleteAsync(deletingId.Value);
+            Toast.ShowSuccess("Bus stop deleted successfully.");
             showDeleteModal = false;
             await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Failed to delete bus stop: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
         }
     }
 }

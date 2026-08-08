@@ -2,23 +2,25 @@
 @inject IRouteStopService RouteStopService
 @inject IBusLineService BusLineService
 @inject IBusStopService BusStopService
+@inject IToastService Toast
 @inject LanguageService Lang
 
 <div class="space-y-6">
     <!-- Header & Bus Line Selector -->
-    <div class="bg-white p-4 rounded-md border border-outline-variant flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div class="bg-white p-4 rounded-lg border border-outline-variant shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-            <h2 class="text-lg font-bold text-on-surface">@Lang.GetText("NavRouteMapping")</h2>
+            <h2 class="text-lg font-bold text-on-surface tracking-tight">@Lang.GetText("NavRouteMapping")</h2>
+            <p class="text-xs text-tertiary">Select a bus line to configure outbound and return stop sequences.</p>
         </div>
 
         <div class="w-full sm:w-72">
-            <select @onchange="OnBusLineSelected" class="w-full h-10 px-3 text-sm border border-outline rounded-md focus:outline-none focus:border-secondary bg-white">
+            <select @onchange="OnBusLineSelected" class="w-full h-10 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary bg-white font-medium">
                 <option value="0">@Lang.GetText("SelectBusLine")</option>
                 @if (busLineList != null)
                 {
                     @foreach (var line in busLineList)
                     {
-                        <option value="@line.RouteId">Bus #@line.BusNumber</option>
+                        <option value="@line.RouteId">Bus #@line.BusNumber (@line.OutboundTitleMm)</option>
                     }
                 }
             </select>
@@ -27,163 +29,212 @@
 
     @if (selectedBusLineId > 0)
     {
-        @if (isLoading)
-        {
-            <div class="p-8 text-center text-sm text-tertiary">Loading route mappings...</div>
-        }
-        else if (fullRoute != null)
-        {
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Outbound Route Column -->
-                <div class="bg-white rounded-md border border-outline-variant p-4 space-y-4">
-                    <div class="flex items-center justify-between border-b border-outline-variant pb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="w-3 h-3 bg-secondary rounded-full inline-block"></span>
-                            <h3 class="font-bold text-sm text-on-surface">@Lang.GetText("OutboundTitle") (@fullRoute.OutboundStops.Count)</h3>
-                        </div>
-                        <button type="button" @onclick='() => OpenAssignModal("Outbound")' class="px-3 py-1 text-xs font-semibold bg-secondary/10 text-secondary rounded border border-secondary/20 hover:bg-secondary/20">
-                            + @Lang.GetText("AssignStops")
-                        </button>
-                    </div>
-
-                    <div class="space-y-2">
-                        @if (!fullRoute.OutboundStops.Any())
-                        {
-                            <p class="text-xs text-tertiary p-4 text-center">No outbound stops assigned yet.</p>
-                        }
-                        else
-                        {
-                            @for (int i = 0; i < fullRoute.OutboundStops.Count; i++)
-                            {
-                                var index = i;
-                                var item = fullRoute.OutboundStops[i];
-                                <div class="flex items-center justify-between p-3 bg-surface rounded border border-outline-variant text-xs">
-                                    <div class="flex items-center gap-3">
-                                        <span class="w-5 h-5 rounded bg-surface-container-high text-tertiary flex items-center justify-center font-mono font-bold">@(index + 1)</span>
-                                        <div>
-                                            <div class="font-bold text-on-surface">@(item.StopNameMm ?? "Bus Stop")</div>
-                                            <div class="text-tertiary font-mono">@(item.StopNameEn) - @(item.RoadMm)</div>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center gap-1">
-                                        <button type="button" disabled="@(index == 0)" @onclick='() => MoveStop("Outbound", index, -1)' class="px-2 py-1 border border-outline rounded bg-white hover:bg-surface-container disabled:opacity-30">
-                                            @Lang.GetText("MoveUp")
-                                        </button>
-                                        <button type="button" disabled="@(index == fullRoute.OutboundStops.Count - 1)" @onclick='() => MoveStop("Outbound", index, 1)' class="px-2 py-1 border border-outline rounded bg-white hover:bg-surface-container disabled:opacity-30">
-                                            @Lang.GetText("MoveDown")
-                                        </button>
-                                        <button type="button" @onclick="() => RemoveRouteStop(item.Id)" class="px-2 py-1 text-red-700 hover:bg-red-50 border border-red-200 rounded">
-                                            x
-                                        </button>
-                                    </div>
+        <StateView IsLoading="@isLoading"
+                   HasError="@hasError"
+                   ErrorMessage="@errorMessage"
+                   OnRetry="LoadRoute"
+                   IsEmpty="@(fullRoute == null)"
+                   EmptyTitle="No route data"
+                   EmptyDescription="Unable to retrieve route stop details for the selected bus line.">
+            <ChildContent>
+                @if (fullRoute != null)
+                {
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Outbound Route Column -->
+                        <div class="bg-white rounded-lg border border-outline-variant p-4 space-y-4 shadow-2xs">
+                            <div class="flex items-center justify-between border-b border-outline-variant pb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 bg-secondary rounded-full inline-block"></span>
+                                    <h3 class="font-bold text-sm text-on-surface">@Lang.GetText("OutboundTitle") (@fullRoute.OutboundStops.Count)</h3>
                                 </div>
-                            }
-                        }
-                    </div>
-                </div>
+                                <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick='() => OpenAssignModal("Outbound")'>
+                                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                    @Lang.GetText("AssignStops")
+                                </Button>
+                            </div>
 
-                <!-- Return Route Column -->
-                <div class="bg-white rounded-md border border-outline-variant p-4 space-y-4">
-                    <div class="flex items-center justify-between border-b border-outline-variant pb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="w-3 h-3 bg-primary rounded-full inline-block"></span>
-                            <h3 class="font-bold text-sm text-on-surface">@Lang.GetText("ReturnTitle") (@fullRoute.ReturnStops.Count)</h3>
-                        </div>
-                        <button type="button" @onclick='() => OpenAssignModal("Return")' class="px-3 py-1 text-xs font-semibold bg-primary-container text-on-primary-container rounded border border-primary/20 hover:bg-primary-container/80">
-                            + @Lang.GetText("AssignStops")
-                        </button>
-                    </div>
-
-                    <div class="space-y-2">
-                        @if (!fullRoute.ReturnStops.Any())
-                        {
-                            <p class="text-xs text-tertiary p-4 text-center">No return stops assigned yet.</p>
-                        }
-                        else
-                        {
-                            @for (int i = 0; i < fullRoute.ReturnStops.Count; i++)
-                            {
-                                var index = i;
-                                var item = fullRoute.ReturnStops[i];
-                                <div class="flex items-center justify-between p-3 bg-surface rounded border border-outline-variant text-xs">
-                                    <div class="flex items-center gap-3">
-                                        <span class="w-5 h-5 rounded bg-surface-container-high text-tertiary flex items-center justify-center font-mono font-bold">@(index + 1)</span>
-                                        <div>
-                                            <div class="font-bold text-on-surface">@(item.StopNameMm ?? "Bus Stop")</div>
-                                            <div class="text-tertiary font-mono">@(item.StopNameEn) - @(item.RoadMm)</div>
+                            <div class="space-y-2 min-h-[160px]">
+                                @if (!fullRoute.OutboundStops.Any())
+                                {
+                                    <div class="p-8 text-center border border-dashed border-outline-variant rounded-md">
+                                        <p class="text-xs text-tertiary">No outbound stops assigned yet.</p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    @for (int i = 0; i < fullRoute.OutboundStops.Count; i++)
+                                    {
+                                        var index = i;
+                                        var item = fullRoute.OutboundStops[i];
+                                        <div class="flex items-center justify-between p-3 bg-surface-container/30 rounded-md border border-outline-variant text-xs hover:border-secondary/30 transition-all">
+                                            <div class="flex items-center gap-3">
+                                                <span class="w-6 h-6 rounded-full bg-surface-container-high text-tertiary flex items-center justify-center font-mono font-bold text-2xs">@(index + 1)</span>
+                                                <div>
+                                                    <div class="font-bold text-on-surface">@(item.StopNameMm ?? "Bus Stop")</div>
+                                                    <div class="text-tertiary font-mono text-2xs mt-0.5">@(item.StopNameEn) - @(item.RoadMm)</div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-1">
+                                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Disabled="@(index == 0)" OnClick='() => MoveStop("Outbound", index, -1)' Title="@Lang.GetText("MoveUp")">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                                    </svg>
+                                                </Button>
+                                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Disabled="@(index == fullRoute.OutboundStops.Count - 1)" OnClick='() => MoveStop("Outbound", index, 1)' Title="@Lang.GetText("MoveDown")">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                    </svg>
+                                                </Button>
+                                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Class="text-error hover:bg-red-50 hover:text-error" OnClick="() => RemoveRouteStop(item.Id)">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                    </svg>
+                                                </Button>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="flex items-center gap-1">
-                                        <button type="button" disabled="@(index == 0)" @onclick='() => MoveStop("Return", index, -1)' class="px-2 py-1 border border-outline rounded bg-white hover:bg-surface-container disabled:opacity-30">
-                                            @Lang.GetText("MoveUp")
-                                        </button>
-                                        <button type="button" disabled="@(index == fullRoute.ReturnStops.Count - 1)" @onclick='() => MoveStop("Return", index, 1)' class="px-2 py-1 border border-outline rounded bg-white hover:bg-surface-container disabled:opacity-30">
-                                            @Lang.GetText("MoveDown")
-                                        </button>
-                                        <button type="button" @onclick="() => RemoveRouteStop(item.Id)" class="px-2 py-1 text-red-700 hover:bg-red-50 border border-red-200 rounded">
-                                            x
-                                        </button>
-                                    </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Return Route Column -->
+                        <div class="bg-white rounded-lg border border-outline-variant p-4 space-y-4 shadow-2xs">
+                            <div class="flex items-center justify-between border-b border-outline-variant pb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 bg-primary rounded-full inline-block"></span>
+                                    <h3 class="font-bold text-sm text-on-surface">@Lang.GetText("ReturnTitle") (@fullRoute.ReturnStops.Count)</h3>
                                 </div>
-                            }
-                        }
+                                <Button Variant="ButtonVariant.Secondary" Size="ButtonSize.Sm" OnClick='() => OpenAssignModal("Return")'>
+                                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                    @Lang.GetText("AssignStops")
+                                </Button>
+                            </div>
+
+                            <div class="space-y-2 min-h-[160px]">
+                                @if (!fullRoute.ReturnStops.Any())
+                                {
+                                    <div class="p-8 text-center border border-dashed border-outline-variant rounded-md">
+                                        <p class="text-xs text-tertiary">No return stops assigned yet.</p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    @for (int i = 0; i < fullRoute.ReturnStops.Count; i++)
+                                    {
+                                        var index = i;
+                                        var item = fullRoute.ReturnStops[i];
+                                        <div class="flex items-center justify-between p-3 bg-surface-container/30 rounded-md border border-outline-variant text-xs hover:border-primary/30 transition-all">
+                                            <div class="flex items-center gap-3">
+                                                <span class="w-6 h-6 rounded-full bg-surface-container-high text-tertiary flex items-center justify-center font-mono font-bold text-2xs">@(index + 1)</span>
+                                                <div>
+                                                    <div class="font-bold text-on-surface">@(item.StopNameMm ?? "Bus Stop")</div>
+                                                    <div class="text-tertiary font-mono text-2xs mt-0.5">@(item.StopNameEn) - @(item.RoadMm)</div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-1">
+                                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Disabled="@(index == 0)" OnClick='() => MoveStop("Return", index, -1)' Title="@Lang.GetText("MoveUp")">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                                    </svg>
+                                                </Button>
+                                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Disabled="@(index == fullRoute.ReturnStops.Count - 1)" OnClick='() => MoveStop("Return", index, 1)' Title="@Lang.GetText("MoveDown")">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                    </svg>
+                                                </Button>
+                                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Class="text-error hover:bg-red-50 hover:text-error" OnClick="() => RemoveRouteStop(item.Id)">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                    </svg>
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
                     </div>
-                </div>
+                }
+            </ChildContent>
+        </StateView>
+    }
+    else
+    {
+        <div class="bg-white rounded-lg border border-outline-variant p-12 text-center shadow-2xs">
+            <div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-tertiary mx-auto mb-3">
+                <svg class="w-6 h-6 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.818V8.049a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                </svg>
             </div>
-        }
+            <h3 class="text-base font-semibold text-on-surface">Please select a bus line</h3>
+            <p class="text-xs text-tertiary mt-1">Choose a bus line from the dropdown above to manage its route stop sequence.</p>
+        </div>
     }
 </div>
 
 <!-- Assign Bus Stops Modal -->
-@if (showAssignModal)
-{
-    <div class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-md border border-outline-variant shadow-lg max-w-md w-full p-6 space-y-4">
-            <h3 class="text-base font-bold text-on-surface border-b border-outline-variant pb-2">
-                @Lang.GetText("AssignStops") (@assignDirection)
-            </h3>
-
-            <div class="space-y-2">
-                <input type="text" @bind="modalSearchQuery" @bind:event="oninput" placeholder="Search bus stops..." class="w-full h-9 px-3 text-xs border border-outline rounded focus:outline-none focus:border-secondary" />
-
-                <div class="max-h-64 overflow-y-auto space-y-2 border border-outline-variant p-3 rounded bg-surface">
-                    @if (filteredBusStops == null || !filteredBusStops.Any())
-                    {
-                        <p class="text-xs text-tertiary">No bus stops found.</p>
-                    }
-                    else
-                    {
-                        @foreach (var stop in filteredBusStops)
-                        {
-                            <div class="flex items-center gap-2 p-1.5 hover:bg-white rounded text-xs">
-                                <input type="checkbox" id="@($"chk_{stop.StopId}")" checked="@selectedStopIds.Contains(stop.StopId)" @onchange='(e) => ToggleStopSelection(stop.StopId, e.Value)' class="h-4 w-4 rounded border-outline text-secondary" />
-                                <label for="@($"chk_{stop.StopId}")" class="flex-1 cursor-pointer">
-                                    <span class="font-bold text-on-surface">@stop.NameMm</span>
-                                    <span class="text-tertiary font-mono ml-1">(@stop.NameEn - @stop.RoadMm)</span>
-                                </label>
-                            </div>
-                        }
-                    }
+<ModalDialog IsOpen="@showAssignModal"
+             IsOpenChanged="v => showAssignModal = v"
+             Title="@($"{Lang.GetText("AssignStops")} ({assignDirection})")"
+             Description="Check the bus stops to include in this route direction.">
+    <ChildContent>
+        <div class="space-y-3">
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-tertiary">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
                 </div>
+                <input type="text"
+                       @bind="modalSearchQuery"
+                       @bind:event="oninput"
+                       placeholder="Filter bus stops by name or road..."
+                       class="w-full h-9 pl-8 pr-3 text-xs border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" />
             </div>
 
-            <div class="flex items-center justify-end gap-3 pt-3 border-t border-outline-variant">
-                <button type="button" @onclick="() => showAssignModal = false" class="px-4 py-1.5 text-xs font-medium border border-outline rounded hover:bg-surface-container">
-                    @Lang.GetText("Cancel")
-                </button>
-                <button type="button" @onclick="SaveAssignedStops" class="px-4 py-1.5 text-xs font-semibold bg-secondary text-white rounded hover:bg-secondary/90">
-                    @Lang.GetText("Save")
-                </button>
+            <div class="max-h-64 overflow-y-auto space-y-1.5 border border-outline-variant p-3 rounded-md bg-surface-container/30">
+                @if (filteredBusStops == null || !filteredBusStops.Any())
+                {
+                    <p class="text-xs text-tertiary text-center p-4">No matching bus stops found.</p>
+                }
+                else
+                {
+                    @foreach (var stop in filteredBusStops)
+                    {
+                        <div class="flex items-center gap-2.5 p-2 hover:bg-white rounded-md text-xs transition-colors border border-transparent hover:border-outline-variant">
+                            <input type="checkbox" id="@($"chk_{stop.StopId}")" checked="@selectedStopIds.Contains(stop.StopId)" @onchange='(e) => ToggleStopSelection(stop.StopId, e.Value)' class="h-4 w-4 rounded border-outline text-secondary focus:ring-secondary/50" />
+                            <label for="@($"chk_{stop.StopId}")" class="flex-1 cursor-pointer select-none">
+                                <span class="font-bold text-on-surface">@stop.NameMm</span>
+                                <span class="text-tertiary font-mono ml-1.5">(@stop.NameEn - @stop.RoadMm)</span>
+                            </label>
+                        </div>
+                    }
+                }
             </div>
         </div>
-    </div>
-}
+    </ChildContent>
+    <Footer>
+        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick="() => showAssignModal = false">
+            @Lang.GetText("Cancel")
+        </Button>
+        <Button Variant="ButtonVariant.Default" Size="ButtonSize.Sm" IsLoading="@isSaving" OnClick="SaveAssignedStops">
+            @Lang.GetText("Save")
+        </Button>
+    </Footer>
+</ModalDialog>
 
 @code {
     private List<BusLineDto>? busLineList;
     private int selectedBusLineId = 0;
     private FullRouteResponseDto? fullRoute;
     private bool isLoading = false;
+    private bool hasError = false;
+    private string? errorMessage = null;
+    private bool isSaving = false;
 
     // Assign modal state
     private bool showAssignModal = false;
@@ -233,6 +284,8 @@
     private async Task LoadRoute()
     {
         isLoading = true;
+        hasError = false;
+        errorMessage = null;
         try
         {
             var res = await RouteStopService.GetFullRouteAsync(selectedBusLineId);
@@ -240,8 +293,17 @@
             {
                 fullRoute = res.Data;
             }
+            else
+            {
+                hasError = true;
+                errorMessage = res?.Message ?? "Failed to load route stops.";
+            }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            hasError = true;
+            errorMessage = ex.Message;
+        }
         finally
         {
             isLoading = false;
@@ -259,16 +321,32 @@
         list[currentIndex] = list[targetIndex];
         list[targetIndex] = temp;
 
-        var items = list.Select((x, idx) => new ReorderItem(x.Id, idx + 1)).ToList();
-        var req = new ReorderRouteStopsRequest(selectedBusLineId, direction, items);
-        await RouteStopService.ReorderRouteStopsAsync(req);
-        await LoadRoute();
+        try
+        {
+            var items = list.Select((x, idx) => new ReorderItem(x.Id, idx + 1)).ToList();
+            var req = new ReorderRouteStopsRequest(selectedBusLineId, direction, items);
+            await RouteStopService.ReorderRouteStopsAsync(req);
+            Toast.ShowSuccess("Stop order updated.");
+            await LoadRoute();
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Failed to reorder stops: {ex.Message}");
+        }
     }
 
     private async Task RemoveRouteStop(int routeStopId)
     {
-        await RouteStopService.DeleteRouteStopAsync(routeStopId);
-        await LoadRoute();
+        try
+        {
+            await RouteStopService.DeleteRouteStopAsync(routeStopId);
+            Toast.ShowSuccess("Stop removed from route.");
+            await LoadRoute();
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Failed to remove stop: {ex.Message}");
+        }
     }
 
     private void OpenAssignModal(string direction)
@@ -295,10 +373,23 @@
 
     private async Task SaveAssignedStops()
     {
-        var items = selectedStopIds.Select((sId, idx) => new AssignRouteStopItem(sId, assignDirection, idx + 1, null)).ToList();
-        var req = new AssignRouteStopsRequest(selectedBusLineId, items);
-        await RouteStopService.AssignRouteStopsAsync(req);
-        showAssignModal = false;
-        await LoadRoute();
+        isSaving = true;
+        try
+        {
+            var items = selectedStopIds.Select((sId, idx) => new AssignRouteStopItem(sId, assignDirection, idx + 1, null)).ToList();
+            var req = new AssignRouteStopsRequest(selectedBusLineId, items);
+            await RouteStopService.AssignRouteStopsAsync(req);
+            Toast.ShowSuccess($"Assigned stops for {assignDirection} route updated.");
+            showAssignModal = false;
+            await LoadRoute();
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Failed to assign stops: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
     }
 }
