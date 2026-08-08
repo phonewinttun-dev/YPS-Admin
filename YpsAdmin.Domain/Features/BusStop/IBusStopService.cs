@@ -5,10 +5,10 @@ namespace YpsAdmin.Domain.Features.BusStop
 {
     public interface IBusStopService
     {
-        Task<PagedResult<BusStopDto>> GetBusStopsAsync(BusStopQueryFilter filter);
-        Task<Result<BusStopDto>> GetBusStopByIdAsync(int stopId);
-        Task<Result<BusStopDto>> CreateBusStopAsync(CreateBusStopRequest request);
-        Task<Result<BusStopDto>> UpdateBusStopAsync(int stopId, UpdateBusStopRequest request);
-        Task<Result<bool>> DeleteBusStopAsync(int stopId);
+        Task<PagedResult<BusStopDto>> GetBusStopsAsync(BusStopQueryFilter filter, CancellationToken cancellationToken = default);
+        Task<Result<BusStopDto>> GetBusStopByIdAsync(int stopId, CancellationToken cancellationToken = default);
+        Task<Result<BusStopDto>> CreateBusStopAsync(CreateBusStopRequest request, CancellationToken cancellationToken = default);
+        Task<Result<BusStopDto>> UpdateBusStopAsync(int stopId, UpdateBusStopRequest request, CancellationToken cancellationToken = default);
+        Task<Result<bool>> DeleteBusStopAsync(int stopId, CancellationToken cancellationToken = default);
     }
 }

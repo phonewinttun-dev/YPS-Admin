@@ -14,7 +14,7 @@ namespace YpsAdmin.Domain.Features.Township
             _context = context;
         }
 
-        public async Task<PagedResult<TownshipDto>> GetTownshipsAsync(TownshipQueryFilter filter)
+        public async Task<PagedResult<TownshipDto>> GetTownshipsAsync(TownshipQueryFilter filter, CancellationToken cancellationToken = default)
         {
             var query = _context.TblTownships.AsNoTracking().Where(t => t.DeleteFlag != true);
 
@@ -26,7 +26,7 @@ namespace YpsAdmin.Domain.Features.Township
                     (t.TownshipNameEn != null && t.TownshipNameEn.ToLower().Contains(search)));
             }
 
-            int totalCount = await query.CountAsync();
+            int totalCount = await query.CountAsync(cancellationToken);
             int skip = (filter.PageNumber - 1) * filter.PageSize;
 
             var items = await query
@@ -40,17 +40,17 @@ namespace YpsAdmin.Domain.Features.Township
                     TownshipNameEn = t.TownshipNameEn,
                     DeleteFlag = t.DeleteFlag ?? false
                 })
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             var pagination = new Pagination(filter.PageNumber, filter.PageSize, totalCount);
             return PagedResult<TownshipDto>.Success(items, pagination, "Townships retrieved successfully.");
         }
 
-        public async Task<Result<TownshipDto>> GetTownshipByIdAsync(int townshipId)
+        public async Task<Result<TownshipDto>> GetTownshipByIdAsync(int townshipId, CancellationToken cancellationToken = default)
         {
             var township = await _context.TblTownships
                 .AsNoTracking()
-                .FirstOrDefaultAsync(t => t.TownshipId == townshipId && t.DeleteFlag != true);
+                .FirstOrDefaultAsync(t => t.TownshipId == townshipId && t.DeleteFlag != true, cancellationToken);
 
             if (township == null)
             {
@@ -68,7 +68,7 @@ namespace YpsAdmin.Domain.Features.Township
             return Result<TownshipDto>.Success(dto, "Township retrieved successfully.");
         }
 
-        public async Task<Result<TownshipDto>> CreateTownshipAsync(CreateTownshipRequest request)
+        public async Task<Result<TownshipDto>> CreateTownshipAsync(CreateTownshipRequest request, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(request.TownshipNameMm))
             {
@@ -83,7 +83,7 @@ namespace YpsAdmin.Domain.Features.Township
             };
 
             _context.TblTownships.Add(township);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             var dto = new TownshipDto
             {
@@ -96,9 +96,9 @@ namespace YpsAdmin.Domain.Features.Township
             return Result<TownshipDto>.Success(dto, "Township created successfully.");
         }
 
-        public async Task<Result<TownshipDto>> UpdateTownshipAsync(int townshipId, UpdateTownshipRequest request)
+        public async Task<Result<TownshipDto>> UpdateTownshipAsync(int townshipId, UpdateTownshipRequest request, CancellationToken cancellationToken = default)
         {
-            var township = await _context.TblTownships.FirstOrDefaultAsync(t => t.TownshipId == townshipId);
+            var township = await _context.TblTownships.FirstOrDefaultAsync(t => t.TownshipId == townshipId, cancellationToken);
             if (township == null)
             {
                 return Result<TownshipDto>.Failure($"Township with ID '{townshipId}' was not found.");
@@ -107,7 +107,7 @@ namespace YpsAdmin.Domain.Features.Township
             township.TownshipNameMm = request.TownshipNameMm?.Trim() ?? township.TownshipNameMm;
             township.TownshipNameEn = request.TownshipNameEn?.Trim();
 
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             var dto = new TownshipDto
             {
@@ -120,16 +120,16 @@ namespace YpsAdmin.Domain.Features.Township
             return Result<TownshipDto>.Success(dto, "Township updated successfully.");
         }
 
-        public async Task<Result<bool>> DeleteTownshipAsync(int townshipId)
+        public async Task<Result<bool>> DeleteTownshipAsync(int townshipId, CancellationToken cancellationToken = default)
         {
-            var township = await _context.TblTownships.FirstOrDefaultAsync(t => t.TownshipId == townshipId);
+            var township = await _context.TblTownships.FirstOrDefaultAsync(t => t.TownshipId == townshipId, cancellationToken);
             if (township == null)
             {
                 return Result<bool>.Failure($"Township with ID '{townshipId}' was not found.");
             }
 
             township.DeleteFlag = true;
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             return Result<bool>.Success(true, "Township deleted successfully.");
         }

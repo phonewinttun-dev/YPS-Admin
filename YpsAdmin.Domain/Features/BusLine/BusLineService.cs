@@ -14,10 +14,10 @@ namespace YpsAdmin.Domain.Features.BusLine
             _context = context;
         }
 
-        public async Task<PagedResult<BusLineDto>> GetBusLinesAsync(PaginationRequest request)
+        public async Task<PagedResult<BusLineDto>> GetBusLinesAsync(PaginationRequest request, CancellationToken cancellationToken = default)
         {
             var query = _context.TblBusLines.AsNoTracking();
-            int totalCount = await query.CountAsync();
+            int totalCount = await query.CountAsync(cancellationToken);
             int skip = (request.PageNumber - 1) * request.PageSize;
             var items = await query
                 .OrderBy(b => b.BusNumber)
@@ -33,16 +33,16 @@ namespace YpsAdmin.Domain.Features.BusLine
                     ReturnTitleEn = b.ReturnTitleEn,
                     IsYpsAccepted = b.IsYpsAccepted ?? false
                 })
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
             var pagination = new Pagination(request.PageNumber, request.PageSize, totalCount);
             return PagedResult<BusLineDto>.Success(items, pagination, "Bus lines retrieved successfully.");
         }
 
-        public async Task<Result<BusLineDto>> GetBusLineByIdAsync(int routeId)
+        public async Task<Result<BusLineDto>> GetBusLineByIdAsync(int routeId, CancellationToken cancellationToken = default)
         {
             var busLine = await _context.TblBusLines
                 .AsNoTracking()
-                .FirstOrDefaultAsync(b => b.RouteId == routeId);
+                .FirstOrDefaultAsync(b => b.RouteId == routeId, cancellationToken);
 
             if (busLine == null)
             {
@@ -63,10 +63,10 @@ namespace YpsAdmin.Domain.Features.BusLine
             return Result<BusLineDto>.Success(dto, "Bus line retrieved successfully.");
         }
 
-        public async Task<Result<BusLineDto>> CreateBusLineAsync(CreateBusLineRequest request)
+        public async Task<Result<BusLineDto>> CreateBusLineAsync(CreateBusLineRequest request, CancellationToken cancellationToken = default)
         {
             // Check for duplicate Route ID
-            bool exists = await _context.TblBusLines.AnyAsync(b => b.RouteId == request.RouteId);
+            bool exists = await _context.TblBusLines.AnyAsync(b => b.RouteId == request.RouteId, cancellationToken);
             if (exists)
             {
                 return Result<BusLineDto>.Failure($"A bus line with Route ID '{request.RouteId}' already exists.");
@@ -84,7 +84,7 @@ namespace YpsAdmin.Domain.Features.BusLine
             };
 
             _context.TblBusLines.Add(busLine);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             var dto = new BusLineDto
             {
@@ -100,9 +100,9 @@ namespace YpsAdmin.Domain.Features.BusLine
             return Result<BusLineDto>.Success(dto, "Bus line created successfully.");
         }
 
-        public async Task<Result<BusLineDto>> UpdateBusLineAsync(int routeId, UpdateBusLineRequest request)
+        public async Task<Result<BusLineDto>> UpdateBusLineAsync(int routeId, UpdateBusLineRequest request, CancellationToken cancellationToken = default)
         {
-            var busLine = await _context.TblBusLines.FirstOrDefaultAsync(b => b.RouteId == routeId);
+            var busLine = await _context.TblBusLines.FirstOrDefaultAsync(b => b.RouteId == routeId, cancellationToken);
             if (busLine == null)
             {
                 return Result<BusLineDto>.Failure($"Bus line with Route ID '{routeId}' was not found.");
@@ -115,7 +115,7 @@ namespace YpsAdmin.Domain.Features.BusLine
             busLine.ReturnTitleEn = request.ReturnTitleEn?.Trim();
             busLine.IsYpsAccepted = request.IsYpsAccepted;
 
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             var dto = new BusLineDto
             {
@@ -131,16 +131,16 @@ namespace YpsAdmin.Domain.Features.BusLine
             return Result<BusLineDto>.Success(dto, "Bus line updated successfully.");
         }
 
-        public async Task<Result<bool>> DeleteBusLineAsync(int routeId)
+        public async Task<Result<bool>> DeleteBusLineAsync(int routeId, CancellationToken cancellationToken = default)
         {
-            var busLine = await _context.TblBusLines.FirstOrDefaultAsync(b => b.RouteId == routeId);
+            var busLine = await _context.TblBusLines.FirstOrDefaultAsync(b => b.RouteId == routeId, cancellationToken);
             if (busLine == null)
             {
                 return Result<bool>.Failure($"Bus line with Route ID '{routeId}' was not found.");
             }
 
             _context.TblBusLines.Remove(busLine);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             return Result<bool>.Success(true, "Bus line deleted successfully.");
         }

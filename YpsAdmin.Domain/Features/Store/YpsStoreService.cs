@@ -15,7 +15,7 @@ namespace YpsAdmin.Domain.Features.Store
             _context = context;
         }
 
-        public async Task<PagedResult<YpsStoreDto>> GetYpsStoresAsync(YpsStoreQueryFilter filter)
+        public async Task<PagedResult<YpsStoreDto>> GetYpsStoresAsync(YpsStoreQueryFilter filter, CancellationToken cancellationToken = default)
         {
             var query = _context.TblYpsStores.AsNoTracking().Include(s => s.Township).AsQueryable();
 
@@ -32,7 +32,7 @@ namespace YpsAdmin.Domain.Features.Store
                 query = query.Where(s => s.TownshipId == filter.TownshipId.Value);
             }
 
-            int totalCount = await query.CountAsync();
+            int totalCount = await query.CountAsync(cancellationToken);
 
             int skip = (filter.PageNumber - 1) * filter.PageSize;
 
@@ -42,7 +42,7 @@ namespace YpsAdmin.Domain.Features.Store
                 .OrderBy(s => s.StoreId)
                 .Skip(skip)
                 .Take(filter.PageSize)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             var dtos = stores.Select(s => new YpsStoreDto
             {
@@ -71,14 +71,14 @@ namespace YpsAdmin.Domain.Features.Store
             return PagedResult<YpsStoreDto>.Success(dtos, pagination, "YPS stores retrieved successfully.");
         }
 
-        public async Task<Result<YpsStoreDto>> GetYpsStoreByIdAsync(int storeId)
+        public async Task<Result<YpsStoreDto>> GetYpsStoreByIdAsync(int storeId, CancellationToken cancellationToken = default)
         {
             var store = await _context.TblYpsStores
                 .AsNoTracking()
                 .Include(s => s.Township)
                 .Include(s => s.TblYpsStoreNearestStops)
                 .Include(s => s.TblYpsStoreServingBusLines)
-                .FirstOrDefaultAsync(s => s.StoreId == storeId);
+                .FirstOrDefaultAsync(s => s.StoreId == storeId, cancellationToken);
 
             if (store == null)
             {
@@ -111,7 +111,7 @@ namespace YpsAdmin.Domain.Features.Store
             return Result<YpsStoreDto>.Success(dto, "YPS store retrieved successfully.");
         }
 
-        public async Task<Result<YpsStoreDto>> CreateYpsStoreAsync(CreateYpsStoreRequest request)
+        public async Task<Result<YpsStoreDto>> CreateYpsStoreAsync(CreateYpsStoreRequest request, CancellationToken cancellationToken = default)
         {
             Point? geom = null;
             if (request.Latitude.HasValue && request.Longitude.HasValue)
@@ -135,7 +135,7 @@ namespace YpsAdmin.Domain.Features.Store
 
             if (request.StoreId.HasValue && request.StoreId.Value > 0)
             {
-                bool exists = await _context.TblYpsStores.AnyAsync(s => s.StoreId == request.StoreId.Value);
+                bool exists = await _context.TblYpsStores.AnyAsync(s => s.StoreId == request.StoreId.Value, cancellationToken);
                 if (exists)
                 {
                     return Result<YpsStoreDto>.Failure($"A YPS store with Store ID '{request.StoreId.Value}' already exists.");
@@ -144,13 +144,13 @@ namespace YpsAdmin.Domain.Features.Store
             }
 
             _context.TblYpsStores.Add(store);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             string? townshipNameMm = null;
             string? townshipNameEn = null;
             if (store.TownshipId.HasValue)
             {
-                var township = await _context.TblTownships.FindAsync(store.TownshipId.Value);
+                var township = await _context.TblTownships.FindAsync(new object[] { store.TownshipId.Value }, cancellationToken);
                 townshipNameMm = township?.TownshipNameMm;
                 townshipNameEn = township?.TownshipNameEn;
             }
@@ -171,13 +171,13 @@ namespace YpsAdmin.Domain.Features.Store
             return Result<YpsStoreDto>.Success(dto, "YPS store created successfully.");
         }
 
-        public async Task<Result<YpsStoreDto>> UpdateYpsStoreAsync(int storeId, UpdateYpsStoreRequest request)
+        public async Task<Result<YpsStoreDto>> UpdateYpsStoreAsync(int storeId, UpdateYpsStoreRequest request, CancellationToken cancellationToken = default)
         {
             var store = await _context.TblYpsStores
                 .Include(s => s.Township)
                 .Include(s => s.TblYpsStoreNearestStops)
                 .Include(s => s.TblYpsStoreServingBusLines)
-                .FirstOrDefaultAsync(s => s.StoreId == storeId);
+                .FirstOrDefaultAsync(s => s.StoreId == storeId, cancellationToken);
 
             if (store == null)
             {
@@ -203,13 +203,13 @@ namespace YpsAdmin.Domain.Features.Store
                 store.Geom = null;
             }
 
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             string? townshipNameMm = null;
             string? townshipNameEn = null;
             if (store.TownshipId.HasValue)
             {
-                var township = await _context.TblTownships.FindAsync(store.TownshipId.Value);
+                var township = await _context.TblTownships.FindAsync(new object[] { store.TownshipId.Value }, cancellationToken);
                 townshipNameMm = township?.TownshipNameMm;
                 townshipNameEn = township?.TownshipNameEn;
             }
@@ -240,38 +240,38 @@ namespace YpsAdmin.Domain.Features.Store
             return Result<YpsStoreDto>.Success(dto, "YPS store updated successfully.");
         }
 
-        public async Task<Result<bool>> DeleteYpsStoreAsync(int storeId)
+        public async Task<Result<bool>> DeleteYpsStoreAsync(int storeId, CancellationToken cancellationToken = default)
         {
-            var store = await _context.TblYpsStores.FirstOrDefaultAsync(s => s.StoreId == storeId);
+            var store = await _context.TblYpsStores.FirstOrDefaultAsync(s => s.StoreId == storeId, cancellationToken);
             if (store == null)
             {
                 return Result<bool>.Failure($"YPS store with Store ID '{storeId}' was not found.");
             }
 
             _context.TblYpsStores.Remove(store);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             return Result<bool>.Success(true, "YPS store deleted successfully.");
         }
 
-        public async Task<Result<bool>> AssignNearestStopsAsync(int storeId, AssignNearestStopsRequest request)
+        public async Task<Result<bool>> AssignNearestStopsAsync(int storeId, AssignNearestStopsRequest request, CancellationToken cancellationToken = default)
         {
             var store = await _context.TblYpsStores
                 .Include(s => s.TblYpsStoreNearestStops)
-                .FirstOrDefaultAsync(s => s.StoreId == storeId);
+                .FirstOrDefaultAsync(s => s.StoreId == storeId, cancellationToken);
 
             if (store == null)
             {
                 return Result<bool>.Failure($"YPS store with Store ID '{storeId}' was not found.");
             }
 
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
             try
             {
                 if (store.TblYpsStoreNearestStops.Count > 0)
                 {
                     _context.TblYpsStoreNearestStops.RemoveRange(store.TblYpsStoreNearestStops);
-                    await _context.SaveChangesAsync();
+                    await _context.SaveChangesAsync(cancellationToken);
                 }
 
                 if (request.NearestStops != null && request.NearestStops.Count > 0)
@@ -294,37 +294,37 @@ namespace YpsAdmin.Domain.Features.Store
                         _context.TblYpsStoreNearestStops.Add(nearestStop);
                     }
 
-                    await _context.SaveChangesAsync();
+                    await _context.SaveChangesAsync(cancellationToken);
                 }
 
-                await transaction.CommitAsync();
+                await transaction.CommitAsync(cancellationToken);
                 return Result<bool>.Success(true, "Nearest bus stops assigned to YPS store successfully.");
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
+                await transaction.RollbackAsync(cancellationToken);
                 return Result<bool>.Failure($"Failed to assign nearest stops: {ex.Message}");
             }
         }
 
-        public async Task<Result<bool>> AssignServingBusLinesAsync(int storeId, AssignServingBusLinesRequest request)
+        public async Task<Result<bool>> AssignServingBusLinesAsync(int storeId, AssignServingBusLinesRequest request, CancellationToken cancellationToken = default)
         {
             var store = await _context.TblYpsStores
                 .Include(s => s.TblYpsStoreServingBusLines)
-                .FirstOrDefaultAsync(s => s.StoreId == storeId);
+                .FirstOrDefaultAsync(s => s.StoreId == storeId, cancellationToken);
 
             if (store == null)
             {
                 return Result<bool>.Failure($"YPS store with Store ID '{storeId}' was not found.");
             }
 
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
             try
             {
                 if (store.TblYpsStoreServingBusLines.Count > 0)
                 {
                     _context.TblYpsStoreServingBusLines.RemoveRange(store.TblYpsStoreServingBusLines);
-                    await _context.SaveChangesAsync();
+                    await _context.SaveChangesAsync(cancellationToken);
                 }
 
                 if (request.BusNumbers != null && request.BusNumbers.Count > 0)
@@ -334,7 +334,7 @@ namespace YpsAdmin.Domain.Features.Store
                     // Batch fetch matching RouteIds for all requested bus numbers to avoid N+1 queries
                     var busLines = await _context.TblBusLines
                         .Where(b => distinctBusNumbers.Contains(b.BusNumber))
-                        .ToListAsync();
+                        .ToListAsync(cancellationToken);
 
                     var busLineDict = busLines
                         .GroupBy(b => b.BusNumber)
@@ -367,15 +367,15 @@ namespace YpsAdmin.Domain.Features.Store
                         _context.TblYpsStoreServingBusLines.Add(servingBusLine);
                     }
 
-                    await _context.SaveChangesAsync();
+                    await _context.SaveChangesAsync(cancellationToken);
                 }
 
-                await transaction.CommitAsync();
+                await transaction.CommitAsync(cancellationToken);
                 return Result<bool>.Success(true, "Serving bus lines assigned to YPS store successfully.");
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
+                await transaction.RollbackAsync(cancellationToken);
                 return Result<bool>.Failure($"Failed to assign serving bus lines: {ex.Message}");
             }
         }

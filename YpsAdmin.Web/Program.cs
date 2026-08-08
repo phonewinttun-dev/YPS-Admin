@@ -12,7 +12,13 @@ var apiBaseUrl = isHttps
     ? (builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7119/")
     : (builder.Configuration["ApiBaseUrlHttp"] ?? "http://localhost:5214/");
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBaseUrl) });
+var timeoutSeconds = int.TryParse(builder.Configuration["ApiTimeoutSeconds"], out int sec) ? sec : 30;
+
+builder.Services.AddScoped(sp => new HttpClient 
+{ 
+    BaseAddress = new Uri(apiBaseUrl),
+    Timeout = TimeSpan.FromSeconds(timeoutSeconds)
+});
 builder.Services.AddScoped<LanguageService>();
 builder.Services.AddScoped<IBusLineService, BusLineService>();
 builder.Services.AddScoped<IBusStopService, BusStopService>();

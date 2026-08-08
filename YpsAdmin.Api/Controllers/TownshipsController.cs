@@ -16,16 +16,16 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetTownships([FromQuery] TownshipQueryFilter filter)
+        public async Task<IActionResult> GetTownships([FromQuery] TownshipQueryFilter filter, CancellationToken cancellationToken)
         {
-            var result = await _townshipService.GetTownshipsAsync(filter);
+            var result = await _townshipService.GetTownshipsAsync(filter, cancellationToken);
             return Ok(result);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetTownshipById(int id)
+        public async Task<IActionResult> GetTownshipById(int id, CancellationToken cancellationToken)
         {
-            var result = await _townshipService.GetTownshipByIdAsync(id);
+            var result = await _townshipService.GetTownshipByIdAsync(id, cancellationToken);
             if (result.IsFailure)
             {
                 return NotFound(result);
@@ -34,9 +34,9 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateTownship([FromBody] CreateTownshipRequest request)
+        public async Task<IActionResult> CreateTownship([FromBody] CreateTownshipRequest request, CancellationToken cancellationToken)
         {
-            var result = await _townshipService.CreateTownshipAsync(request);
+            var result = await _townshipService.CreateTownshipAsync(request, cancellationToken);
             if (result.IsFailure)
             {
                 return BadRequest(result);
@@ -45,9 +45,9 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTownship(int id, [FromBody] UpdateTownshipRequest request)
+        public async Task<IActionResult> UpdateTownship(int id, [FromBody] UpdateTownshipRequest request, CancellationToken cancellationToken)
         {
-            var result = await _townshipService.UpdateTownshipAsync(id, request);
+            var result = await _townshipService.UpdateTownshipAsync(id, request, cancellationToken);
             if (result.IsFailure)
             {
                 return BadRequest(result);
@@ -56,9 +56,9 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTownship(int id)
+        public async Task<IActionResult> DeleteTownship(int id, CancellationToken cancellationToken)
         {
-            var result = await _townshipService.DeleteTownshipAsync(id);
+            var result = await _townshipService.DeleteTownshipAsync(id, cancellationToken);
             if (result.IsFailure)
             {
                 return BadRequest(result);

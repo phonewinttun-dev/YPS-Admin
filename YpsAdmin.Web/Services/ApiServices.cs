@@ -84,31 +84,89 @@ public class BusLineService : IBusLineService
     private readonly HttpClient _http;
     public BusLineService(HttpClient http) => _http = http;
 
-    public Task<PagedResult<BusLineDto>?> GetBusLinesAsync(int pageNumber, int pageSize, string? searchBusNumber)
+    public async Task<PagedResult<BusLineDto>?> GetBusLinesAsync(int pageNumber, int pageSize, string? searchBusNumber)
     {
-        var url = $"/api/bus-lines?pageNumber={pageNumber}&pageSize={pageSize}";
-        if (!string.IsNullOrWhiteSpace(searchBusNumber)) url += $"&searchBusNumber={Uri.EscapeDataString(searchBusNumber)}";
-        return _http.GetFromJsonAsync<PagedResult<BusLineDto>>(url);
+        try
+        {
+            var url = $"/api/bus-lines?pageNumber={pageNumber}&pageSize={pageSize}";
+            if (!string.IsNullOrWhiteSpace(searchBusNumber)) url += $"&searchBusNumber={Uri.EscapeDataString(searchBusNumber)}";
+            return await _http.GetFromJsonAsync<PagedResult<BusLineDto>>(url);
+        }
+        catch (TaskCanceledException)
+        {
+            return PagedResult<BusLineDto>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return PagedResult<BusLineDto>.Failure($"API request failed: {ex.Message}");
+        }
     }
 
-    public Task<Result<BusLineDto>?> GetByIdAsync(int id) => _http.GetFromJsonAsync<Result<BusLineDto>>($"/api/bus-lines/{id}");
+    public async Task<Result<BusLineDto>?> GetByIdAsync(int id)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<Result<BusLineDto>>($"/api/bus-lines/{id}");
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<BusLineDto>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<BusLineDto>.Failure($"API request failed: {ex.Message}");
+        }
+    }
 
     public async Task<Result<BusLineDto>?> CreateAsync(CreateBusLineRequest request)
     {
-        var resp = await _http.PostAsJsonAsync("/api/bus-lines", request);
-        return await resp.Content.ReadFromJsonAsync<Result<BusLineDto>>();
+        try
+        {
+            var resp = await _http.PostAsJsonAsync("/api/bus-lines", request);
+            return await resp.Content.ReadFromJsonAsync<Result<BusLineDto>>();
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<BusLineDto>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<BusLineDto>.Failure($"API request failed: {ex.Message}");
+        }
     }
 
     public async Task<Result<BusLineDto>?> UpdateAsync(int id, UpdateBusLineRequest request)
     {
-        var resp = await _http.PutAsJsonAsync($"/api/bus-lines/{id}", request);
-        return await resp.Content.ReadFromJsonAsync<Result<BusLineDto>>();
+        try
+        {
+            var resp = await _http.PutAsJsonAsync($"/api/bus-lines/{id}", request);
+            return await resp.Content.ReadFromJsonAsync<Result<BusLineDto>>();
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<BusLineDto>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<BusLineDto>.Failure($"API request failed: {ex.Message}");
+        }
     }
 
     public async Task<Result<bool>?> DeleteAsync(int id)
     {
-        var resp = await _http.DeleteAsync($"/api/bus-lines/{id}");
-        return await resp.Content.ReadFromJsonAsync<Result<bool>>();
+        try
+        {
+            var resp = await _http.DeleteAsync($"/api/bus-lines/{id}");
+            return await resp.Content.ReadFromJsonAsync<Result<bool>>();
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<bool>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<bool>.Failure($"API request failed: {ex.Message}");
+        }
     }
 }
 
@@ -117,32 +175,90 @@ public class BusStopService : IBusStopService
     private readonly HttpClient _http;
     public BusStopService(HttpClient http) => _http = http;
 
-    public Task<PagedResult<BusStopDto>?> GetBusStopsAsync(int pageNumber, int pageSize, string? searchStopName, int? townshipId = null)
+    public async Task<PagedResult<BusStopDto>?> GetBusStopsAsync(int pageNumber, int pageSize, string? searchStopName, int? townshipId = null)
     {
-        var url = $"/api/bus-stops?pageNumber={pageNumber}&pageSize={pageSize}";
-        if (!string.IsNullOrWhiteSpace(searchStopName)) url += $"&searchStopName={Uri.EscapeDataString(searchStopName)}";
-        if (townshipId.HasValue) url += $"&townshipId={townshipId.Value}";
-        return _http.GetFromJsonAsync<PagedResult<BusStopDto>>(url);
+        try
+        {
+            var url = $"/api/bus-stops?pageNumber={pageNumber}&pageSize={pageSize}";
+            if (!string.IsNullOrWhiteSpace(searchStopName)) url += $"&searchStopName={Uri.EscapeDataString(searchStopName)}";
+            if (townshipId.HasValue) url += $"&townshipId={townshipId.Value}";
+            return await _http.GetFromJsonAsync<PagedResult<BusStopDto>>(url);
+        }
+        catch (TaskCanceledException)
+        {
+            return PagedResult<BusStopDto>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return PagedResult<BusStopDto>.Failure($"API request failed: {ex.Message}");
+        }
     }
 
-    public Task<Result<BusStopDto>?> GetByIdAsync(int id) => _http.GetFromJsonAsync<Result<BusStopDto>>($"/api/bus-stops/{id}");
+    public async Task<Result<BusStopDto>?> GetByIdAsync(int id)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<Result<BusStopDto>>($"/api/bus-stops/{id}");
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<BusStopDto>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<BusStopDto>.Failure($"API request failed: {ex.Message}");
+        }
+    }
 
     public async Task<Result<BusStopDto>?> CreateAsync(CreateBusStopRequest request)
     {
-        var resp = await _http.PostAsJsonAsync("/api/bus-stops", request);
-        return await resp.Content.ReadFromJsonAsync<Result<BusStopDto>>();
+        try
+        {
+            var resp = await _http.PostAsJsonAsync("/api/bus-stops", request);
+            return await resp.Content.ReadFromJsonAsync<Result<BusStopDto>>();
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<BusStopDto>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<BusStopDto>.Failure($"API request failed: {ex.Message}");
+        }
     }
 
     public async Task<Result<BusStopDto>?> UpdateAsync(int id, UpdateBusStopRequest request)
     {
-        var resp = await _http.PutAsJsonAsync($"/api/bus-stops/{id}", request);
-        return await resp.Content.ReadFromJsonAsync<Result<BusStopDto>>();
+        try
+        {
+            var resp = await _http.PutAsJsonAsync($"/api/bus-stops/{id}", request);
+            return await resp.Content.ReadFromJsonAsync<Result<BusStopDto>>();
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<BusStopDto>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<BusStopDto>.Failure($"API request failed: {ex.Message}");
+        }
     }
 
     public async Task<Result<bool>?> DeleteAsync(int id)
     {
-        var resp = await _http.DeleteAsync($"/api/bus-stops/{id}");
-        return await resp.Content.ReadFromJsonAsync<Result<bool>>();
+        try
+        {
+            var resp = await _http.DeleteAsync($"/api/bus-stops/{id}");
+            return await resp.Content.ReadFromJsonAsync<Result<bool>>();
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<bool>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<bool>.Failure($"API request failed: {ex.Message}");
+        }
     }
 }
 
@@ -153,25 +269,69 @@ public class RouteStopService : IRouteStopService
 
     public async Task<Result<FullRouteResponseDto>> GetFullRouteAsync(int busLineId)
     {
-        return (await _http.GetFromJsonAsync<Result<FullRouteResponseDto>>($"/api/route-stops/bus-line/{busLineId}"))!;
+        try
+        {
+            return (await _http.GetFromJsonAsync<Result<FullRouteResponseDto>>($"/api/route-stops/bus-line/{busLineId}"))!;
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<FullRouteResponseDto>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<FullRouteResponseDto>.Failure($"API request failed: {ex.Message}");
+        }
     }
 
     public async Task<Result<bool>> AssignRouteStopsAsync(AssignRouteStopsRequest request)
     {
-        var resp = await _http.PostAsJsonAsync("/api/route-stops/assign", request);
-        return (await resp.Content.ReadFromJsonAsync<Result<bool>>())!;
+        try
+        {
+            var resp = await _http.PostAsJsonAsync("/api/route-stops/assign", request);
+            return (await resp.Content.ReadFromJsonAsync<Result<bool>>())!;
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<bool>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<bool>.Failure($"API request failed: {ex.Message}");
+        }
     }
 
     public async Task<Result<bool>> ReorderRouteStopsAsync(ReorderRouteStopsRequest request)
     {
-        var resp = await _http.PutAsJsonAsync("/api/route-stops/reorder", request);
-        return (await resp.Content.ReadFromJsonAsync<Result<bool>>())!;
+        try
+        {
+            var resp = await _http.PutAsJsonAsync("/api/route-stops/reorder", request);
+            return (await resp.Content.ReadFromJsonAsync<Result<bool>>())!;
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<bool>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<bool>.Failure($"API request failed: {ex.Message}");
+        }
     }
 
     public async Task<Result<bool>> DeleteRouteStopAsync(int routeStopId)
     {
-        var resp = await _http.DeleteAsync($"/api/route-stops/{routeStopId}");
-        return (await resp.Content.ReadFromJsonAsync<Result<bool>>())!;
+        try
+        {
+            var resp = await _http.DeleteAsync($"/api/route-stops/{routeStopId}");
+            return (await resp.Content.ReadFromJsonAsync<Result<bool>>())!;
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<bool>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<bool>.Failure($"API request failed: {ex.Message}");
+        }
     }
 }
 
@@ -180,44 +340,124 @@ public class YpsStoreService : IYpsStoreService
     private readonly HttpClient _http;
     public YpsStoreService(HttpClient http) => _http = http;
 
-    public Task<PagedResult<YpsStoreDto>?> GetStoresAsync(int pageNumber, int pageSize, string? searchName, int? townshipId = null)
+    public async Task<PagedResult<YpsStoreDto>?> GetStoresAsync(int pageNumber, int pageSize, string? searchName, int? townshipId = null)
     {
-        var url = $"/api/yps-stores?pageNumber={pageNumber}&pageSize={pageSize}";
-        if (!string.IsNullOrWhiteSpace(searchName)) url += $"&searchName={Uri.EscapeDataString(searchName)}";
-        if (townshipId.HasValue) url += $"&townshipId={townshipId.Value}";
-        return _http.GetFromJsonAsync<PagedResult<YpsStoreDto>>(url);
+        try
+        {
+            var url = $"/api/yps-stores?pageNumber={pageNumber}&pageSize={pageSize}";
+            if (!string.IsNullOrWhiteSpace(searchName)) url += $"&searchName={Uri.EscapeDataString(searchName)}";
+            if (townshipId.HasValue) url += $"&townshipId={townshipId.Value}";
+            return await _http.GetFromJsonAsync<PagedResult<YpsStoreDto>>(url);
+        }
+        catch (TaskCanceledException)
+        {
+            return PagedResult<YpsStoreDto>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return PagedResult<YpsStoreDto>.Failure($"API request failed: {ex.Message}");
+        }
     }
 
-    public Task<Result<YpsStoreDto>?> GetByIdAsync(int id) => _http.GetFromJsonAsync<Result<YpsStoreDto>>($"/api/yps-stores/{id}");
+    public async Task<Result<YpsStoreDto>?> GetByIdAsync(int id)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<Result<YpsStoreDto>>($"/api/yps-stores/{id}");
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<YpsStoreDto>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<YpsStoreDto>.Failure($"API request failed: {ex.Message}");
+        }
+    }
 
     public async Task<Result<YpsStoreDto>?> CreateAsync(CreateYpsStoreRequest request)
     {
-        var resp = await _http.PostAsJsonAsync("/api/yps-stores", request);
-        return await resp.Content.ReadFromJsonAsync<Result<YpsStoreDto>>();
+        try
+        {
+            var resp = await _http.PostAsJsonAsync("/api/yps-stores", request);
+            return await resp.Content.ReadFromJsonAsync<Result<YpsStoreDto>>();
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<YpsStoreDto>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<YpsStoreDto>.Failure($"API request failed: {ex.Message}");
+        }
     }
 
     public async Task<Result<YpsStoreDto>?> UpdateAsync(int id, UpdateYpsStoreRequest request)
     {
-        var resp = await _http.PutAsJsonAsync($"/api/yps-stores/{id}", request);
-        return await resp.Content.ReadFromJsonAsync<Result<YpsStoreDto>>();
+        try
+        {
+            var resp = await _http.PutAsJsonAsync($"/api/yps-stores/{id}", request);
+            return await resp.Content.ReadFromJsonAsync<Result<YpsStoreDto>>();
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<YpsStoreDto>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<YpsStoreDto>.Failure($"API request failed: {ex.Message}");
+        }
     }
 
     public async Task<Result<bool>?> DeleteAsync(int id)
     {
-        var resp = await _http.DeleteAsync($"/api/yps-stores/{id}");
-        return await resp.Content.ReadFromJsonAsync<Result<bool>>();
+        try
+        {
+            var resp = await _http.DeleteAsync($"/api/yps-stores/{id}");
+            return await resp.Content.ReadFromJsonAsync<Result<bool>>();
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<bool>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<bool>.Failure($"API request failed: {ex.Message}");
+        }
     }
 
     public async Task<Result<bool>?> AssignNearestStopsAsync(int id, AssignNearestStopsRequest request)
     {
-        var resp = await _http.PostAsJsonAsync($"/api/yps-stores/{id}/nearest-stops", request);
-        return await resp.Content.ReadFromJsonAsync<Result<bool>>();
+        try
+        {
+            var resp = await _http.PostAsJsonAsync($"/api/yps-stores/{id}/nearest-stops", request);
+            return await resp.Content.ReadFromJsonAsync<Result<bool>>();
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<bool>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<bool>.Failure($"API request failed: {ex.Message}");
+        }
     }
 
     public async Task<Result<bool>?> AssignServingBusLinesAsync(int id, AssignServingBusLinesRequest request)
     {
-        var resp = await _http.PostAsJsonAsync($"/api/yps-stores/{id}/serving-bus-lines", request);
-        return await resp.Content.ReadFromJsonAsync<Result<bool>>();
+        try
+        {
+            var resp = await _http.PostAsJsonAsync($"/api/yps-stores/{id}/serving-bus-lines", request);
+            return await resp.Content.ReadFromJsonAsync<Result<bool>>();
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<bool>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<bool>.Failure($"API request failed: {ex.Message}");
+        }
     }
 }
 
@@ -226,30 +466,88 @@ public class TownshipService : ITownshipService
     private readonly HttpClient _http;
     public TownshipService(HttpClient http) => _http = http;
 
-    public Task<PagedResult<TownshipDto>?> GetTownshipsAsync(int pageNumber, int pageSize, string? searchName)
+    public async Task<PagedResult<TownshipDto>?> GetTownshipsAsync(int pageNumber, int pageSize, string? searchName)
     {
-        var url = $"/api/townships?pageNumber={pageNumber}&pageSize={pageSize}";
-        if (!string.IsNullOrWhiteSpace(searchName)) url += $"&searchName={Uri.EscapeDataString(searchName)}";
-        return _http.GetFromJsonAsync<PagedResult<TownshipDto>>(url);
+        try
+        {
+            var url = $"/api/townships?pageNumber={pageNumber}&pageSize={pageSize}";
+            if (!string.IsNullOrWhiteSpace(searchName)) url += $"&searchName={Uri.EscapeDataString(searchName)}";
+            return await _http.GetFromJsonAsync<PagedResult<TownshipDto>>(url);
+        }
+        catch (TaskCanceledException)
+        {
+            return PagedResult<TownshipDto>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return PagedResult<TownshipDto>.Failure($"API request failed: {ex.Message}");
+        }
     }
 
-    public Task<Result<TownshipDto>?> GetByIdAsync(int id) => _http.GetFromJsonAsync<Result<TownshipDto>>($"/api/townships/{id}");
+    public async Task<Result<TownshipDto>?> GetByIdAsync(int id)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<Result<TownshipDto>>($"/api/townships/{id}");
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<TownshipDto>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<TownshipDto>.Failure($"API request failed: {ex.Message}");
+        }
+    }
 
     public async Task<Result<TownshipDto>?> CreateAsync(CreateTownshipRequest request)
     {
-        var resp = await _http.PostAsJsonAsync("/api/townships", request);
-        return await resp.Content.ReadFromJsonAsync<Result<TownshipDto>>();
+        try
+        {
+            var resp = await _http.PostAsJsonAsync("/api/townships", request);
+            return await resp.Content.ReadFromJsonAsync<Result<TownshipDto>>();
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<TownshipDto>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<TownshipDto>.Failure($"API request failed: {ex.Message}");
+        }
     }
 
     public async Task<Result<TownshipDto>?> UpdateAsync(int id, UpdateTownshipRequest request)
     {
-        var resp = await _http.PutAsJsonAsync($"/api/townships/{id}", request);
-        return await resp.Content.ReadFromJsonAsync<Result<TownshipDto>>();
+        try
+        {
+            var resp = await _http.PutAsJsonAsync($"/api/townships/{id}", request);
+            return await resp.Content.ReadFromJsonAsync<Result<TownshipDto>>();
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<TownshipDto>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<TownshipDto>.Failure($"API request failed: {ex.Message}");
+        }
     }
 
     public async Task<Result<bool>?> DeleteAsync(int id)
     {
-        var resp = await _http.DeleteAsync($"/api/townships/{id}");
-        return await resp.Content.ReadFromJsonAsync<Result<bool>>();
+        try
+        {
+            var resp = await _http.DeleteAsync($"/api/townships/{id}");
+            return await resp.Content.ReadFromJsonAsync<Result<bool>>();
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<bool>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<bool>.Failure($"API request failed: {ex.Message}");
+        }
     }
 }

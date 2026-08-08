@@ -17,16 +17,16 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetBusStops([FromQuery] BusStopQueryFilter filter)
+        public async Task<IActionResult> GetBusStops([FromQuery] BusStopQueryFilter filter, CancellationToken cancellationToken)
         {
-            var result = await _busStopService.GetBusStopsAsync(filter);
+            var result = await _busStopService.GetBusStopsAsync(filter, cancellationToken);
             return Ok(result);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetBusStopById(int id)
+        public async Task<IActionResult> GetBusStopById(int id, CancellationToken cancellationToken)
         {
-            var result = await _busStopService.GetBusStopByIdAsync(id);
+            var result = await _busStopService.GetBusStopByIdAsync(id, cancellationToken);
             if (result.IsFailure)
             {
                 return NotFound(result);
@@ -35,9 +35,9 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateBusStop([FromBody] CreateBusStopRequest request)
+        public async Task<IActionResult> CreateBusStop([FromBody] CreateBusStopRequest request, CancellationToken cancellationToken)
         {
-            var result = await _busStopService.CreateBusStopAsync(request);
+            var result = await _busStopService.CreateBusStopAsync(request, cancellationToken);
             if (result.IsFailure)
             {
                 return BadRequest(result);
@@ -46,9 +46,9 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateBusStop(int id, [FromBody] UpdateBusStopRequest request)
+        public async Task<IActionResult> UpdateBusStop(int id, [FromBody] UpdateBusStopRequest request, CancellationToken cancellationToken)
         {
-            var result = await _busStopService.UpdateBusStopAsync(id, request);
+            var result = await _busStopService.UpdateBusStopAsync(id, request, cancellationToken);
             if (result.IsFailure)
             {
                 return BadRequest(result);
@@ -57,9 +57,9 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteBusStop(int id)
+        public async Task<IActionResult> DeleteBusStop(int id, CancellationToken cancellationToken)
         {
-            var result = await _busStopService.DeleteBusStopAsync(id);
+            var result = await _busStopService.DeleteBusStopAsync(id, cancellationToken);
             if (result.IsFailure)
             {
                 return BadRequest(result);

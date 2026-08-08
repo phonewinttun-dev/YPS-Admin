@@ -5,10 +5,10 @@ namespace YpsAdmin.Domain.Features.Township
 {
     public interface ITownshipService
     {
-        Task<PagedResult<TownshipDto>> GetTownshipsAsync(TownshipQueryFilter filter);
-        Task<Result<TownshipDto>> GetTownshipByIdAsync(int townshipId);
-        Task<Result<TownshipDto>> CreateTownshipAsync(CreateTownshipRequest request);
-        Task<Result<TownshipDto>> UpdateTownshipAsync(int townshipId, UpdateTownshipRequest request);
-        Task<Result<bool>> DeleteTownshipAsync(int townshipId);
+        Task<PagedResult<TownshipDto>> GetTownshipsAsync(TownshipQueryFilter filter, CancellationToken cancellationToken = default);
+        Task<Result<TownshipDto>> GetTownshipByIdAsync(int townshipId, CancellationToken cancellationToken = default);
+        Task<Result<TownshipDto>> CreateTownshipAsync(CreateTownshipRequest request, CancellationToken cancellationToken = default);
+        Task<Result<TownshipDto>> UpdateTownshipAsync(int townshipId, UpdateTownshipRequest request, CancellationToken cancellationToken = default);
+        Task<Result<bool>> DeleteTownshipAsync(int townshipId, CancellationToken cancellationToken = default);
     }
 }

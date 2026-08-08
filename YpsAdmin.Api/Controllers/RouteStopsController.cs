@@ -16,9 +16,9 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpGet("bus-line/{busLineId}")]
-        public async Task<IActionResult> GetFullRoute(int busLineId)
+        public async Task<IActionResult> GetFullRoute(int busLineId, CancellationToken cancellationToken)
         {
-            var result = await _routeStopService.GetFullRouteAsync(busLineId);
+            var result = await _routeStopService.GetFullRouteAsync(busLineId, cancellationToken);
             if (result.IsFailure)
             {
                 return NotFound(result);
@@ -27,9 +27,9 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpPost("assign")]
-        public async Task<IActionResult> AssignStops([FromBody] AssignRouteStopsRequest request)
+        public async Task<IActionResult> AssignStops([FromBody] AssignRouteStopsRequest request, CancellationToken cancellationToken)
         {
-            var result = await _routeStopService.AssignStopsToRouteAsync(request);
+            var result = await _routeStopService.AssignStopsToRouteAsync(request, cancellationToken);
             if (result.IsFailure)
             {
                 return BadRequest(result);
@@ -38,9 +38,9 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpPut("reorder")]
-        public async Task<IActionResult> ReorderStops([FromBody] ReorderRouteStopsRequest request)
+        public async Task<IActionResult> ReorderStops([FromBody] ReorderRouteStopsRequest request, CancellationToken cancellationToken)
         {
-            var result = await _routeStopService.ReorderRouteStopsAsync(request);
+            var result = await _routeStopService.ReorderRouteStopsAsync(request, cancellationToken);
             if (result.IsFailure)
             {
                 return BadRequest(result);
@@ -49,9 +49,9 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpDelete("{routeStopId}")]
-        public async Task<IActionResult> RemoveRouteStop(int routeStopId)
+        public async Task<IActionResult> RemoveRouteStop(int routeStopId, CancellationToken cancellationToken)
         {
-            var result = await _routeStopService.RemoveRouteStopAsync(routeStopId);
+            var result = await _routeStopService.RemoveRouteStopAsync(routeStopId, cancellationToken);
             if (result.IsFailure)
             {
                 return BadRequest(result);

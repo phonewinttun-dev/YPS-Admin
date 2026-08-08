@@ -17,16 +17,16 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetBusLines([FromQuery] PaginationRequest filter)
+        public async Task<IActionResult> GetBusLines([FromQuery] PaginationRequest filter, CancellationToken cancellationToken)
         {
-            var result = await _busLineService.GetBusLinesAsync(filter);
+            var result = await _busLineService.GetBusLinesAsync(filter, cancellationToken);
             return Ok(result);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetBusLineById(int id)
+        public async Task<IActionResult> GetBusLineById(int id, CancellationToken cancellationToken)
         {
-            var result = await _busLineService.GetBusLineByIdAsync(id);
+            var result = await _busLineService.GetBusLineByIdAsync(id, cancellationToken);
             if (result.IsFailure)
             {
                 return NotFound(result);
@@ -35,9 +35,9 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateBusLine([FromBody] CreateBusLineRequest request)
+        public async Task<IActionResult> CreateBusLine([FromBody] CreateBusLineRequest request, CancellationToken cancellationToken)
         {
-            var result = await _busLineService.CreateBusLineAsync(request);
+            var result = await _busLineService.CreateBusLineAsync(request, cancellationToken);
             if (result.IsFailure)
             {
                 return BadRequest(result);
@@ -46,9 +46,9 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateBusLine(int id, [FromBody] UpdateBusLineRequest request)
+        public async Task<IActionResult> UpdateBusLine(int id, [FromBody] UpdateBusLineRequest request, CancellationToken cancellationToken)
         {
-            var result = await _busLineService.UpdateBusLineAsync(id, request);
+            var result = await _busLineService.UpdateBusLineAsync(id, request, cancellationToken);
             if (result.IsFailure)
             {
                 return BadRequest(result);
@@ -57,9 +57,9 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteBusLine(int id)
+        public async Task<IActionResult> DeleteBusLine(int id, CancellationToken cancellationToken)
         {
-            var result = await _busLineService.DeleteBusLineAsync(id);
+            var result = await _busLineService.DeleteBusLineAsync(id, cancellationToken);
             if (result.IsFailure)
             {
                 return BadRequest(result);

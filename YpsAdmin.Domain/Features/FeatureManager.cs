@@ -19,7 +19,11 @@ namespace YpsAdmin.Domain.Features
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(
                     builder.Configuration.GetConnectionString("DefaultConnection"),
-                    o => o.UseNetTopologySuite()));
+                    o =>
+                    {
+                        o.UseNetTopologySuite();
+                        o.CommandTimeout(30);
+                    }));
 
             // Register Feature Services
             builder.Services.AddScoped<IBusLineService, BusLineService>();
