@@ -1,0 +1,84 @@
+@namespace YpsAdmin.Web.Components
+
+@if (IsOpen)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto bg-black/40 backdrop-blur-xs animate-fade-in"
+         tabindex="-1"
+         @onkeydown="HandleKeyDown"
+         @onclick="OnBackdropClick">
+        
+        <div class="bg-white rounded-lg border border-outline-variant shadow-xl max-w-lg w-full p-6 space-y-5 animate-fade-in my-8 text-on-surface"
+             @onclick:stopPropagation="true"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="modal-title">
+            
+            <!-- Header -->
+            <div class="flex items-start justify-between border-b border-outline-variant pb-3">
+                <div>
+                    <h3 id="modal-title" class="text-base font-bold text-on-surface tracking-tight">@Title</h3>
+                    @if (!string.IsNullOrEmpty(Description))
+                    {
+                        <p class="text-xs text-tertiary mt-0.5">@Description</p>
+                    }
+                </div>
+                <button type="button" @onclick="CloseModal" class="text-tertiary hover:text-on-surface p-1 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    <span class="sr-only">Close modal</span>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="space-y-4">
+                @ChildContent
+            </div>
+
+            <!-- Footer -->
+            @if (Footer != null)
+            {
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-outline-variant">
+                    @Footer
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string? Description { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Footer { get; set; }
+    [Parameter] public bool CloseOnBackdrop { get; set; } = true;
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private async Task CloseModal()
+    {
+        IsOpen = false;
+        await IsOpenChanged.InvokeAsync(false);
+        if (OnClose.HasDelegate)
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+
+    private async Task OnBackdropClick()
+    {
+        if (CloseOnBackdrop)
+        {
+            await CloseModal();
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            await CloseModal();
+        }
+    }
+}

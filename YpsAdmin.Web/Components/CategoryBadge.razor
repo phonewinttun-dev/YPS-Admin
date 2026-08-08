@@ -1,0 +1,52 @@
+@namespace YpsAdmin.Web.Components
+
+<span class="@GetBadgeClass()">
+    @if (ShowDot)
+    {
+        <span class="w-1.5 h-1.5 rounded-full bg-current opacity-80 mr-1.5 inline-block"></span>
+    }
+    @Text
+</span>
+
+@code {
+    [Parameter] public string Text { get; set; } = "";
+    [Parameter] public BadgeVariant Variant { get; set; } = BadgeVariant.Default;
+    [Parameter] public bool ShowDot { get; set; } = false;
+
+    public enum BadgeVariant
+    {
+        Default,
+        TopUp,
+        Retail,
+        ServiceCenter,
+        YpsAccepted,
+        Outline
+    }
+
+    private string GetBadgeClass()
+    {
+        var baseClasses = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-tight transition-colors border select-none font-mono";
+
+        var variantClasses = Variant switch
+        {
+            BadgeVariant.TopUp => "bg-amber-50 text-amber-900 border-amber-200/80",
+            BadgeVariant.Retail => "bg-sky-50 text-sky-900 border-sky-200/80",
+            BadgeVariant.ServiceCenter => "bg-slate-100 text-slate-800 border-slate-200",
+            BadgeVariant.YpsAccepted => "bg-primary-container/60 text-on-primary-container border-primary/30",
+            BadgeVariant.Outline => "bg-transparent text-tertiary border-outline-variant",
+            _ => "bg-surface-container text-on-surface border-outline-variant"
+        };
+
+        return $"{baseClasses} {variantClasses}".Trim();
+    }
+
+    public static BadgeVariant ResolveStoreCategoryVariant(string? category)
+    {
+        if (string.IsNullOrWhiteSpace(category)) return BadgeVariant.Default;
+        var catLower = category.ToLowerInvariant();
+        if (catLower.Contains("top") || catLower.Contains("recharge")) return BadgeVariant.TopUp;
+        if (catLower.Contains("retail") || catLower.Contains("shop") || catLower.Contains("store")) return BadgeVariant.Retail;
+        if (catLower.Contains("service") || catLower.Contains("center")) return BadgeVariant.ServiceCenter;
+        return BadgeVariant.Default;
+    }
+}

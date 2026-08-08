@@ -1,0 +1,100 @@
+@namespace YpsAdmin.Web.Components
+@inject IToastService ToastService
+@implements IDisposable
+
+<div class="fixed top-4 right-4 z-50 flex flex-col space-y-2 max-w-sm w-full pointer-events-none px-4 sm:px-0">
+    @foreach (var toast in toasts)
+    {
+        <div key="@toast.Id" class="pointer-events-auto flex items-start justify-between p-4 rounded-lg border shadow-md transition-all duration-200 animate-slide-in-right bg-white @GetToastBorderClass(toast.Type)">
+            <div class="flex items-start gap-3">
+                <div class="mt-0.5 shrink-0 @GetToastIconColor(toast.Type)">
+                    @if (toast.Type == ToastType.Success)
+                    {
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    }
+                    else if (toast.Type == ToastType.Error)
+                    {
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    }
+                    else
+                    {
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    }
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-on-surface">@GetToastTitle(toast.Type)</p>
+                    <p class="text-xs text-tertiary mt-0.5">@toast.Message</p>
+                </div>
+            </div>
+
+            <button type="button" @onclick="() => DismissToast(toast.Id)" class="text-tertiary hover:text-on-surface p-1 rounded-md transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    private readonly List<ToastMessage> toasts = new();
+
+    protected override void OnInitialized()
+    {
+        ToastService.OnShow += AddToast;
+    }
+
+    private void AddToast(ToastMessage toast)
+    {
+        toasts.Add(toast);
+        StateHasChanged();
+        _ = AutoDismissAsync(toast.Id);
+    }
+
+    private async Task AutoDismissAsync(string id)
+    {
+        await Task.Delay(4500);
+        DismissToast(id);
+    }
+
+    private void DismissToast(string id)
+    {
+        toasts.RemoveAll(t => t.Id == id);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private string GetToastBorderClass(ToastType type) => type switch
+    {
+        ToastType.Success => "border-green-200 bg-green-50/20",
+        ToastType.Error => "border-red-200 bg-red-50/20",
+        ToastType.Warning => "border-amber-200 bg-amber-50/20",
+        _ => "border-blue-200 bg-blue-50/20"
+    };
+
+    private string GetToastIconColor(ToastType type) => type switch
+    {
+        ToastType.Success => "text-green-600",
+        ToastType.Error => "text-red-600",
+        ToastType.Warning => "text-amber-600",
+        _ => "text-secondary"
+    };
+
+    private string GetToastTitle(ToastType type) => type switch
+    {
+        ToastType.Success => "Success",
+        ToastType.Error => "Error",
+        ToastType.Warning => "Warning",
+        _ => "Information"
+    };
+
+    public void Dispose()
+    {
+        ToastService.OnShow -= AddToast;
+    }
+}
