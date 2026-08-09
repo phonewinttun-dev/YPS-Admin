@@ -381,4 +381,4 @@ appsettings.*.local.json
 suggested_features.md
 .rules
 data
-
+seed.sql
