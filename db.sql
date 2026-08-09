@@ -9,7 +9,7 @@ CREATE TABLE "TblTownship" (
 
 CREATE TABLE "TblBusLine" (
     "RouteId" INTEGER PRIMARY KEY,
-    "BusNumber" INTEGER NOT NULL,
+    "BusNumber" VARCHAR(50) NOT NULL,
     "OutboundTitleMm" VARCHAR(255),
     "OutboundTitleEn" VARCHAR(255),
     "ReturnTitleMm" VARCHAR(255),
@@ -64,7 +64,7 @@ CREATE TABLE "TblYpsStore_NearestStop" (
 CREATE TABLE "TblYpsStore_ServingBusLine" (
     "Id" SERIAL PRIMARY KEY,
     "StoreId" INTEGER NOT NULL,
-    "BusNumber" INTEGER NOT NULL,
+    "BusNumber" VARCHAR(50) NOT NULL,
     "RouteId" INTEGER,
     CONSTRAINT "FK_YpsStore_Serving_Store" FOREIGN KEY ("StoreId") REFERENCES "TblYpsStore"("StoreId") ON DELETE CASCADE,
     CONSTRAINT "FK_YpsStore_Serving_Route" FOREIGN KEY ("RouteId") REFERENCES "TblBusLine"("RouteId") ON DELETE SET NULL,

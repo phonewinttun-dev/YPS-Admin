@@ -47,7 +47,7 @@ namespace YpsAdmin.Domain.DTOs.RouteStop
     public class FullRouteResponseDto
     {
         public int RouteId { get; set; }
-        public int BusNumber { get; set; }
+        public string BusNumber { get; set; } = null!;
         public string? OutboundTitleMm { get; set; }
         public string? OutboundTitleEn { get; set; }
         public string? ReturnTitleMm { get; set; }

@@ -20,7 +20,8 @@ namespace YpsAdmin.Domain.Features.BusLine
             int totalCount = await query.CountAsync(cancellationToken);
             int skip = (request.PageNumber - 1) * request.PageSize;
             var items = await query
-                .OrderBy(b => b.BusNumber)
+                .OrderBy(b => b.BusNumber.Length)
+                .ThenBy(b => EF.Functions.Unaccent(b.BusNumber))
                 .Skip(skip)
                 .Take(request.PageSize)
                 .Select(b => new BusLineDto

@@ -7,7 +7,7 @@ public partial class TblBusLine
 {
     public int RouteId { get; set; }
 
-    public int BusNumber { get; set; }
+    public string BusNumber { get; set; } = null!;
 
     public string? OutboundTitleMm { get; set; }
 

@@ -22,7 +22,7 @@ namespace YpsAdmin.Domain.DTOs.Store
         public decimal? Latitude { get; set; }
         public decimal? Longitude { get; set; }
         public List<NearestStopDto> NearestStops { get; set; } = new();
-        public List<int> ServingBusLines { get; set; } = new();
+        public List<string> ServingBusLines { get; set; } = new();
     }
 
     public class CreateYpsStoreRequest
@@ -60,7 +60,7 @@ namespace YpsAdmin.Domain.DTOs.Store
 
     public class AssignServingBusLinesRequest
     {
-        public List<int> BusNumbers { get; set; } = new();
+        public List<string> BusNumbers { get; set; } = new();
     }
 
     public class YpsStoreQueryFilter : PaginationRequest

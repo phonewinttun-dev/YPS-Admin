@@ -40,6 +40,7 @@ public partial class AppDbContext : DbContext
             entity.ToTable("TblBusLine");
 
             entity.Property(e => e.RouteId).ValueGeneratedNever();
+            entity.Property(e => e.BusNumber).HasMaxLength(50);
             entity.Property(e => e.IsYpsAccepted).HasDefaultValue(false);
             entity.Property(e => e.OutboundTitleEn).HasMaxLength(255);
             entity.Property(e => e.OutboundTitleMm).HasMaxLength(255);

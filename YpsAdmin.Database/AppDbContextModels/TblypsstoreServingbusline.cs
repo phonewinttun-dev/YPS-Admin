@@ -9,7 +9,7 @@ public partial class TblYpsStoreServingBusLine
 
     public int StoreId { get; set; }
 
-    public int BusNumber { get; set; }
+    public string BusNumber { get; set; } = null!;
 
     public int? RouteId { get; set; }
 
