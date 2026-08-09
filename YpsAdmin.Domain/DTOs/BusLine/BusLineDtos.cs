@@ -34,8 +34,12 @@ namespace YpsAdmin.Domain.DTOs.BusLine
         public bool IsYpsAccepted { get; set; }
     }
 
-    public class BusLineQueryFilter : PaginationRequest
+    public class BusLineGetRequest : PaginationRequest
     {
-        public string? SearchBusNumber { get; set; }
+    }
+
+    public class BusLineSearchRequest : PaginationRequest
+    {
+        public string? BusNumber { get; set; }
     }
 }

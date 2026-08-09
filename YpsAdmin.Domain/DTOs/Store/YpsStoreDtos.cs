@@ -63,9 +63,13 @@ namespace YpsAdmin.Domain.DTOs.Store
         public List<string> BusNumbers { get; set; } = new();
     }
 
-    public class YpsStoreQueryFilter : PaginationRequest
+    public class YpsStoreGetRequest : PaginationRequest
     {
-        public string? SearchName { get; set; }
         public int? TownshipId { get; set; }
+    }
+
+    public class YpsStoreSearchRequest : PaginationRequest
+    {
+        public string? TownshipName { get; set; }
     }
 }

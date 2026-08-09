@@ -22,8 +22,12 @@ namespace YpsAdmin.Domain.DTOs.Township
         public string? TownshipNameEn { get; set; }
     }
 
-    public class TownshipQueryFilter : PaginationRequest
+    public class TownshipGetRequest : PaginationRequest
     {
-        public string? SearchName { get; set; }
+    }
+
+    public class TownshipSearchRequest : PaginationRequest
+    {
+        public string? TownshipName { get; set; }
     }
 }

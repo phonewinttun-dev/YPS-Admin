@@ -34,9 +34,14 @@ namespace YpsAdmin.Domain.DTOs.BusStop
         public string? RoadEn { get; set; }
     }
 
-    public class BusStopQueryFilter : PaginationRequest
+    public class BusStopGetRequest : PaginationRequest
     {
-        public string? SearchStopName { get; set; }
+        public int? TownshipId { get; set; }
+    }
+
+    public class BusStopSearchRequest : PaginationRequest
+    {
+        public string? SearchTerm { get; set; }
         public int? TownshipId { get; set; }
     }
 }

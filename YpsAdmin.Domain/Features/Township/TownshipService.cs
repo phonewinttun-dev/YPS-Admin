@@ -14,25 +14,17 @@ namespace YpsAdmin.Domain.Features.Township
             _context = context;
         }
 
-        public async Task<PagedResult<TownshipDto>> GetTownshipsAsync(TownshipQueryFilter filter, CancellationToken cancellationToken = default)
+        public async Task<PagedResult<TownshipDto>> GetTownshipsAsync(TownshipGetRequest request, CancellationToken cancellationToken = default)
         {
             var query = _context.TblTownships.AsNoTracking().Where(t => t.DeleteFlag != true);
 
-            if (!string.IsNullOrWhiteSpace(filter.SearchName))
-            {
-                string search = $"%{filter.SearchName.Trim()}%";
-                query = query.Where(t =>
-                    EF.Functions.ILike(t.TownshipNameMm, search) ||
-                    (t.TownshipNameEn != null && EF.Functions.ILike(t.TownshipNameEn, search)));
-            }
-
             int totalCount = await query.CountAsync(cancellationToken);
-            int skip = (filter.PageNumber - 1) * filter.PageSize;
+            int skip = (request.PageNumber - 1) * request.PageSize;
 
             var items = await query
                 .OrderBy(t => t.TownshipNameMm)
                 .Skip(skip)
-                .Take(filter.PageSize)
+                .Take(request.PageSize)
                 .Select(t => new TownshipDto
                 {
                     TownshipId = t.TownshipId,
@@ -42,8 +34,40 @@ namespace YpsAdmin.Domain.Features.Township
                 })
                 .ToListAsync(cancellationToken);
 
-            var pagination = new Pagination(filter.PageNumber, filter.PageSize, totalCount);
+            var pagination = new Pagination(request.PageNumber, request.PageSize, totalCount);
             return PagedResult<TownshipDto>.Success(items, pagination, "Townships retrieved successfully.");
+        }
+
+        public async Task<PagedResult<TownshipDto>> SearchTownshipsAsync(TownshipSearchRequest request, CancellationToken cancellationToken = default)
+        {
+            var query = _context.TblTownships.AsNoTracking().Where(t => t.DeleteFlag != true);
+
+            if (!string.IsNullOrWhiteSpace(request.TownshipName))
+            {
+                string search = $"%{request.TownshipName.Trim()}%";
+                query = query.Where(t =>
+                    EF.Functions.ILike(t.TownshipNameMm, search) ||
+                    (t.TownshipNameEn != null && EF.Functions.ILike(t.TownshipNameEn, search)));
+            }
+
+            int totalCount = await query.CountAsync(cancellationToken);
+            int skip = (request.PageNumber - 1) * request.PageSize;
+
+            var items = await query
+                .OrderBy(t => t.TownshipNameMm)
+                .Skip(skip)
+                .Take(request.PageSize)
+                .Select(t => new TownshipDto
+                {
+                    TownshipId = t.TownshipId,
+                    TownshipNameMm = t.TownshipNameMm,
+                    TownshipNameEn = t.TownshipNameEn,
+                    DeleteFlag = t.DeleteFlag ?? false
+                })
+                .ToListAsync(cancellationToken);
+
+            var pagination = new Pagination(request.PageNumber, request.PageSize, totalCount);
+            return PagedResult<TownshipDto>.Success(items, pagination, "Township search completed successfully.");
         }
 
         public async Task<Result<TownshipDto>> GetTownshipByIdAsync(int townshipId, CancellationToken cancellationToken = default)

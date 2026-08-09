@@ -32,6 +32,7 @@ public partial class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasPostgresExtension("postgis");
+        modelBuilder.HasPostgresExtension("unaccent");
 
         modelBuilder.Entity<TblBusLine>(entity =>
         {

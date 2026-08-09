@@ -14,14 +14,14 @@ namespace YpsAdmin.Domain.Features.BusLine
             _context = context;
         }
 
-        public async Task<PagedResult<BusLineDto>> GetBusLinesAsync(PaginationRequest request, CancellationToken cancellationToken = default)
+        public async Task<PagedResult<BusLineDto>> GetBusLinesAsync(BusLineGetRequest request, CancellationToken cancellationToken = default)
         {
             var query = _context.TblBusLines.AsNoTracking();
             int totalCount = await query.CountAsync(cancellationToken);
             int skip = (request.PageNumber - 1) * request.PageSize;
             var items = await query
                 .OrderBy(b => b.BusNumber.Length)
-                .ThenBy(b => EF.Functions.Unaccent(b.BusNumber))
+                .ThenBy(b => b.BusNumber)
                 .Skip(skip)
                 .Take(request.PageSize)
                 .Select(b => new BusLineDto
@@ -37,6 +37,38 @@ namespace YpsAdmin.Domain.Features.BusLine
                 .ToListAsync(cancellationToken);
             var pagination = new Pagination(request.PageNumber, request.PageSize, totalCount);
             return PagedResult<BusLineDto>.Success(items, pagination, "Bus lines retrieved successfully.");
+        }
+
+        public async Task<PagedResult<BusLineDto>> SearchBusLinesAsync(BusLineSearchRequest request, CancellationToken cancellationToken = default)
+        {
+            var query = _context.TblBusLines.AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(request.BusNumber))
+            {
+                string search = $"%{request.BusNumber.Trim()}%";
+                query = query.Where(b => EF.Functions.ILike(b.BusNumber, search));
+            }
+
+            int totalCount = await query.CountAsync(cancellationToken);
+            int skip = (request.PageNumber - 1) * request.PageSize;
+            var items = await query
+                .OrderBy(b => b.BusNumber.Length)
+                .ThenBy(b => b.BusNumber)
+                .Skip(skip)
+                .Take(request.PageSize)
+                .Select(b => new BusLineDto
+                {
+                    RouteId = b.RouteId,
+                    BusNumber = b.BusNumber,
+                    OutboundTitleMm = b.OutboundTitleMm,
+                    OutboundTitleEn = b.OutboundTitleEn,
+                    ReturnTitleMm = b.ReturnTitleMm,
+                    ReturnTitleEn = b.ReturnTitleEn,
+                    IsYpsAccepted = b.IsYpsAccepted ?? false
+                })
+                .ToListAsync(cancellationToken);
+            var pagination = new Pagination(request.PageNumber, request.PageSize, totalCount);
+            return PagedResult<BusLineDto>.Success(items, pagination, "Bus line search completed successfully.");
         }
 
         public async Task<Result<BusLineDto>> GetBusLineByIdAsync(int routeId, CancellationToken cancellationToken = default)
