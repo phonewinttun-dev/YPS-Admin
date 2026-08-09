@@ -16,9 +16,16 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetTownships([FromQuery] TownshipQueryFilter filter, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetTownships([FromQuery] TownshipGetRequest request, CancellationToken cancellationToken)
         {
-            var result = await _townshipService.GetTownshipsAsync(filter, cancellationToken);
+            var result = await _townshipService.GetTownshipsAsync(request, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchTownships([FromQuery] TownshipSearchRequest request, CancellationToken cancellationToken)
+        {
+            var result = await _townshipService.SearchTownshipsAsync(request, cancellationToken);
             return Ok(result);
         }
 

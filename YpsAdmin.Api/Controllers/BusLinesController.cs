@@ -17,9 +17,16 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetBusLines([FromQuery] PaginationRequest filter, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetBusLines([FromQuery] BusLineGetRequest request, CancellationToken cancellationToken)
         {
-            var result = await _busLineService.GetBusLinesAsync(filter, cancellationToken);
+            var result = await _busLineService.GetBusLinesAsync(request, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchBusLines([FromQuery] BusLineSearchRequest request, CancellationToken cancellationToken)
+        {
+            var result = await _busLineService.SearchBusLinesAsync(request, cancellationToken);
             return Ok(result);
         }
 

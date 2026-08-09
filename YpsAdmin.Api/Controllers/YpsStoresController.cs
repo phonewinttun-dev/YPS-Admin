@@ -17,9 +17,16 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetYpsStores([FromQuery] YpsStoreQueryFilter filter, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetYpsStores([FromQuery] YpsStoreGetRequest request, CancellationToken cancellationToken)
         {
-            var result = await _ypsStoreService.GetYpsStoresAsync(filter, cancellationToken);
+            var result = await _ypsStoreService.GetYpsStoresAsync(request, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchYpsStores([FromQuery] YpsStoreSearchRequest request, CancellationToken cancellationToken)
+        {
+            var result = await _ypsStoreService.SearchYpsStoresAsync(request, cancellationToken);
             return Ok(result);
         }
 
