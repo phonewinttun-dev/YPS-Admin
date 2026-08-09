@@ -6,29 +6,106 @@
 @inject LanguageService Lang
 
 <div class="space-y-6">
-    <!-- Header & Bus Line Selector -->
-    <div class="bg-white p-4 rounded-lg border border-outline-variant shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-            <h2 class="text-lg font-bold text-on-surface tracking-tight">@Lang.GetText("NavRouteMapping")</h2>
-            <p class="text-xs text-tertiary">Select a bus line to configure outbound and return stop sequences.</p>
+    <!-- Header & Paginated Bus Line Selector -->
+    <div class="bg-white p-5 rounded-lg border border-outline-variant shadow-2xs space-y-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-outline-variant pb-4">
+            <div>
+                <h2 class="text-lg font-bold text-on-surface tracking-tight">@Lang.GetText("NavRouteMapping")</h2>
+                <p class="text-xs text-tertiary">Select a bus line from the paginated list below to configure outbound and return stop sequences.</p>
+            </div>
+            @if (busLinesPagedResult != null && busLinesPagedResult.Pagination != null)
+            {
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-mono font-semibold text-tertiary">
+                        Page @busLinePageNumber of @busLinesPagedResult.Pagination.TotalPages (@busLinesPagedResult.Pagination.TotalCount Total Lines)
+                    </span>
+                    <div class="flex items-center gap-1">
+                        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Disabled="@(busLinePageNumber <= 1)" OnClick="PreviousBusLinePage">
+                            Previous
+                        </Button>
+                        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Disabled="@(busLinePageNumber >= busLinesPagedResult.Pagination.TotalPages)" OnClick="NextBusLinePage">
+                            Next
+                        </Button>
+                    </div>
+                </div>
+            }
         </div>
 
-        <div class="w-full sm:w-72">
-            <select @onchange="OnBusLineSelected" class="w-full h-10 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary bg-white font-medium">
-                <option value="0">@Lang.GetText("SelectBusLine")</option>
-                @if (busLineList != null)
-                {
-                    @foreach (var line in busLineList)
+        <!-- 10 Bus Lines Grid Selector -->
+        <div>
+            @if (isSelectorLoading)
+            {
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                    @for (int i = 0; i < 10; i++)
                     {
-                        <option value="@line.RouteId">Bus @line.BusNumber (@line.OutboundTitleMm)</option>
+                        <div class="h-16 bg-surface-container animate-pulse rounded-md border border-outline-variant"></div>
                     }
-                }
-            </select>
+                </div>
+            }
+            else if (busLinesPagedResult != null && busLinesPagedResult.Data != null && busLinesPagedResult.Data.Any())
+            {
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                    @foreach (var line in busLinesPagedResult.Data)
+                    {
+                        var isSelected = line.RouteId == selectedBusLineId;
+                        <button type="button"
+                                @onclick="() => SelectBusLine(line)"
+                                class="p-3 rounded-md text-left transition-all border flex flex-col justify-between h-20 @(isSelected ? "border-secondary bg-secondary/10 shadow-2xs ring-2 ring-secondary/30" : "border-outline-variant bg-white hover:border-secondary/50 hover:bg-surface-container/30")">
+                            <div class="flex items-center justify-between w-full">
+                                <span class="font-mono font-bold text-sm text-secondary">Bus @line.BusNumber</span>
+                                @if (line.IsYpsAccepted)
+                                {
+                                    <span class="w-2 h-2 rounded-full bg-secondary" title="YPS Accepted"></span>
+                                }
+                            </div>
+                            <div class="text-xs text-on-surface truncate font-medium w-full">
+                                @(line.OutboundTitleMm ?? "No Outbound Title")
+                            </div>
+                        </button>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="p-4 text-center border border-dashed border-outline-variant rounded-md">
+                    <p class="text-xs text-tertiary">No bus lines available.</p>
+                </div>
+            }
         </div>
     </div>
 
     @if (selectedBusLineId > 0)
     {
+        <!-- Active Bus Line Card Details -->
+        @if (selectedBusLine != null)
+        {
+            <div class="bg-white p-4 rounded-lg border border-outline-variant shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-3">
+                        <h3 class="text-base font-bold font-mono text-secondary">Bus @selectedBusLine.BusNumber</h3>
+                        @if (selectedBusLine.IsYpsAccepted)
+                        {
+                            <CategoryBadge Text="YPS ACCEPTED" Variant="CategoryBadge.BadgeVariant.YpsAccepted" ShowDot="true" />
+                        }
+                    </div>
+                    <p class="text-xs text-on-surface font-medium">
+                        @(selectedBusLine.OutboundTitleMm) @(!string.IsNullOrEmpty(selectedBusLine.ReturnTitleMm) ? $"<-> {selectedBusLine.ReturnTitleMm}" : "")
+                    </p>
+                </div>
+                @if (fullRoute != null)
+                {
+                    <div class="flex items-center gap-3 text-xs font-mono bg-surface-container/50 px-3 py-2 rounded-md border border-outline-variant">
+                        <span class="text-tertiary">Total Stops: <strong class="text-on-surface font-bold">@(fullRoute.OutboundStops.Count + fullRoute.ReturnStops.Count)</strong></span>
+                        <span class="text-outline-variant">|</span>
+                        <span class="text-secondary">Outbound: <strong class="font-bold">@fullRoute.OutboundStops.Count</strong></span>
+                        <span class="text-outline-variant">|</span>
+                        <span class="text-primary font-bold">Return: <strong>@fullRoute.ReturnStops.Count</strong></span>
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- Outbound & Return Route Stop Steppers -->
         <StateView IsLoading="@isLoading"
                    HasError="@hasError"
                    ErrorMessage="@errorMessage"
@@ -45,9 +122,9 @@
                             <div class="flex items-center justify-between border-b border-outline-variant pb-3">
                                 <div class="flex items-center gap-2">
                                     <span class="w-3 h-3 bg-secondary rounded-full inline-block"></span>
-                                    <h3 class="font-bold text-sm text-on-surface">@Lang.GetText("OutboundTitle") (@fullRoute.OutboundStops.Count)</h3>
+                                    <h3 class="font-bold text-sm text-on-surface">@Lang.GetText("OutboundTitle") (@fullRoute.OutboundStops.Count Stops)</h3>
                                 </div>
-                                <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick='() => OpenAssignModal("Outbound")'>
+                                <Button Variant="ButtonVariant.Default" Size="ButtonSize.Sm" OnClick='() => OpenAssignModal("Outbound")'>
                                     <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                                     </svg>
@@ -55,7 +132,7 @@
                                 </Button>
                             </div>
 
-                            <div class="space-y-2 min-h-[160px]">
+                            <div class="space-y-3 min-h-[180px]">
                                 @if (!fullRoute.OutboundStops.Any())
                                 {
                                     <div class="p-8 text-center border border-dashed border-outline-variant rounded-md">
@@ -64,37 +141,47 @@
                                 }
                                 else
                                 {
-                                    @for (int i = 0; i < fullRoute.OutboundStops.Count; i++)
-                                    {
-                                        var index = i;
-                                        var item = fullRoute.OutboundStops[i];
-                                        <div class="flex items-center justify-between p-3 bg-surface-container/30 rounded-md border border-outline-variant text-xs hover:border-secondary/30 transition-all">
-                                            <div class="flex items-center gap-3">
-                                                <span class="w-6 h-6 rounded-full bg-surface-container-high text-tertiary flex items-center justify-center font-mono font-bold text-2xs">@(index + 1)</span>
-                                                <div>
-                                                    <div class="font-bold text-on-surface">@(item.StopNameMm ?? "Bus Stop")</div>
-                                                    <div class="text-tertiary font-mono text-2xs mt-0.5">@(item.StopNameEn) - @(item.RoadMm)</div>
+                                    <div class="relative border-l-2 border-secondary/30 ml-4 space-y-3 pl-4 pt-1">
+                                        @for (int i = 0; i < fullRoute.OutboundStops.Count; i++)
+                                        {
+                                            var index = i;
+                                            var item = fullRoute.OutboundStops[i];
+                                            <div class="relative flex items-center justify-between p-3 bg-surface-container/30 rounded-md border border-outline-variant text-xs hover:border-secondary/50 transition-all">
+                                                <!-- Stepper node marker -->
+                                                <div class="absolute -left-[23px] top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-white border-2 border-secondary"></div>
+                                                
+                                                <div class="flex items-center gap-3">
+                                                    <span class="w-6 h-6 rounded-full bg-secondary/10 text-secondary flex items-center justify-center font-mono font-bold text-2xs shrink-0">@(index + 1)</span>
+                                                    <div>
+                                                        <div class="font-bold text-on-surface">@(item.StopNameMm ?? "Bus Stop")</div>
+                                                        @if (!string.IsNullOrEmpty(item.StopNameEn) || !string.IsNullOrEmpty(item.RoadMm))
+                                                        {
+                                                            <div class="text-tertiary font-mono text-2xs mt-0.5">
+                                                                @(item.StopNameEn)@(!string.IsNullOrEmpty(item.RoadMm) ? $" - {item.RoadMm}" : "")
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-center gap-1">
+                                                    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Icon" Disabled="@(index == 0)" OnClick='() => MoveStop("Outbound", index, -1)' Title="@Lang.GetText("MoveUp")">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                                        </svg>
+                                                    </Button>
+                                                    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Icon" Disabled="@(index == fullRoute.OutboundStops.Count - 1)" OnClick='() => MoveStop("Outbound", index, 1)' Title="@Lang.GetText("MoveDown")">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                        </svg>
+                                                    </Button>
+                                                    <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Class="text-error hover:bg-red-50 hover:text-error" OnClick="() => RemoveRouteStop(item.Id)">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                        </svg>
+                                                    </Button>
                                                 </div>
                                             </div>
-                                            <div class="flex items-center gap-1">
-                                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Disabled="@(index == 0)" OnClick='() => MoveStop("Outbound", index, -1)' Title="@Lang.GetText("MoveUp")">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-                                                    </svg>
-                                                </Button>
-                                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Disabled="@(index == fullRoute.OutboundStops.Count - 1)" OnClick='() => MoveStop("Outbound", index, 1)' Title="@Lang.GetText("MoveDown")">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                                    </svg>
-                                                </Button>
-                                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Class="text-error hover:bg-red-50 hover:text-error" OnClick="() => RemoveRouteStop(item.Id)">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                    </svg>
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    }
+                                        }
+                                    </div>
                                 }
                             </div>
                         </div>
@@ -104,9 +191,9 @@
                             <div class="flex items-center justify-between border-b border-outline-variant pb-3">
                                 <div class="flex items-center gap-2">
                                     <span class="w-3 h-3 bg-primary rounded-full inline-block"></span>
-                                    <h3 class="font-bold text-sm text-on-surface">@Lang.GetText("ReturnTitle") (@fullRoute.ReturnStops.Count)</h3>
+                                    <h3 class="font-bold text-sm text-on-surface">@Lang.GetText("ReturnTitle") (@fullRoute.ReturnStops.Count Stops)</h3>
                                 </div>
-                                <Button Variant="ButtonVariant.Secondary" Size="ButtonSize.Sm" OnClick='() => OpenAssignModal("Return")'>
+                                <Button Variant="ButtonVariant.Default" Size="ButtonSize.Sm" OnClick='() => OpenAssignModal("Return")'>
                                     <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                                     </svg>
@@ -114,7 +201,7 @@
                                 </Button>
                             </div>
 
-                            <div class="space-y-2 min-h-[160px]">
+                            <div class="space-y-3 min-h-[180px]">
                                 @if (!fullRoute.ReturnStops.Any())
                                 {
                                     <div class="p-8 text-center border border-dashed border-outline-variant rounded-md">
@@ -123,37 +210,47 @@
                                 }
                                 else
                                 {
-                                    @for (int i = 0; i < fullRoute.ReturnStops.Count; i++)
-                                    {
-                                        var index = i;
-                                        var item = fullRoute.ReturnStops[i];
-                                        <div class="flex items-center justify-between p-3 bg-surface-container/30 rounded-md border border-outline-variant text-xs hover:border-primary/30 transition-all">
-                                            <div class="flex items-center gap-3">
-                                                <span class="w-6 h-6 rounded-full bg-surface-container-high text-tertiary flex items-center justify-center font-mono font-bold text-2xs">@(index + 1)</span>
-                                                <div>
-                                                    <div class="font-bold text-on-surface">@(item.StopNameMm ?? "Bus Stop")</div>
-                                                    <div class="text-tertiary font-mono text-2xs mt-0.5">@(item.StopNameEn) - @(item.RoadMm)</div>
+                                    <div class="relative border-l-2 border-primary/40 ml-4 space-y-3 pl-4 pt-1">
+                                        @for (int i = 0; i < fullRoute.ReturnStops.Count; i++)
+                                        {
+                                            var index = i;
+                                            var item = fullRoute.ReturnStops[i];
+                                            <div class="relative flex items-center justify-between p-3 bg-surface-container/30 rounded-md border border-outline-variant text-xs hover:border-primary/50 transition-all">
+                                                <!-- Stepper node marker -->
+                                                <div class="absolute -left-[23px] top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-white border-2 border-primary"></div>
+
+                                                <div class="flex items-center gap-3">
+                                                    <span class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center font-mono font-bold text-2xs shrink-0">@(index + 1)</span>
+                                                    <div>
+                                                        <div class="font-bold text-on-surface">@(item.StopNameMm ?? "Bus Stop")</div>
+                                                        @if (!string.IsNullOrEmpty(item.StopNameEn) || !string.IsNullOrEmpty(item.RoadMm))
+                                                        {
+                                                            <div class="text-tertiary font-mono text-2xs mt-0.5">
+                                                                @(item.StopNameEn)@(!string.IsNullOrEmpty(item.RoadMm) ? $" - {item.RoadMm}" : "")
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-center gap-1">
+                                                    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Icon" Disabled="@(index == 0)" OnClick='() => MoveStop("Return", index, -1)' Title="@Lang.GetText("MoveUp")">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                                        </svg>
+                                                    </Button>
+                                                    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Icon" Disabled="@(index == fullRoute.ReturnStops.Count - 1)" OnClick='() => MoveStop("Return", index, 1)' Title="@Lang.GetText("MoveDown")">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                        </svg>
+                                                    </Button>
+                                                    <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Class="text-error hover:bg-red-50 hover:text-error" OnClick="() => RemoveRouteStop(item.Id)">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                        </svg>
+                                                    </Button>
                                                 </div>
                                             </div>
-                                            <div class="flex items-center gap-1">
-                                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Disabled="@(index == 0)" OnClick='() => MoveStop("Return", index, -1)' Title="@Lang.GetText("MoveUp")">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-                                                    </svg>
-                                                </Button>
-                                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Disabled="@(index == fullRoute.ReturnStops.Count - 1)" OnClick='() => MoveStop("Return", index, 1)' Title="@Lang.GetText("MoveDown")">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                                    </svg>
-                                                </Button>
-                                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Class="text-error hover:bg-red-50 hover:text-error" OnClick="() => RemoveRouteStop(item.Id)">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                    </svg>
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    }
+                                        }
+                                    </div>
                                 }
                             </div>
                         </div>
@@ -170,8 +267,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.818V8.049a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
                 </svg>
             </div>
-            <h3 class="text-base font-semibold text-on-surface">Please select a bus line</h3>
-            <p class="text-xs text-tertiary mt-1">Choose a bus line from the dropdown above to manage its route stop sequence.</p>
+            <h3 class="text-base font-semibold text-on-surface">Please select a bus line above</h3>
+            <p class="text-xs text-tertiary mt-1">Click on any bus line from the paginated list above to manage its route stop sequence.</p>
         </div>
     }
 </div>
@@ -228,8 +325,13 @@
 </ModalDialog>
 
 @code {
-    private List<BusLineDto>? busLineList;
+    private PagedResult<BusLineDto>? busLinesPagedResult;
+    private int busLinePageNumber = 1;
+    private int busLinePageSize = 10;
+    private bool isSelectorLoading = false;
+
     private int selectedBusLineId = 0;
+    private BusLineDto? selectedBusLine;
     private FullRouteResponseDto? fullRoute;
     private bool isLoading = false;
     private bool hasError = false;
@@ -251,16 +353,10 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var busesTask = BusLineService.GetBusLinesAsync(1, 100, null);
+        var selectorTask = LoadBusLinesSelectorPageAsync(1);
         var stopsTask = BusStopService.GetBusStopsAsync(1, 500, null);
 
-        await Task.WhenAll(busesTask, stopsTask);
-
-        var res = await busesTask;
-        if (res != null && res.Data != null)
-        {
-            busLineList = res.Data;
-        }
+        await Task.WhenAll(selectorTask, stopsTask);
 
         var stopsRes = await stopsTask;
         if (stopsRes != null && stopsRes.Data != null)
@@ -269,20 +365,50 @@
         }
     }
 
-    private async Task OnBusLineSelected(ChangeEventArgs e)
+    private async Task LoadBusLinesSelectorPageAsync(int page)
     {
-        if (int.TryParse(e.Value?.ToString(), out int id))
+        isSelectorLoading = true;
+        try
         {
-            selectedBusLineId = id;
-            if (id > 0)
-            {
-                await LoadRoute();
-            }
+            busLinePageNumber = page;
+            busLinesPagedResult = await BusLineService.GetBusLinesAsync(busLinePageNumber, busLinePageSize, null);
         }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Failed to load bus lines: {ex.Message}");
+        }
+        finally
+        {
+            isSelectorLoading = false;
+        }
+    }
+
+    private async Task PreviousBusLinePage()
+    {
+        if (busLinePageNumber > 1)
+        {
+            await LoadBusLinesSelectorPageAsync(busLinePageNumber - 1);
+        }
+    }
+
+    private async Task NextBusLinePage()
+    {
+        if (busLinesPagedResult != null && busLinesPagedResult.Pagination != null && busLinePageNumber < busLinesPagedResult.Pagination.TotalPages)
+        {
+            await LoadBusLinesSelectorPageAsync(busLinePageNumber + 1);
+        }
+    }
+
+    private async Task SelectBusLine(BusLineDto line)
+    {
+        selectedBusLineId = line.RouteId;
+        selectedBusLine = line;
+        await LoadRoute();
     }
 
     private async Task LoadRoute()
     {
+        if (selectedBusLineId <= 0) return;
         isLoading = true;
         hasError = false;
         errorMessage = null;

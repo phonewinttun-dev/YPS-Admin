@@ -21,10 +21,9 @@
                     </svg>
                 </div>
                 <input type="text"
-                       @bind="searchQuery"
-                       @bind:event="oninput"
-                       @onkeyup="HandleSearch"
-                       placeholder="@Lang.GetText("Search")..."
+                       value="@searchQuery"
+                       @oninput="OnSearchInput"
+                       placeholder="Search by township name..."
                        class="w-full h-10 pl-9 pr-3 text-sm border border-outline-variant rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all" />
             </div>
 
@@ -313,23 +312,38 @@
     private bool showDeleteModal = false;
     private int? deletingId = null;
 
+    private CancellationTokenSource? searchCts;
+
     protected override async Task OnInitializedAsync()
     {
-        var loadDataTask = LoadData();
-        var townshipsTask = TownshipService.GetTownshipsAsync(1, 200, null);
-        var stopsTask = BusStopService.GetBusStopsAsync(1, 500, null);
-        var busesTask = BusLineService.GetBusLinesAsync(1, 200, null);
+        await LoadData();
+    }
 
-        await Task.WhenAll(loadDataTask, townshipsTask, stopsTask, busesTask);
+    private async Task EnsureTownshipsLoadedAsync()
+    {
+        if (townships == null)
+        {
+            var res = await TownshipService.GetTownshipsAsync(1, 500, null);
+            if (res != null && res.Data != null) townships = res.Data;
+        }
+    }
 
-        var tRes = await townshipsTask;
-        if (tRes != null && tRes.Data != null) townships = tRes.Data;
+    private async Task EnsureBusStopsLoadedAsync()
+    {
+        if (allBusStops == null)
+        {
+            var res = await BusStopService.GetBusStopsAsync(1, 500, null);
+            if (res != null && res.Data != null) allBusStops = res.Data;
+        }
+    }
 
-        var stopsRes = await stopsTask;
-        if (stopsRes != null && stopsRes.Data != null) allBusStops = stopsRes.Data;
-
-        var busesRes = await busesTask;
-        if (busesRes != null && busesRes.Data != null) allBusLines = busesRes.Data;
+    private async Task EnsureBusLinesLoadedAsync()
+    {
+        if (allBusLines == null)
+        {
+            var res = await BusLineService.GetBusLinesAsync(1, 200, null);
+            if (res != null && res.Data != null) allBusLines = res.Data;
+        }
     }
 
     private async Task LoadData()
@@ -352,10 +366,27 @@
         }
     }
 
-    private async Task HandleSearch() { pageNumber = 1; await LoadData(); }
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        searchQuery = e.Value?.ToString() ?? "";
+        searchCts?.Cancel();
+        searchCts = new CancellationTokenSource();
+        var token = searchCts.Token;
+
+        try
+        {
+            await Task.Delay(300, token);
+            pageNumber = 1;
+            await LoadData();
+        }
+        catch (TaskCanceledException)
+        {
+        }
+    }
+
     private async Task OnPageChanged(int newPage) { pageNumber = newPage; await LoadData(); }
 
-    private void OpenCreateModal()
+    private async Task OpenCreateModal()
     {
         editingId = null;
         formNameMm = "";
@@ -366,10 +397,11 @@
         formLongitude = 96.1951m;
         formValidationError = "";
         formNameMmError = "";
+        await EnsureTownshipsLoadedAsync();
         showFormModal = true;
     }
 
-    private void OpenEditModal(YpsStoreDto item)
+    private async Task OpenEditModal(YpsStoreDto item)
     {
         editingId = item.StoreId;
         formNameMm = item.NameMm;
@@ -380,6 +412,7 @@
         formLongitude = item.Longitude ?? 96.1951m;
         formValidationError = "";
         formNameMmError = "";
+        await EnsureTownshipsLoadedAsync();
         showFormModal = true;
     }
 
@@ -425,7 +458,7 @@
         }
     }
 
-    private void OpenAssignStopsModal(YpsStoreDto item)
+    private async Task OpenAssignStopsModal(YpsStoreDto item)
     {
         activeStore = item;
         selectedStopIds.Clear();
@@ -436,6 +469,7 @@
                 if (ns.MatchedStopId.HasValue) selectedStopIds.Add(ns.MatchedStopId.Value);
             }
         }
+        await EnsureBusStopsLoadedAsync();
         showStopsModal = true;
     }
 
@@ -471,7 +505,7 @@
         }
     }
 
-    private void OpenAssignBusesModal(YpsStoreDto item)
+    private async Task OpenAssignBusesModal(YpsStoreDto item)
     {
         activeStore = item;
         selectedBusNumbers.Clear();
@@ -482,6 +516,7 @@
                 selectedBusNumbers.Add(b);
             }
         }
+        await EnsureBusLinesLoadedAsync();
         showBusesModal = true;
     }
 

@@ -88,8 +88,9 @@ public class BusLineService : IBusLineService
     {
         try
         {
-            var url = $"/api/bus-lines?pageNumber={pageNumber}&pageSize={pageSize}";
-            if (!string.IsNullOrWhiteSpace(searchBusNumber)) url += $"&searchBusNumber={Uri.EscapeDataString(searchBusNumber)}";
+            var url = !string.IsNullOrWhiteSpace(searchBusNumber)
+                ? $"/api/bus-lines/search?pageNumber={pageNumber}&pageSize={pageSize}&busNumber={Uri.EscapeDataString(searchBusNumber)}"
+                : $"/api/bus-lines?pageNumber={pageNumber}&pageSize={pageSize}";
             return await _http.GetFromJsonAsync<PagedResult<BusLineDto>>(url);
         }
         catch (TaskCanceledException)
@@ -179,9 +180,17 @@ public class BusStopService : IBusStopService
     {
         try
         {
-            var url = $"/api/bus-stops?pageNumber={pageNumber}&pageSize={pageSize}";
-            if (!string.IsNullOrWhiteSpace(searchStopName)) url += $"&searchStopName={Uri.EscapeDataString(searchStopName)}";
-            if (townshipId.HasValue) url += $"&townshipId={townshipId.Value}";
+            string url;
+            if (!string.IsNullOrWhiteSpace(searchStopName))
+            {
+                url = $"/api/bus-stops/search?pageNumber={pageNumber}&pageSize={pageSize}&searchTerm={Uri.EscapeDataString(searchStopName)}";
+                if (townshipId.HasValue) url += $"&townshipId={townshipId.Value}";
+            }
+            else
+            {
+                url = $"/api/bus-stops?pageNumber={pageNumber}&pageSize={pageSize}";
+                if (townshipId.HasValue) url += $"&townshipId={townshipId.Value}";
+            }
             return await _http.GetFromJsonAsync<PagedResult<BusStopDto>>(url);
         }
         catch (TaskCanceledException)
@@ -344,9 +353,16 @@ public class YpsStoreService : IYpsStoreService
     {
         try
         {
-            var url = $"/api/yps-stores?pageNumber={pageNumber}&pageSize={pageSize}";
-            if (!string.IsNullOrWhiteSpace(searchName)) url += $"&searchName={Uri.EscapeDataString(searchName)}";
-            if (townshipId.HasValue) url += $"&townshipId={townshipId.Value}";
+            string url;
+            if (!string.IsNullOrWhiteSpace(searchName))
+            {
+                url = $"/api/yps-stores/search?pageNumber={pageNumber}&pageSize={pageSize}&townshipName={Uri.EscapeDataString(searchName)}";
+            }
+            else
+            {
+                url = $"/api/yps-stores?pageNumber={pageNumber}&pageSize={pageSize}";
+                if (townshipId.HasValue) url += $"&townshipId={townshipId.Value}";
+            }
             return await _http.GetFromJsonAsync<PagedResult<YpsStoreDto>>(url);
         }
         catch (TaskCanceledException)
@@ -470,8 +486,9 @@ public class TownshipService : ITownshipService
     {
         try
         {
-            var url = $"/api/townships?pageNumber={pageNumber}&pageSize={pageSize}";
-            if (!string.IsNullOrWhiteSpace(searchName)) url += $"&searchName={Uri.EscapeDataString(searchName)}";
+            var url = !string.IsNullOrWhiteSpace(searchName)
+                ? $"/api/townships/search?pageNumber={pageNumber}&pageSize={pageSize}&townshipName={Uri.EscapeDataString(searchName)}"
+                : $"/api/townships?pageNumber={pageNumber}&pageSize={pageSize}";
             return await _http.GetFromJsonAsync<PagedResult<TownshipDto>>(url);
         }
         catch (TaskCanceledException)
