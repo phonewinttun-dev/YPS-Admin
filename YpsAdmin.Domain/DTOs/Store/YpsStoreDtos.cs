@@ -38,7 +38,7 @@ namespace YpsAdmin.Domain.DTOs.Store
 
     public class UpdateYpsStoreRequest
     {
-        public string NameMm { get; set; } = null!;
+        public string? NameMm { get; set; }
         public string? NameEn { get; set; }
         public string? Category { get; set; }
         public int? TownshipId { get; set; }

@@ -53,6 +53,7 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpPut("{id}")]
+        [HttpPatch("{id}")]
         public async Task<IActionResult> UpdateYpsStore(int id, [FromBody] UpdateYpsStoreRequest request, CancellationToken cancellationToken)
         {
             var result = await _ypsStoreService.UpdateYpsStoreAsync(id, request, cancellationToken);

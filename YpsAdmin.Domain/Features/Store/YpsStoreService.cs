@@ -241,16 +241,39 @@ namespace YpsAdmin.Domain.Features.Store
                 return Result<YpsStoreDto>.Failure($"YPS store with Store ID '{storeId}' was not found.");
             }
 
-            store.NameMm = request.NameMm?.Trim() ?? store.NameMm;
-            store.NameEn = request.NameEn?.Trim();
-            store.Category = request.Category?.Trim();
-            store.TownshipId = request.TownshipId;
-            store.Latitude = request.Latitude;
-            store.Longitude = request.Longitude;
-
-            if (request.Latitude.HasValue && request.Longitude.HasValue)
+            if (request.NameMm != null)
             {
-                store.Geom = new Point((double)request.Longitude.Value, (double)request.Latitude.Value)
+                store.NameMm = request.NameMm.Trim();
+            }
+
+            if (request.NameEn != null)
+            {
+                store.NameEn = request.NameEn.Trim();
+            }
+
+            if (request.Category != null)
+            {
+                store.Category = request.Category.Trim();
+            }
+
+            if (request.TownshipId.HasValue)
+            {
+                store.TownshipId = request.TownshipId;
+            }
+
+            if (request.Latitude.HasValue)
+            {
+                store.Latitude = request.Latitude;
+            }
+
+            if (request.Longitude.HasValue)
+            {
+                store.Longitude = request.Longitude;
+            }
+
+            if (store.Latitude.HasValue && store.Longitude.HasValue)
+            {
+                store.Geom = new Point((double)store.Longitude.Value, (double)store.Latitude.Value)
                 {
                     SRID = 4326
                 };
