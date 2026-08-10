@@ -147,6 +147,8 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => new { e.StoreId, e.RouteId }, "UQ_YpsStore_Serving").IsUnique();
 
+            entity.Property(e => e.BusNumber).HasMaxLength(50);
+
             entity.HasOne(d => d.Route).WithMany(p => p.TblYpsStoreServingBusLines)
                 .HasForeignKey(d => d.RouteId)
                 .OnDelete(DeleteBehavior.SetNull)

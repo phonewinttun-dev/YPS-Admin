@@ -25,6 +25,9 @@ namespace YpsAdmin.Domain.Features
                         o.CommandTimeout(30);
                     }));
 
+            // Register MemoryCache
+            builder.Services.AddMemoryCache();
+
             // Register Feature Services
             builder.Services.AddScoped<IBusLineService, BusLineService>();
             builder.Services.AddScoped<IBusStopService, BusStopService>();
