@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 using YpsAdmin.Database.AppDbContextModels;
@@ -10,66 +9,53 @@ namespace YpsAdmin.Domain.Features.Store
     public class YpsStoreService : IYpsStoreService
     {
         private readonly AppDbContext _context;
-        private readonly IMemoryCache _cache;
 
-        public YpsStoreService(AppDbContext context, IMemoryCache cache)
+        public YpsStoreService(AppDbContext context)
         {
             _context = context;
-            _cache = cache;
         }
 
         public async Task<PagedResult<YpsStoreDto>> GetYpsStoresAsync(YpsStoreGetRequest request, CancellationToken cancellationToken = default)
         {
             try
             {
-                var cacheKey = "stores_all";
-                var allStores = await _cache.GetOrCreateAsync(cacheKey, async entry =>
-                {
-                    entry.SetAbsoluteExpiration(TimeSpan.FromHours(24));
-                    entry.SetPriority(CacheItemPriority.High);
-
-                    return await _context.TblYpsStores
-                        .AsNoTracking()
-                        .OrderBy(s => s.StoreId)
-                        .Select(s => new YpsStoreDto
-                        {
-                            StoreId = s.StoreId,
-                            NameMm = s.NameMm,
-                            NameEn = s.NameEn,
-                            Category = s.Category,
-                            TownshipId = s.TownshipId,
-                            TownshipNameMm = s.Township != null ? s.Township.TownshipNameMm : null,
-                            TownshipNameEn = s.Township != null ? s.Township.TownshipNameEn : null,
-                            Latitude = s.Latitude,
-                            Longitude = s.Longitude,
-                            NearestStops = s.TblYpsStoreNearestStops.Select(ns => new NearestStopDto
-                            {
-                                Id = ns.Id,
-                                StopNameMm = ns.StopNameMm,
-                                StopNameEn = ns.StopNameEn,
-                                MatchedStopId = ns.MatchedStopId
-                            }).ToList(),
-                            ServingBusLines = s.TblYpsStoreServingBusLines
-                                .Select(sl => sl.BusNumber)
-                                .ToList()
-                        })
-                        .ToListAsync(cancellationToken);
-                });
-
-                var filteredStores = allStores ?? new List<YpsStoreDto>();
+                var query = _context.TblYpsStores.AsNoTracking();
 
                 if (request.TownshipId.HasValue)
                 {
-                    filteredStores = filteredStores.Where(s => s.TownshipId == request.TownshipId.Value).ToList();
+                    query = query.Where(s => s.TownshipId == request.TownshipId.Value);
                 }
 
-                int totalCount = filteredStores.Count;
+                int totalCount = await query.CountAsync(cancellationToken);
                 int skip = (request.PageNumber - 1) * request.PageSize;
 
-                var pagedItems = filteredStores
+                var pagedItems = await query
+                    .OrderBy(s => s.StoreId)
                     .Skip(skip)
                     .Take(request.PageSize)
-                    .ToList();
+                    .Select(s => new YpsStoreDto
+                    {
+                        StoreId = s.StoreId,
+                        NameMm = s.NameMm,
+                        NameEn = s.NameEn,
+                        Category = s.Category,
+                        TownshipId = s.TownshipId,
+                        TownshipNameMm = s.Township != null ? s.Township.TownshipNameMm : null,
+                        TownshipNameEn = s.Township != null ? s.Township.TownshipNameEn : null,
+                        Latitude = s.Latitude,
+                        Longitude = s.Longitude,
+                        NearestStops = s.TblYpsStoreNearestStops.Select(ns => new NearestStopDto
+                        {
+                            Id = ns.Id,
+                            StopNameMm = ns.StopNameMm,
+                            StopNameEn = ns.StopNameEn,
+                            MatchedStopId = ns.MatchedStopId
+                        }).ToList(),
+                        ServingBusLines = s.TblYpsStoreServingBusLines
+                            .Select(sl => sl.BusNumber)
+                            .ToList()
+                    })
+                    .ToListAsync(cancellationToken);
 
                 var pagination = new Pagination(request.PageNumber, request.PageSize, totalCount);
                 return PagedResult<YpsStoreDto>.Success(pagedItems, pagination, "YPS stores retrieved successfully.");
