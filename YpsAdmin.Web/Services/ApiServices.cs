@@ -4,28 +4,28 @@ using YpsAdmin.Shared;
 namespace YpsAdmin.Web.Services;
 
 // DTOs matching API specs
-public record BusLineDto(int RouteId, int BusNumber, string? OutboundTitleMm, string? OutboundTitleEn, string? ReturnTitleMm, string? ReturnTitleEn, bool IsYpsAccepted);
-public record CreateBusLineRequest(int RouteId, int BusNumber, string? OutboundTitleMm, string? OutboundTitleEn, string? ReturnTitleMm, string? ReturnTitleEn, bool IsYpsAccepted);
-public record UpdateBusLineRequest(int BusNumber, string? OutboundTitleMm, string? OutboundTitleEn, string? ReturnTitleMm, string? ReturnTitleEn, bool IsYpsAccepted);
+public record BusLineDto(int RouteId, string BusNumber, string? OutboundTitleMm, string? OutboundTitleEn, string? ReturnTitleMm, string? ReturnTitleEn, bool IsYpsAccepted);
+public record CreateBusLineRequest(int RouteId, string BusNumber, string? OutboundTitleMm, string? OutboundTitleEn, string? ReturnTitleMm, string? ReturnTitleEn, bool IsYpsAccepted);
+public record UpdateBusLineRequest(string BusNumber, string? OutboundTitleMm, string? OutboundTitleEn, string? ReturnTitleMm, string? ReturnTitleEn, bool IsYpsAccepted);
 
 public record BusStopDto(int StopId, string NameMm, string? NameEn, int? TownshipId, string? TownshipNameMm, string? TownshipNameEn, string? RoadMm, string? RoadEn, int TotalServingBusLines);
 public record CreateBusStopRequest(int? StopId, string NameMm, string? NameEn, int? TownshipId, string? RoadMm, string? RoadEn);
 public record UpdateBusStopRequest(string NameMm, string? NameEn, int? TownshipId, string? RoadMm, string? RoadEn);
 
 public record RouteStopDto(int Id, int RouteId, int? StopId, string Direction, int StopOrder, string? StopType, string? StopNameMm, string? StopNameEn, int? TownshipId, string? TownshipNameMm, string? TownshipNameEn, string? RoadMm, string? RoadEn);
-public record FullRouteResponseDto(int RouteId, int BusNumber, string? OutboundTitleMm, string? OutboundTitleEn, string? ReturnTitleMm, string? ReturnTitleEn, List<RouteStopDto> OutboundStops, List<RouteStopDto> ReturnStops);
+public record FullRouteResponseDto(int RouteId, string BusNumber, string? OutboundTitleMm, string? OutboundTitleEn, string? ReturnTitleMm, string? ReturnTitleEn, List<RouteStopDto> OutboundStops, List<RouteStopDto> ReturnStops);
 public record AssignRouteStopItem(int? StopId, string Direction, int StopOrder, string? StopType);
 public record AssignRouteStopsRequest(int RouteId, List<AssignRouteStopItem> Stops);
 public record ReorderItem(int RouteStopId, int NewStopOrder);
 public record ReorderRouteStopsRequest(int RouteId, string Direction, List<ReorderItem> Items);
 
 public record NearestStopDto(int Id, string? StopNameMm, string? StopNameEn, int? MatchedStopId);
-public record YpsStoreDto(int StoreId, string NameMm, string? NameEn, string? Category, int? TownshipId, string? TownshipNameMm, string? TownshipNameEn, decimal? Latitude, decimal? Longitude, List<NearestStopDto> NearestStops, List<int> ServingBusLines);
+public record YpsStoreDto(int StoreId, string NameMm, string? NameEn, string? Category, int? TownshipId, string? TownshipNameMm, string? TownshipNameEn, decimal? Latitude, decimal? Longitude, List<NearestStopDto> NearestStops, List<string> ServingBusLines);
 public record CreateYpsStoreRequest(int? StoreId, string NameMm, string? NameEn, string? Category, int? TownshipId, decimal? Latitude, decimal? Longitude);
 public record UpdateYpsStoreRequest(string NameMm, string? NameEn, string? Category, int? TownshipId, decimal? Latitude, decimal? Longitude);
 public record AssignNearestStopItem(int? MatchedStopId, string? StopNameMm, string? StopNameEn);
 public record AssignNearestStopsRequest(List<AssignNearestStopItem> NearestStops);
-public record AssignServingBusLinesRequest(List<int> BusNumbers);
+public record AssignServingBusLinesRequest(List<string> BusNumbers);
 
 public record TownshipDto(int TownshipId, string TownshipNameMm, string? TownshipNameEn, bool DeleteFlag);
 public record CreateTownshipRequest(string TownshipNameMm, string? TownshipNameEn);

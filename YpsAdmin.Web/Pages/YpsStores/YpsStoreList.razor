@@ -306,7 +306,6 @@
     // Serving Buses Modal
     private bool showBusesModal = false;
     private List<BusLineDto>? allBusLines;
-    private HashSet<int> selectedBusNumbers = new();
 
     // Delete Modal
     private bool showDeleteModal = false;
@@ -505,6 +504,8 @@
         }
     }
 
+    private HashSet<string> selectedBusNumbers = new();
+
     private async Task OpenAssignBusesModal(YpsStoreDto item)
     {
         activeStore = item;
@@ -520,7 +521,7 @@
         showBusesModal = true;
     }
 
-    private void ToggleBusLineSelection(int busNumber, object? isChecked)
+    private void ToggleBusLineSelection(string busNumber, object? isChecked)
     {
         if (isChecked is bool b && b) selectedBusNumbers.Add(busNumber);
         else selectedBusNumbers.Remove(busNumber);

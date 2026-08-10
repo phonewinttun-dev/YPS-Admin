@@ -134,7 +134,7 @@
         <div class="space-y-3">
             <div>
                 <label class="block text-xs font-medium text-on-surface mb-1">@Lang.GetText("BusNumber") *</label>
-                <input type="number" @bind="formBusNumber" min="1" class="w-full h-9 px-3 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono @(!string.IsNullOrEmpty(formBusNumberError) ? "border-red-500 bg-red-50/20" : "border-outline-variant")" />
+                <input type="text" @bind="formBusNumber" class="w-full h-9 px-3 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono @(!string.IsNullOrEmpty(formBusNumberError) ? "border-red-500 bg-red-50/20" : "border-outline-variant")" />
                 @if (!string.IsNullOrEmpty(formBusNumberError))
                 {
                     <p class="text-2xs text-red-600 mt-1">@formBusNumberError</p>
@@ -208,7 +208,8 @@
     // Form Modal state & validation
     private bool showFormModal = false;
     private int? editingId = null;
-    private int formBusNumber = 0;
+    private int formRouteId = 0;
+    private string formBusNumber = "";
     private string formOutboundTitleMm = "";
     private string formOutboundTitleEn = "";
     private string formReturnTitleMm = "";
@@ -253,7 +254,8 @@
     private void OpenCreateModal()
     {
         editingId = null;
-        formBusNumber = 0;
+        formRouteId = 0;
+        formBusNumber = "";
         formOutboundTitleMm = "";
         formOutboundTitleEn = "";
         formReturnTitleMm = "";
@@ -268,6 +270,7 @@
     private void OpenEditModal(BusLineDto item)
     {
         editingId = item.RouteId;
+        formRouteId = item.RouteId;
         formBusNumber = item.BusNumber;
         formOutboundTitleMm = item.OutboundTitleMm ?? "";
         formOutboundTitleEn = item.OutboundTitleEn ?? "";
@@ -288,9 +291,9 @@
         formBusNumberError = "";
         formOutboundError = "";
 
-        if (formBusNumber <= 0)
+        if (string.IsNullOrWhiteSpace(formBusNumber))
         {
-            formBusNumberError = "Bus Number must be greater than 0.";
+            formBusNumberError = "Bus Number is required.";
         }
         if (string.IsNullOrWhiteSpace(formOutboundTitleMm))
         {
@@ -314,7 +317,7 @@
             }
             else
             {
-                var req = new CreateBusLineRequest(formBusNumber, formBusNumber, formOutboundTitleMm, formOutboundTitleEn, formReturnTitleMm, formReturnTitleEn, formYpsAccepted);
+                var req = new CreateBusLineRequest(formRouteId, formBusNumber, formOutboundTitleMm, formOutboundTitleEn, formReturnTitleMm, formReturnTitleEn, formYpsAccepted);
                 await BusLineService.CreateAsync(req);
                 Toast.ShowSuccess($"Bus Line {formBusNumber} created successfully.");
             }
