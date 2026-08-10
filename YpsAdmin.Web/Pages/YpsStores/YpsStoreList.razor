@@ -127,19 +127,19 @@
         }
 
         <div class="space-y-3">
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs font-medium text-on-surface mb-1">Name (MM) *</label>
-                    <input type="text" @bind="formNameMm" class="w-full h-9 px-3 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary @(!string.IsNullOrEmpty(formNameMmError) ? "border-red-500 bg-red-50/20" : "border-outline-variant")" />
-                    @if (!string.IsNullOrEmpty(formNameMmError))
-                    {
-                        <p class="text-2xs text-red-600 mt-1">@formNameMmError</p>
-                    }
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-tertiary mb-1">Name (EN)</label>
-                    <input type="text" @bind="formNameEn" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono" />
-                </div>
+            <div>
+                <label class="block text-xs font-medium text-on-surface mb-1">
+                    Name (MM) <span class="@(string.IsNullOrWhiteSpace(formNameMm) ? "text-red-500 font-bold" : "text-tertiary")">*</span>
+                </label>
+                <input type="text" @bind="formNameMm" class="w-full h-9 px-3 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary @(!string.IsNullOrEmpty(formNameMmError) ? "border-red-500 bg-red-50/20" : "border-outline-variant")" />
+                @if (!string.IsNullOrEmpty(formNameMmError))
+                {
+                    <p class="text-2xs text-red-600 mt-1">@formNameMmError</p>
+                }
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-tertiary mb-1">Name (EN)</label>
+                <input type="text" @bind="formNameEn" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono" />
             </div>
             <div>
                 <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("Category")</label>
@@ -186,14 +186,27 @@
              Title="@($"{Lang.GetText("AssignStops")} - {activeStore?.NameMm}")"
              Description="Select nearest bus stops that serve this YPS store location.">
     <ChildContent>
+        <div class="flex items-center justify-between mb-3">
+            <label class="inline-flex items-center gap-2 text-xs font-medium text-on-surface cursor-pointer select-none border border-outline-variant px-3 py-1.5 rounded-md hover:bg-surface-container/50 transition-colors">
+                <input type="checkbox" @bind="showOnlyLinkedStops" class="h-4 w-4 rounded border-outline text-secondary focus:ring-secondary/50" />
+                <span>Linked Stops</span>
+            </label>
+        </div>
         <div class="max-h-64 overflow-y-auto space-y-1.5 border border-outline-variant p-3 rounded-md bg-surface-container/30">
-            @if (allBusStops == null || !allBusStops.Any())
+            @{
+                var displayedStops = showOnlyLinkedStops
+                    ? allBusStops?.Where(s => selectedStopIds.Contains(s.StopId)).ToList()
+                    : allBusStops;
+            }
+            @if (displayedStops == null || !displayedStops.Any())
             {
-                <p class="text-xs text-tertiary text-center p-4">No bus stops available.</p>
+                <p class="text-xs text-tertiary text-center p-4">
+                    @(showOnlyLinkedStops ? "No linked bus stops found." : "No bus stops available.")
+                </p>
             }
             else
             {
-                @foreach (var stop in allBusStops)
+                @foreach (var stop in displayedStops)
                 {
                     <div class="flex items-center gap-2.5 p-2 hover:bg-white rounded-md text-xs transition-colors border border-transparent hover:border-outline-variant">
                         <input type="checkbox" id="@($"store_stop_{stop.StopId}")" checked="@selectedStopIds.Contains(stop.StopId)" @onchange='(e) => ToggleStopSelection(stop.StopId, e.Value)' class="h-4 w-4 rounded border-outline text-secondary focus:ring-secondary/50" />
@@ -222,14 +235,27 @@
              Title="@($"{Lang.GetText("AssignBuses")} - {activeStore?.NameMm}")"
              Description="Select bus lines serving commuters near this YPS store.">
     <ChildContent>
+        <div class="flex items-center justify-between mb-3">
+            <label class="inline-flex items-center gap-2 text-xs font-medium text-on-surface cursor-pointer select-none border border-outline-variant px-3 py-1.5 rounded-md hover:bg-surface-container/50 transition-colors">
+                <input type="checkbox" @bind="showOnlyLinkedBuses" class="h-4 w-4 rounded border-outline text-secondary focus:ring-secondary/50" />
+                <span>Linked Buses</span>
+            </label>
+        </div>
         <div class="max-h-64 overflow-y-auto space-y-1.5 border border-outline-variant p-3 rounded-md bg-surface-container/30">
-            @if (allBusLines == null || !allBusLines.Any())
+            @{
+                var displayedBusLines = showOnlyLinkedBuses
+                    ? allBusLines?.Where(l => selectedBusNumbers.Contains(l.BusNumber)).ToList()
+                    : allBusLines;
+            }
+            @if (displayedBusLines == null || !displayedBusLines.Any())
             {
-                <p class="text-xs text-tertiary text-center p-4">No bus lines available.</p>
+                <p class="text-xs text-tertiary text-center p-4">
+                    @(showOnlyLinkedBuses ? "No linked bus lines found." : "No bus lines available.")
+                </p>
             }
             else
             {
-                @foreach (var line in allBusLines)
+                @foreach (var line in displayedBusLines)
                 {
                     <div class="flex items-center gap-2.5 p-2 hover:bg-white rounded-md text-xs transition-colors border border-transparent hover:border-outline-variant">
                         <input type="checkbox" id="@($"store_bus_{line.BusNumber}")" checked="@selectedBusNumbers.Contains(line.BusNumber)" @onchange='(e) => ToggleBusLineSelection(line.BusNumber, e.Value)' class="h-4 w-4 rounded border-outline text-secondary focus:ring-secondary/50" />
@@ -299,12 +325,14 @@
 
     // Nearest Stops Modal
     private bool showStopsModal = false;
+    private bool showOnlyLinkedStops = false;
     private YpsStoreDto? activeStore;
     private List<BusStopDto>? allBusStops;
     private HashSet<int> selectedStopIds = new();
 
     // Serving Buses Modal
     private bool showBusesModal = false;
+    private bool showOnlyLinkedBuses = false;
     private List<BusLineDto>? allBusLines;
 
     // Delete Modal
@@ -460,6 +488,7 @@
     private async Task OpenAssignStopsModal(YpsStoreDto item)
     {
         activeStore = item;
+        showOnlyLinkedStops = false;
         selectedStopIds.Clear();
         if (item.NearestStops != null)
         {
@@ -509,6 +538,7 @@
     private async Task OpenAssignBusesModal(YpsStoreDto item)
     {
         activeStore = item;
+        showOnlyLinkedBuses = false;
         selectedBusNumbers.Clear();
         if (item.ServingBusLines != null)
         {
