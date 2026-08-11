@@ -412,7 +412,7 @@ public class YpsStoreService : IYpsStoreService
     {
         try
         {
-            var resp = await _http.PutAsJsonAsync($"/api/yps-stores/{id}", request);
+            var resp = await _http.PatchAsJsonAsync($"/api/yps-stores/{id}", request);
             return await resp.Content.ReadFromJsonAsync<Result<YpsStoreDto>>();
         }
         catch (TaskCanceledException)

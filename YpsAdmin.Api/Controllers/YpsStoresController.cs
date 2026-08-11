@@ -52,7 +52,6 @@ namespace YpsAdmin.Api.Controllers
             return CreatedAtAction(nameof(GetYpsStoreById), new { id = result.Data!.StoreId }, result);
         }
 
-        [HttpPut("{id}")]
         [HttpPatch("{id}")]
         public async Task<IActionResult> UpdateYpsStore(int id, [FromBody] UpdateYpsStoreRequest request, CancellationToken cancellationToken)
         {

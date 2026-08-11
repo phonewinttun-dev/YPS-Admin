@@ -234,17 +234,17 @@ namespace YpsAdmin.Domain.Features.Store
 
             if (request.NameEn != null)
             {
-                store.NameEn = request.NameEn.Trim();
+                store.NameEn = string.IsNullOrWhiteSpace(request.NameEn) ? null : request.NameEn.Trim();
             }
 
             if (request.Category != null)
             {
-                store.Category = request.Category.Trim();
+                store.Category = string.IsNullOrWhiteSpace(request.Category) ? null : request.Category.Trim();
             }
 
             if (request.TownshipId.HasValue)
             {
-                store.TownshipId = request.TownshipId;
+                store.TownshipId = request.TownshipId.Value > 0 ? request.TownshipId.Value : null;
             }
 
             if (request.Latitude.HasValue)
