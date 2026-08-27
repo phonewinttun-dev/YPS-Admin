@@ -1,8 +1,7 @@
 @page "/yps-stores"
-@inject IYpsStoreService StoreService
+@inject IStoreService StoreService
 @inject IBusStopService BusStopService
-@inject IBusLineService BusLineService
-@inject ITownshipService TownshipService
+@inject IRegionService RegionService
 @inject IToastService Toast
 @inject LanguageService Lang
 
@@ -23,7 +22,7 @@
                 <input type="text"
                        value="@searchQuery"
                        @oninput="OnSearchInput"
-                       placeholder="Search by township name..."
+                       placeholder="Search stores..."
                        class="w-full h-10 pl-9 pr-3 text-sm border border-outline-variant rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all" />
             </div>
 
@@ -52,8 +51,9 @@
                             <tr class="bg-surface-container/60 border-b border-outline-variant text-xs font-semibold text-tertiary uppercase tracking-wider">
                                 <th class="p-3.5">@Lang.GetText("StoreName")</th>
                                 <th class="p-3.5">@Lang.GetText("Category")</th>
-                                <th class="p-3.5">@Lang.GetText("TownshipMM")</th>
+                                <th class="p-3.5">@Lang.GetText("Region")</th>
                                 <th class="p-3.5 font-mono">@Lang.GetText("Coordinates")</th>
+                                <th class="p-3.5">@Lang.GetText("ServingBuses")</th>
                                 <th class="p-3.5 text-right">@Lang.GetText("Actions")</th>
                             </tr>
                         </thead>
@@ -64,26 +64,46 @@
                                 {
                                     <tr class="hover:bg-surface-container/30 transition-colors">
                                         <td class="p-3.5">
-                                            <div class="font-bold text-on-surface">@item.NameMm</div>
-                                            @if (!string.IsNullOrEmpty(item.NameEn))
+                                            <div class="font-bold text-on-surface">@(item.MmName ?? item.EngName ?? "Unnamed Store")</div>
+                                            @if (!string.IsNullOrEmpty(item.EngName) && item.EngName != item.MmName)
                                             {
-                                                <div class="text-xs text-tertiary font-mono mt-0.5">@item.NameEn</div>
+                                                <div class="text-xs text-tertiary font-mono mt-0.5">@item.EngName</div>
                                             }
                                         </td>
                                         <td class="p-3.5">
                                             <CategoryBadge Text="@item.Category" Variant="@CategoryBadge.ResolveStoreCategoryVariant(item.Category)" ShowDot="true" />
                                         </td>
-                                        <td class="p-3.5 text-on-surface">@item.TownshipNameMm</td>
+                                        <td class="p-3.5 text-on-surface">@(item.RegionName ?? "Unassigned")</td>
                                         <td class="p-3.5 font-mono text-xs text-secondary">
-                                            @(item.Latitude?.ToString("F6") ?? "-"), @(item.Longitude?.ToString("F6") ?? "-")
+                                            @item.Lat.ToString("F6"), @item.Lon.ToString("F6")
+                                        </td>
+                                        <td class="p-3.5">
+                                            @if (item.ServingBusNumbers != null && item.ServingBusNumbers.Any())
+                                            {
+                                                <div class="flex flex-wrap gap-1">
+                                                    @foreach (var bNum in item.ServingBusNumbers.Take(4))
+                                                    {
+                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-2xs font-mono font-bold bg-secondary/10 text-secondary border border-secondary/20">
+                                                            Bus @bNum
+                                                        </span>
+                                                    }
+                                                    @if (item.ServingBusNumbers.Count > 4)
+                                                    {
+                                                        <span class="text-2xs text-tertiary font-mono self-center">
+                                                            +@(item.ServingBusNumbers.Count - 4) more
+                                                        </span>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-xs text-tertiary">-</span>
+                                            }
                                         </td>
                                         <td class="p-3.5 text-right">
                                             <div class="flex items-center justify-end gap-1.5">
                                                 <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick="() => OpenAssignStopsModal(item)">
                                                     @Lang.GetText("AssignStops")
-                                                </Button>
-                                                <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick="() => OpenAssignBusesModal(item)">
-                                                    @Lang.GetText("AssignBuses")
                                                 </Button>
                                                 <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Sm" OnClick="() => OpenEditModal(item)">
                                                     @Lang.GetText("Edit")
@@ -114,7 +134,7 @@
 <ModalDialog IsOpen="@showFormModal"
              IsOpenChanged="v => showFormModal = v"
              Title="@(editingId.HasValue ? $"{Lang.GetText("Edit")} {Lang.GetText("NavYpsStores")}" : $"{Lang.GetText("Add")} {Lang.GetText("NavYpsStores")}")"
-             Description="Fill in the store name and coordinates below. Fields marked with * are required.">
+             Description="Fill in the store name and coordinates below.">
     <ChildContent>
         @if (!string.IsNullOrEmpty(formValidationError))
         {
@@ -128,32 +148,30 @@
 
         <div class="space-y-3">
             <div>
-                <label class="block text-xs font-medium text-on-surface mb-1">
-                    Name (MM) <span class="@(string.IsNullOrWhiteSpace(formNameMm) ? "text-red-500 font-bold" : "text-tertiary")">*</span>
-                </label>
-                <input type="text" @bind="formNameMm" class="w-full h-9 px-3 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary @(!string.IsNullOrEmpty(formNameMmError) ? "border-red-500 bg-red-50/20" : "border-outline-variant")" />
-                @if (!string.IsNullOrEmpty(formNameMmError))
+                <label class="block text-xs font-medium text-on-surface mb-1">Name (MM) *</label>
+                <input type="text" @bind="formMmName" class="w-full h-9 px-3 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary @(!string.IsNullOrEmpty(formMmNameError) ? "border-red-500 bg-red-50/20" : "border-outline-variant")" />
+                @if (!string.IsNullOrEmpty(formMmNameError))
                 {
-                    <p class="text-2xs text-red-600 mt-1">@formNameMmError</p>
+                    <p class="text-2xs text-red-600 mt-1">@formMmNameError</p>
                 }
             </div>
             <div>
                 <label class="block text-xs font-medium text-tertiary mb-1">Name (EN)</label>
-                <input type="text" @bind="formNameEn" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono" />
+                <input type="text" @bind="formEngName" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono" />
             </div>
             <div>
                 <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("Category")</label>
                 <input type="text" @bind="formCategory" placeholder="e.g. Top-Up Point, Retail Store" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" />
             </div>
             <div>
-                <label class="block text-xs font-medium text-tertiary mb-1">Township</label>
-                <select @bind="formTownshipId" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary bg-white">
-                    <option value="">Select Township</option>
-                    @if (townships != null)
+                <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("Region")</label>
+                <select @bind="formRegionId" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary bg-white">
+                    <option value="">Select Region</option>
+                    @if (regions != null)
                     {
-                        @foreach (var t in townships)
+                        @foreach (var r in regions)
                         {
-                            <option value="@t.TownshipId">@t.TownshipNameMm (@t.TownshipNameEn)</option>
+                            <option value="@r.Id">@r.RegionName</option>
                         }
                     }
                 </select>
@@ -161,11 +179,11 @@
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-xs font-medium text-tertiary mb-1">Latitude</label>
-                    <input type="number" step="any" @bind="formLatitude" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono" />
+                    <input type="number" step="any" @bind="formLat" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono" />
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-tertiary mb-1">Longitude</label>
-                    <input type="number" step="any" @bind="formLongitude" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono" />
+                    <input type="number" step="any" @bind="formLon" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono" />
                 </div>
             </div>
         </div>
@@ -183,7 +201,7 @@
 <!-- Nearest Bus Stops Modal -->
 <ModalDialog IsOpen="@showStopsModal"
              IsOpenChanged="v => showStopsModal = v"
-             Title="@($"{Lang.GetText("AssignStops")} - {activeStore?.NameMm}")"
+             Title="@($"{Lang.GetText("AssignStops")} - {activeStore?.MmName ?? activeStore?.EngName}")"
              Description="Select nearest bus stops that serve this YPS store location.">
     <ChildContent>
         <div class="flex items-center justify-between mb-3">
@@ -195,7 +213,7 @@
         <div class="max-h-64 overflow-y-auto space-y-1.5 border border-outline-variant p-3 rounded-md bg-surface-container/30">
             @{
                 var displayedStops = showOnlyLinkedStops
-                    ? allBusStops?.Where(s => selectedStopIds.Contains(s.StopId)).ToList()
+                    ? allBusStops?.Where(s => selectedStopMap.ContainsKey(s.Id)).ToList()
                     : allBusStops;
             }
             @if (displayedStops == null || !displayedStops.Any())
@@ -208,12 +226,25 @@
             {
                 @foreach (var stop in displayedStops)
                 {
-                    <div class="flex items-center gap-2.5 p-2 hover:bg-white rounded-md text-xs transition-colors border border-transparent hover:border-outline-variant">
-                        <input type="checkbox" id="@($"store_stop_{stop.StopId}")" checked="@selectedStopIds.Contains(stop.StopId)" @onchange='(e) => ToggleStopSelection(stop.StopId, e.Value)' class="h-4 w-4 rounded border-outline text-secondary focus:ring-secondary/50" />
-                        <label for="@($"store_stop_{stop.StopId}")" class="flex-1 cursor-pointer select-none">
-                            <span class="font-bold text-on-surface">@stop.NameMm</span>
-                            <span class="text-tertiary font-mono ml-1.5">(@stop.RoadMm)</span>
-                        </label>
+                    var isChecked = selectedStopMap.ContainsKey(stop.Id);
+                    <div class="flex items-center justify-between gap-2.5 p-2 hover:bg-white rounded-md text-xs transition-colors border border-transparent hover:border-outline-variant">
+                        <div class="flex items-center gap-2.5 flex-1">
+                            <input type="checkbox" id="@($"store_stop_{stop.Id}")" checked="@isChecked" @onchange='(e) => ToggleStopSelection(stop.Id, e.Value)' class="h-4 w-4 rounded border-outline text-secondary focus:ring-secondary/50" />
+                            <label for="@($"store_stop_{stop.Id}")" class="cursor-pointer select-none">
+                                <span class="font-bold text-on-surface">@stop.StopName</span>
+                                <span class="text-tertiary font-mono ml-1.5">(@(stop.RegionName ?? "No Region"))</span>
+                            </label>
+                        </div>
+                        @if (isChecked)
+                        {
+                            <div class="flex items-center gap-1">
+                                <span class="text-2xs text-tertiary font-mono">km:</span>
+                                <input type="number" step="0.01" min="0" 
+                                       value="@(selectedStopMap.TryGetValue(stop.Id, out var dist) ? dist : 0.1)"
+                                       @onchange='(e) => UpdateDistance(stop.Id, e.Value)'
+                                       class="w-16 h-7 px-1.5 text-xs border border-outline-variant rounded font-mono" />
+                            </div>
+                        }
                     </div>
                 }
             }
@@ -229,65 +260,13 @@
     </Footer>
 </ModalDialog>
 
-<!-- Serving Bus Lines Modal -->
-<ModalDialog IsOpen="@showBusesModal"
-             IsOpenChanged="v => showBusesModal = v"
-             Title="@($"{Lang.GetText("AssignBuses")} - {activeStore?.NameMm}")"
-             Description="Select bus lines serving commuters near this YPS store.">
-    <ChildContent>
-        <div class="flex items-center justify-between mb-3">
-            <label class="inline-flex items-center gap-2 text-xs font-medium text-on-surface cursor-pointer select-none border border-outline-variant px-3 py-1.5 rounded-md hover:bg-surface-container/50 transition-colors">
-                <input type="checkbox" @bind="showOnlyLinkedBuses" class="h-4 w-4 rounded border-outline text-secondary focus:ring-secondary/50" />
-                <span>Linked Buses</span>
-            </label>
-        </div>
-        <div class="max-h-64 overflow-y-auto space-y-1.5 border border-outline-variant p-3 rounded-md bg-surface-container/30">
-            @{
-                var displayedBusLines = showOnlyLinkedBuses
-                    ? allBusLines?.Where(l => selectedBusNumbers.Contains(l.BusNumber)).ToList()
-                    : allBusLines;
-            }
-            @if (displayedBusLines == null || !displayedBusLines.Any())
-            {
-                <p class="text-xs text-tertiary text-center p-4">
-                    @(showOnlyLinkedBuses ? "No linked bus lines found." : "No bus lines available.")
-                </p>
-            }
-            else
-            {
-                @foreach (var line in displayedBusLines)
-                {
-                    <div class="flex items-center gap-2.5 p-2 hover:bg-white rounded-md text-xs transition-colors border border-transparent hover:border-outline-variant">
-                        <input type="checkbox" id="@($"store_bus_{line.BusNumber}")" checked="@selectedBusNumbers.Contains(line.BusNumber)" @onchange='(e) => ToggleBusLineSelection(line.BusNumber, e.Value)' class="h-4 w-4 rounded border-outline text-secondary focus:ring-secondary/50" />
-                        <label for="@($"store_bus_{line.BusNumber}")" class="flex-1 cursor-pointer select-none">
-                            <span class="font-bold text-secondary">Bus @line.BusNumber</span>
-                            @if (!string.IsNullOrEmpty(line.OutboundTitleMm))
-                            {
-                                <span class="text-tertiary ml-1.5">(@line.OutboundTitleMm)</span>
-                            }
-                        </label>
-                    </div>
-                }
-            }
-        </div>
-    </ChildContent>
-    <Footer>
-        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick="() => showBusesModal = false">
-            @Lang.GetText("Cancel")
-        </Button>
-        <Button Variant="ButtonVariant.Default" Size="ButtonSize.Sm" IsLoading="@isSaving" OnClick="SaveServingBuses">
-            @Lang.GetText("Save")
-        </Button>
-    </Footer>
-</ModalDialog>
-
 <!-- Delete Modal -->
 <ModalDialog IsOpen="@showDeleteModal"
              IsOpenChanged="v => showDeleteModal = v"
              Title="@Lang.GetText("ConfirmDeleteTitle")"
              Description="@Lang.GetText("ConfirmDeleteMessage")">
     <ChildContent>
-        <p class="text-xs text-tertiary">This action cannot be undone. Removing this store will un-assign its nearest bus stops and serving lines.</p>
+        <p class="text-xs text-tertiary">This action cannot be undone. Removing this store will un-assign its nearest bus stops.</p>
     </ChildContent>
     <Footer>
         <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick="() => showDeleteModal = false">
@@ -300,8 +279,8 @@
 </ModalDialog>
 
 @code {
-    private PagedResult<YpsStoreDto>? stores;
-    private List<TownshipDto>? townships;
+    private PagedResult<StoreDto>? stores;
+    private List<RegionDto>? regions;
     private bool isLoading = true;
     private bool hasError = false;
     private string? errorMessage = null;
@@ -314,26 +293,21 @@
     // Form Modal state & validation
     private bool showFormModal = false;
     private int? editingId = null;
-    private string formNameMm = "";
-    private string formNameEn = "";
+    private string formMmName = "";
+    private string formEngName = "";
     private string formCategory = "";
-    private int? formTownshipId = null;
-    private decimal formLatitude = 16.8661m;
-    private decimal formLongitude = 96.1951m;
+    private int? formRegionId = null;
+    private double formLat = 16.8661;
+    private double formLon = 96.1951;
     private string formValidationError = "";
-    private string formNameMmError = "";
+    private string formMmNameError = "";
 
     // Nearest Stops Modal
     private bool showStopsModal = false;
     private bool showOnlyLinkedStops = false;
-    private YpsStoreDto? activeStore;
+    private StoreDto? activeStore;
     private List<BusStopDto>? allBusStops;
-    private HashSet<int> selectedStopIds = new();
-
-    // Serving Buses Modal
-    private bool showBusesModal = false;
-    private bool showOnlyLinkedBuses = false;
-    private List<BusLineDto>? allBusLines;
+    private Dictionary<long, double> selectedStopMap = new();
 
     // Delete Modal
     private bool showDeleteModal = false;
@@ -346,12 +320,12 @@
         await LoadData();
     }
 
-    private async Task EnsureTownshipsLoadedAsync()
+    private async Task EnsureRegionsLoadedAsync()
     {
-        if (townships == null)
+        if (regions == null)
         {
-            var res = await TownshipService.GetTownshipsAsync(1, 500, null);
-            if (res != null && res.Data != null) townships = res.Data;
+            var res = await RegionService.GetRegionsAsync(1, 500, null);
+            if (res != null && res.Data != null) regions = res.Data;
         }
     }
 
@@ -361,15 +335,6 @@
         {
             var res = await BusStopService.GetBusStopsAsync(1, 500, null);
             if (res != null && res.Data != null) allBusStops = res.Data;
-        }
-    }
-
-    private async Task EnsureBusLinesLoadedAsync()
-    {
-        if (allBusLines == null)
-        {
-            var res = await BusLineService.GetBusLinesAsync(1, 200, null);
-            if (res != null && res.Data != null) allBusLines = res.Data;
         }
     }
 
@@ -416,30 +381,30 @@
     private async Task OpenCreateModal()
     {
         editingId = null;
-        formNameMm = "";
-        formNameEn = "";
+        formMmName = "";
+        formEngName = "";
         formCategory = "";
-        formTownshipId = null;
-        formLatitude = 16.8661m;
-        formLongitude = 96.1951m;
+        formRegionId = null;
+        formLat = 16.8661;
+        formLon = 96.1951;
         formValidationError = "";
-        formNameMmError = "";
-        await EnsureTownshipsLoadedAsync();
+        formMmNameError = "";
+        await EnsureRegionsLoadedAsync();
         showFormModal = true;
     }
 
-    private async Task OpenEditModal(YpsStoreDto item)
+    private async Task OpenEditModal(StoreDto item)
     {
-        editingId = item.StoreId;
-        formNameMm = item.NameMm;
-        formNameEn = item.NameEn ?? "";
+        editingId = item.Id;
+        formMmName = item.MmName ?? "";
+        formEngName = item.EngName ?? "";
         formCategory = item.Category ?? "";
-        formTownshipId = item.TownshipId;
-        formLatitude = item.Latitude ?? 16.8661m;
-        formLongitude = item.Longitude ?? 96.1951m;
+        formRegionId = item.RegionId;
+        formLat = item.Lat;
+        formLon = item.Lon;
         formValidationError = "";
-        formNameMmError = "";
-        await EnsureTownshipsLoadedAsync();
+        formMmNameError = "";
+        await EnsureRegionsLoadedAsync();
         showFormModal = true;
     }
 
@@ -448,11 +413,11 @@
     private async Task SaveStore()
     {
         formValidationError = "";
-        formNameMmError = "";
+        formMmNameError = "";
 
-        if (string.IsNullOrWhiteSpace(formNameMm))
+        if (string.IsNullOrWhiteSpace(formMmName) && string.IsNullOrWhiteSpace(formEngName))
         {
-            formNameMmError = "Store Name (MM) is required.";
+            formMmNameError = "Store Name is required.";
             formValidationError = "Please fix the validation errors before saving.";
             return;
         }
@@ -462,13 +427,21 @@
         {
             if (editingId.HasValue)
             {
-                var req = new UpdateYpsStoreRequest(formNameMm, formNameEn, formCategory, formTownshipId, formLatitude, formLongitude);
+                var req = new UpdateStoreRequest(
+                    string.IsNullOrWhiteSpace(formEngName) ? null : formEngName.Trim(),
+                    string.IsNullOrWhiteSpace(formMmName) ? null : formMmName.Trim(),
+                    string.IsNullOrWhiteSpace(formCategory) ? null : formCategory.Trim(),
+                    formLat, formLon, formRegionId, false);
                 await StoreService.UpdateAsync(editingId.Value, req);
                 Toast.ShowSuccess("Store details updated successfully.");
             }
             else
             {
-                var req = new CreateYpsStoreRequest(null, formNameMm, formNameEn, formCategory, formTownshipId, formLatitude, formLongitude);
+                var req = new CreateStoreRequest(
+                    string.IsNullOrWhiteSpace(formEngName) ? null : formEngName.Trim(),
+                    string.IsNullOrWhiteSpace(formMmName) ? null : formMmName.Trim(),
+                    string.IsNullOrWhiteSpace(formCategory) ? null : formCategory.Trim(),
+                    formLat, formLon, formRegionId);
                 await StoreService.CreateAsync(req);
                 Toast.ShowSuccess("New YPS store added successfully.");
             }
@@ -485,26 +458,40 @@
         }
     }
 
-    private async Task OpenAssignStopsModal(YpsStoreDto item)
+    private async Task OpenAssignStopsModal(StoreDto item)
     {
         activeStore = item;
         showOnlyLinkedStops = false;
-        selectedStopIds.Clear();
+        selectedStopMap.Clear();
         if (item.NearestStops != null)
         {
             foreach (var ns in item.NearestStops)
             {
-                if (ns.MatchedStopId.HasValue) selectedStopIds.Add(ns.MatchedStopId.Value);
+                selectedStopMap[ns.BusStopId] = ns.DistanceKm ?? 0.1;
             }
         }
         await EnsureBusStopsLoadedAsync();
         showStopsModal = true;
     }
 
-    private void ToggleStopSelection(int busStopId, object? isChecked)
+    private void ToggleStopSelection(long busStopId, object? isChecked)
     {
-        if (isChecked is bool b && b) selectedStopIds.Add(busStopId);
-        else selectedStopIds.Remove(busStopId);
+        if (isChecked is bool b && b)
+        {
+            if (!selectedStopMap.ContainsKey(busStopId)) selectedStopMap[busStopId] = 0.1;
+        }
+        else
+        {
+            selectedStopMap.Remove(busStopId);
+        }
+    }
+
+    private void UpdateDistance(long busStopId, object? val)
+    {
+        if (double.TryParse(val?.ToString(), out double d))
+        {
+            selectedStopMap[busStopId] = d;
+        }
     }
 
     private async Task SaveNearestStops()
@@ -513,12 +500,9 @@
         isSaving = true;
         try
         {
-            var items = selectedStopIds.Select(sId => {
-                var s = allBusStops?.FirstOrDefault(x => x.StopId == sId);
-                return new AssignNearestStopItem(sId, s?.NameMm, s?.NameEn);
-            }).ToList();
+            var items = selectedStopMap.Select(kvp => new AssignNearestBusStopItem(kvp.Key, kvp.Value)).ToList();
             var req = new AssignNearestStopsRequest(items);
-            await StoreService.AssignNearestStopsAsync(activeStore.StoreId, req);
+            await StoreService.AssignNearestStopsAsync(activeStore.Id, req);
             Toast.ShowSuccess("Assigned nearest bus stops updated.");
             showStopsModal = false;
             await LoadData();
@@ -533,55 +517,9 @@
         }
     }
 
-    private HashSet<string> selectedBusNumbers = new();
-
-    private async Task OpenAssignBusesModal(YpsStoreDto item)
+    private void PromptDelete(StoreDto item)
     {
-        activeStore = item;
-        showOnlyLinkedBuses = false;
-        selectedBusNumbers.Clear();
-        if (item.ServingBusLines != null)
-        {
-            foreach (var b in item.ServingBusLines)
-            {
-                selectedBusNumbers.Add(b);
-            }
-        }
-        await EnsureBusLinesLoadedAsync();
-        showBusesModal = true;
-    }
-
-    private void ToggleBusLineSelection(string busNumber, object? isChecked)
-    {
-        if (isChecked is bool b && b) selectedBusNumbers.Add(busNumber);
-        else selectedBusNumbers.Remove(busNumber);
-    }
-
-    private async Task SaveServingBuses()
-    {
-        if (activeStore == null) return;
-        isSaving = true;
-        try
-        {
-            var req = new AssignServingBusLinesRequest(selectedBusNumbers.ToList());
-            await StoreService.AssignServingBusLinesAsync(activeStore.StoreId, req);
-            Toast.ShowSuccess("Assigned serving bus lines updated.");
-            showBusesModal = false;
-            await LoadData();
-        }
-        catch (Exception ex)
-        {
-            Toast.ShowError($"Failed to assign bus lines: {ex.Message}");
-        }
-        finally
-        {
-            isSaving = false;
-        }
-    }
-
-    private void PromptDelete(YpsStoreDto item)
-    {
-        deletingId = item.StoreId;
+        deletingId = item.Id;
         showDeleteModal = true;
     }
 
