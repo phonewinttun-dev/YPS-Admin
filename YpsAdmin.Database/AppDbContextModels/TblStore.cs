@@ -3,11 +3,15 @@ using System.Collections.Generic;
 
 namespace YpsAdmin.Database.AppDbContextModels;
 
-public partial class TblBusStop
+public partial class TblStore
 {
-    public long Id { get; set; }
+    public int Id { get; set; }
 
-    public string StopName { get; set; } = null!;
+    public string? EngName { get; set; }
+
+    public string? MmName { get; set; }
+
+    public string? Category { get; set; }
 
     public double Lat { get; set; }
 
@@ -17,13 +21,11 @@ public partial class TblBusStop
 
     public bool? DeleteFlag { get; set; }
 
-    public DateOnly CreatedAt { get; set; }
+    public DateOnly? CreatedAt { get; set; }
 
-    public DateOnly UpdatedAt { get; set; }
+    public DateOnly? UpdatedAt { get; set; }
 
     public virtual TblRegion? Region { get; set; }
-
-    public virtual ICollection<TblBusRoute> TblBusRoutes { get; set; } = new List<TblBusRoute>();
 
     public virtual ICollection<TblNearestBusStop> TblNearestBusStops { get; set; } = new List<TblNearestBusStop>();
 }
