@@ -1,5 +1,5 @@
 @page "/bus-lines"
-@inject IBusLineService BusLineService
+@inject IBusService BusService
 @inject IToastService Toast
 @inject LanguageService Lang
 
@@ -8,7 +8,7 @@
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-lg border border-outline-variant shadow-2xs">
         <div>
             <h2 class="text-lg font-bold text-on-surface tracking-tight">@Lang.GetText("NavBusLines")</h2>
-            <p class="text-xs text-tertiary">Manage YBS transit lines, routes, titles, and YPS card acceptance status.</p>
+            <p class="text-xs text-tertiary">Manage YBS transit buses, variant IDs, route directions, and YPS payment card acceptance.</p>
         </div>
         <div class="flex items-center gap-3 w-full sm:w-auto">
             <div class="relative flex-1 sm:w-64">
@@ -40,46 +40,58 @@
                    HasError="@hasError"
                    ErrorMessage="@errorMessage"
                    OnRetry="LoadData"
-                   IsEmpty="@(busLines == null || busLines.Data == null || !busLines.Data.Any())"
-                   EmptyTitle="No bus lines found"
-                   EmptyDescription="Try searching for a different bus number or create a new bus line entry.">
+                   IsEmpty="@(buses == null || buses.Data == null || !buses.Data.Any())"
+                   EmptyTitle="No buses found"
+                   EmptyDescription="Try searching for a different bus number or create a new bus record.">
             <ChildContent>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm border-collapse">
                         <thead>
                             <tr class="bg-surface-container/60 border-b border-outline-variant text-xs font-semibold text-tertiary uppercase tracking-wider">
                                 <th class="p-3.5">@Lang.GetText("BusNumber")</th>
-                                <th class="p-3.5">@Lang.GetText("OutboundTitle")</th>
-                                <th class="p-3.5">@Lang.GetText("ReturnTitle")</th>
+                                <th class="p-3.5">@Lang.GetText("VariantId")</th>
+                                <th class="p-3.5">@Lang.GetText("Direction")</th>
                                 <th class="p-3.5 text-center">@Lang.GetText("YpsAccepted")</th>
                                 <th class="p-3.5 text-right">@Lang.GetText("Actions")</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-outline-variant">
-                            @if (busLines != null && busLines.Data != null)
+                            @if (buses != null && buses.Data != null)
                             {
-                                @foreach (var item in busLines.Data)
+                                @foreach (var item in buses.Data)
                                 {
                                     <tr class="hover:bg-surface-container/30 transition-colors">
                                         <td class="p-3.5 font-bold font-mono text-secondary text-base">
-                                            @item.BusNumber
+                                            Bus @item.BusNumber
                                         </td>
-                                        <td class="p-3.5 text-on-surface max-w-xs truncate">
-                                            @item.OutboundTitleMm
-                                            @if (!string.IsNullOrEmpty(item.OutboundTitleEn))
+                                        <td class="p-3.5 text-on-surface">
+                                            @if (!string.IsNullOrEmpty(item.VariantId))
                                             {
-                                                <span class="text-xs text-tertiary font-mono block">@item.OutboundTitleEn</span>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-surface-container text-on-surface border border-outline-variant">
+                                                    @item.VariantId
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-xs text-tertiary">Default</span>
                                             }
                                         </td>
-                                        <td class="p-3.5 text-on-surface max-w-xs truncate">
-                                            @item.ReturnTitleMm
-                                            @if (!string.IsNullOrEmpty(item.ReturnTitleEn))
+                                        <td class="p-3.5">
+                                            @if (item.IsReversed)
                                             {
-                                                <span class="text-xs text-tertiary font-mono block">@item.ReturnTitleEn</span>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                                                    @Lang.GetText("Return")
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary/10 text-secondary border border-secondary/20">
+                                                    @Lang.GetText("Outbound")
+                                                </span>
                                             }
                                         </td>
                                         <td class="p-3.5 text-center">
-                                            @if (item.IsYpsAccepted)
+                                            @if (item.IsCardAccepted)
                                             {
                                                 <CategoryBadge Text="@Lang.GetText("Yes")" Variant="CategoryBadge.BadgeVariant.YpsAccepted" ShowDot="true" />
                                             }
@@ -106,9 +118,9 @@
                 </div>
 
                 <!-- Pagination -->
-                @if (busLines != null && busLines.Pagination != null)
+                @if (buses != null && buses.Pagination != null)
                 {
-                    <Pagination PageNumber="@pageNumber" TotalPages="@busLines.Pagination.TotalPages" TotalCount="@busLines.Pagination.TotalCount" PageSize="@pageSize" PageChanged="OnPageChanged" />
+                    <Pagination PageNumber="@pageNumber" TotalPages="@buses.Pagination.TotalPages" TotalCount="@buses.Pagination.TotalCount" PageSize="@pageSize" PageChanged="OnPageChanged" />
                 }
             </ChildContent>
         </StateView>
@@ -119,7 +131,7 @@
 <ModalDialog IsOpen="@showFormModal"
              IsOpenChanged="v => showFormModal = v"
              Title="@(editingId.HasValue ? $"{Lang.GetText("Edit")} {Lang.GetText("NavBusLines")}" : $"{Lang.GetText("Add")} {Lang.GetText("NavBusLines")}")"
-             Description="Enter bus line number and outbound/return route titles.">
+             Description="Enter bus line number, optional route variant ID, and configuration options.">
     <ChildContent>
         @if (!string.IsNullOrEmpty(formValidationError))
         {
@@ -134,31 +146,19 @@
         <div class="space-y-3">
             <div>
                 <label class="block text-xs font-medium text-on-surface mb-1">@Lang.GetText("BusNumber") *</label>
-                <input type="text" @bind="formBusNumber" class="w-full h-9 px-3 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono @(!string.IsNullOrEmpty(formBusNumberError) ? "border-red-500 bg-red-50/20" : "border-outline-variant")" />
+                <input type="number" @bind="formBusNumber" min="1" class="w-full h-9 px-3 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono @(!string.IsNullOrEmpty(formBusNumberError) ? "border-red-500 bg-red-50/20" : "border-outline-variant")" />
                 @if (!string.IsNullOrEmpty(formBusNumberError))
                 {
                     <p class="text-2xs text-red-600 mt-1">@formBusNumberError</p>
                 }
             </div>
             <div>
-                <label class="block text-xs font-medium text-on-surface mb-1">@Lang.GetText("OutboundTitle") (MM) *</label>
-                <input type="text" @bind="formOutboundTitleMm" class="w-full h-9 px-3 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary @(!string.IsNullOrEmpty(formOutboundError) ? "border-red-500 bg-red-50/20" : "border-outline-variant")" />
-                @if (!string.IsNullOrEmpty(formOutboundError))
-                {
-                    <p class="text-2xs text-red-600 mt-1">@formOutboundError</p>
-                }
+                <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("VariantId") (e.g. Main, Inbound, Express)</label>
+                <input type="text" @bind="formVariantId" placeholder="Optional variant identifier" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono" />
             </div>
-            <div>
-                <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("OutboundTitle") (EN)</label>
-                <input type="text" @bind="formOutboundTitleEn" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono" />
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("ReturnTitle") (MM)</label>
-                <input type="text" @bind="formReturnTitleMm" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" />
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("ReturnTitle") (EN)</label>
-                <input type="text" @bind="formReturnTitleEn" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono" />
+            <div class="flex items-center gap-2 pt-2">
+                <input type="checkbox" id="reversedCheck" @bind="formIsReversed" class="h-4 w-4 rounded border-outline text-secondary focus:ring-secondary/50" />
+                <label for="reversedCheck" class="text-sm font-medium text-on-surface cursor-pointer select-none">@Lang.GetText("IsReversed")</label>
             </div>
             <div class="flex items-center gap-2 pt-1">
                 <input type="checkbox" id="ypsCheck" @bind="formYpsAccepted" class="h-4 w-4 rounded border-outline text-secondary focus:ring-secondary/50" />
@@ -170,7 +170,7 @@
         <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick="CloseFormModal">
             @Lang.GetText("Cancel")
         </Button>
-        <Button Variant="ButtonVariant.Default" Size="ButtonSize.Sm" IsLoading="@isSaving" OnClick="SaveBusLine">
+        <Button Variant="ButtonVariant.Default" Size="ButtonSize.Sm" IsLoading="@isSaving" OnClick="SaveBus">
             @Lang.GetText("Save")
         </Button>
     </Footer>
@@ -195,7 +195,7 @@
 </ModalDialog>
 
 @code {
-    private PagedResult<BusLineDto>? busLines;
+    private PagedResult<BusDto>? buses;
     private bool isLoading = true;
     private bool hasError = false;
     private string? errorMessage = null;
@@ -207,21 +207,17 @@
 
     // Form Modal state & validation
     private bool showFormModal = false;
-    private int? editingId = null;
-    private int formRouteId = 0;
-    private string formBusNumber = "";
-    private string formOutboundTitleMm = "";
-    private string formOutboundTitleEn = "";
-    private string formReturnTitleMm = "";
-    private string formReturnTitleEn = "";
+    private long? editingId = null;
+    private long formBusNumber = 1;
+    private string formVariantId = "";
+    private bool formIsReversed = false;
     private bool formYpsAccepted = false;
     private string formValidationError = "";
     private string formBusNumberError = "";
-    private string formOutboundError = "";
 
     // Delete Modal state
     private bool showDeleteModal = false;
-    private int? deletingId = null;
+    private long? deletingId = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -235,7 +231,7 @@
         errorMessage = null;
         try
         {
-            busLines = await BusLineService.GetBusLinesAsync(pageNumber, pageSize, searchQuery);
+            buses = await BusService.GetBusesAsync(pageNumber, pageSize, searchQuery);
         }
         catch (Exception ex)
         {
@@ -254,54 +250,37 @@
     private void OpenCreateModal()
     {
         editingId = null;
-        formRouteId = 0;
-        formBusNumber = "";
-        formOutboundTitleMm = "";
-        formOutboundTitleEn = "";
-        formReturnTitleMm = "";
-        formReturnTitleEn = "";
+        formBusNumber = 1;
+        formVariantId = "";
+        formIsReversed = false;
         formYpsAccepted = false;
         formValidationError = "";
         formBusNumberError = "";
-        formOutboundError = "";
         showFormModal = true;
     }
 
-    private void OpenEditModal(BusLineDto item)
+    private void OpenEditModal(BusDto item)
     {
-        editingId = item.RouteId;
-        formRouteId = item.RouteId;
+        editingId = item.Id;
         formBusNumber = item.BusNumber;
-        formOutboundTitleMm = item.OutboundTitleMm ?? "";
-        formOutboundTitleEn = item.OutboundTitleEn ?? "";
-        formReturnTitleMm = item.ReturnTitleMm ?? "";
-        formReturnTitleEn = item.ReturnTitleEn ?? "";
-        formYpsAccepted = item.IsYpsAccepted;
+        formVariantId = item.VariantId ?? "";
+        formIsReversed = item.IsReversed;
+        formYpsAccepted = item.IsCardAccepted;
         formValidationError = "";
         formBusNumberError = "";
-        formOutboundError = "";
         showFormModal = true;
     }
 
     private void CloseFormModal() => showFormModal = false;
 
-    private async Task SaveBusLine()
+    private async Task SaveBus()
     {
         formValidationError = "";
         formBusNumberError = "";
-        formOutboundError = "";
 
-        if (string.IsNullOrWhiteSpace(formBusNumber))
+        if (formBusNumber <= 0)
         {
-            formBusNumberError = "Bus Number is required.";
-        }
-        if (string.IsNullOrWhiteSpace(formOutboundTitleMm))
-        {
-            formOutboundError = "Outbound Title (MM) is required.";
-        }
-
-        if (!string.IsNullOrEmpty(formBusNumberError) || !string.IsNullOrEmpty(formOutboundError))
-        {
+            formBusNumberError = "Valid Bus Number is required.";
             formValidationError = "Please fix validation errors before saving.";
             return;
         }
@@ -311,22 +290,22 @@
         {
             if (editingId.HasValue)
             {
-                var req = new UpdateBusLineRequest(formBusNumber, formOutboundTitleMm, formOutboundTitleEn, formReturnTitleMm, formReturnTitleEn, formYpsAccepted);
-                await BusLineService.UpdateAsync(editingId.Value, req);
-                Toast.ShowSuccess($"Bus Line {formBusNumber} updated successfully.");
+                var req = new UpdateBusRequest(formBusNumber, string.IsNullOrWhiteSpace(formVariantId) ? null : formVariantId.Trim(), formYpsAccepted, formIsReversed, false);
+                await BusService.UpdateAsync(editingId.Value, req);
+                Toast.ShowSuccess($"Bus {formBusNumber} updated successfully.");
             }
             else
             {
-                var req = new CreateBusLineRequest(formRouteId, formBusNumber, formOutboundTitleMm, formOutboundTitleEn, formReturnTitleMm, formReturnTitleEn, formYpsAccepted);
-                await BusLineService.CreateAsync(req);
-                Toast.ShowSuccess($"Bus Line {formBusNumber} created successfully.");
+                var req = new CreateBusRequest(formBusNumber, string.IsNullOrWhiteSpace(formVariantId) ? null : formVariantId.Trim(), formYpsAccepted, formIsReversed);
+                await BusService.CreateAsync(req);
+                Toast.ShowSuccess($"Bus {formBusNumber} created successfully.");
             }
             showFormModal = false;
             await LoadData();
         }
         catch (Exception ex)
         {
-            Toast.ShowError($"Failed to save bus line: {ex.Message}");
+            Toast.ShowError($"Failed to save bus: {ex.Message}");
         }
         finally
         {
@@ -334,9 +313,9 @@
         }
     }
 
-    private void PromptDelete(BusLineDto item)
+    private void PromptDelete(BusDto item)
     {
-        deletingId = item.RouteId;
+        deletingId = item.Id;
         showDeleteModal = true;
     }
 
@@ -346,14 +325,14 @@
         isSaving = true;
         try
         {
-            await BusLineService.DeleteAsync(deletingId.Value);
-            Toast.ShowSuccess("Bus line deleted successfully.");
+            await BusService.DeleteAsync(deletingId.Value);
+            Toast.ShowSuccess("Bus deleted successfully.");
             showDeleteModal = false;
             await LoadData();
         }
         catch (Exception ex)
         {
-            Toast.ShowError($"Failed to delete bus line: {ex.Message}");
+            Toast.ShowError($"Failed to delete bus: {ex.Message}");
         }
         finally
         {
