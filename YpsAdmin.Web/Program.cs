@@ -19,11 +19,11 @@ builder.Services.AddScoped(sp => new HttpClient
     Timeout = TimeSpan.FromSeconds(timeoutSeconds)
 });
 builder.Services.AddScoped<LanguageService>();
-builder.Services.AddScoped<IBusLineService, BusLineService>();
+builder.Services.AddScoped<IBusService, BusService>();
 builder.Services.AddScoped<IBusStopService, BusStopService>();
-builder.Services.AddScoped<IRouteStopService, RouteStopService>();
-builder.Services.AddScoped<IYpsStoreService, YpsStoreService>();
-builder.Services.AddScoped<ITownshipService, TownshipService>();
+builder.Services.AddScoped<IBusRouteService, BusRouteService>();
+builder.Services.AddScoped<IRegionService, RegionService>();
+builder.Services.AddScoped<IStoreService, StoreService>();
 builder.Services.AddScoped<IToastService, ToastService>();
 
 await builder.Build().RunAsync();

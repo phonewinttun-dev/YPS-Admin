@@ -1,5 +1,6 @@
-using System.ComponentModel;
-using System.Text.Json;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.JSInterop;
 
 namespace YpsAdmin.Web.Services;
@@ -79,36 +80,35 @@ public class LanguageService
         ["Next"] = new() { ["en"] = "Next", ["my"] = "နောက်တစ်ခု" },
 
         // Common Fields & Terms
-        ["RouteId"] = new() { ["en"] = "Route ID", ["my"] = "လမ်းကြောင်း အမှတ်" },
         ["BusNumber"] = new() { ["en"] = "Bus Number", ["my"] = "ယာဉ်အမှတ်" },
+        ["VariantId"] = new() { ["en"] = "Variant ID", ["my"] = "ဗားရှင်း အမှတ်" },
+        ["IsReversed"] = new() { ["en"] = "Reversed Route", ["my"] = "အပြန် လမ်းကြောင်း" },
+        ["Direction"] = new() { ["en"] = "Direction", ["my"] = "ဦးတည်ချက်" },
+        ["Outbound"] = new() { ["en"] = "Outbound", ["my"] = "အသွား" },
+        ["Return"] = new() { ["en"] = "Return / Reversed", ["my"] = "အပြန်" },
         ["YpsAccepted"] = new() { ["en"] = "YPS Payment Accepted", ["my"] = "YPS လက်ခံမှု" },
         ["Yes"] = new() { ["en"] = "Yes", ["my"] = "လက်ခံသည်" },
         ["No"] = new() { ["en"] = "No", ["my"] = "လက်မခံပါ" },
-        ["OutboundTitle"] = new() { ["en"] = "Outbound Direction", ["my"] = "အသွား လမ်းကြောင်း" },
-        ["ReturnTitle"] = new() { ["en"] = "Return Direction", ["my"] = "အပြန် လမ်းကြောင်း" },
-        ["StopId"] = new() { ["en"] = "Stop ID", ["my"] = "မှတ်တိုင် အမှတ်" },
+        ["StopName"] = new() { ["en"] = "Stop Name", ["my"] = "မှတ်တိုင်အမည်" },
         ["StopNameMM"] = new() { ["en"] = "Stop Name (MM)", ["my"] = "မှတ်တိုင်အမည် (မြန်မာ)" },
         ["StopNameEN"] = new() { ["en"] = "Stop Name (EN)", ["my"] = "မှတ်တိုင်အမည် (အင်္ဂလိပ်)" },
-        ["TownshipMM"] = new() { ["en"] = "Township (MM)", ["my"] = "မြို့နယ် (မြန်မာ)" },
-        ["TownshipEN"] = new() { ["en"] = "Township (EN)", ["my"] = "မြို့နယ် (အင်္ဂလိပ်)" },
-        ["Road"] = new() { ["en"] = "Road Name", ["my"] = "လမ်းအမည်" },
-        
+        ["Region"] = new() { ["en"] = "Region / Township", ["my"] = "တိုင်းဒေသကြီး / မြို့နယ်" },
+        ["TownshipMM"] = new() { ["en"] = "Region", ["my"] = "တိုင်းဒေသကြီး" },
+        ["Coordinates"] = new() { ["en"] = "Coordinates (Lat, Lon)", ["my"] = "တည်နေရာ (လတ္တီတွဒ်/လောင်ဂျီတွဒ်)" },
+        ["DistanceKm"] = new() { ["en"] = "Distance (km)", ["my"] = "အကွာအဝေး (ကီလိုမီတာ)" },
+        ["ServingBuses"] = new() { ["en"] = "Serving Buses", ["my"] = "ဖြတ်သန်းသွားလာသော ယာဉ်လိုင်းများ" },
+
         // YPS Store
         ["StoreName"] = new() { ["en"] = "Store Name", ["my"] = "ဆိုင်အမည်" },
         ["Category"] = new() { ["en"] = "Category", ["my"] = "အမျိုးအစား" },
-        ["Coordinates"] = new() { ["en"] = "Coordinates (Lat, Long)", ["my"] = "တည်နေရာ (လတ္တီတွဒ်/လောင်ဂျီတွဒ်)" },
-        ["AssignStops"] = new() { ["en"] = "Link Stops", ["my"] = "မှတ်တိုင်များ ချိတ်ဆက်ရန်" },
-        ["AssignBuses"] = new() { ["en"] = "Link Buses", ["my"] = "ယာဉ်လိုင်းများ ချိတ်ဆက်ရန်" },
-        
+        ["AssignStops"] = new() { ["en"] = "Link Nearest Stops", ["my"] = "အနီးဆုံး မှတ်တိုင်များ ချိတ်ဆက်ရန်" },
+
         // Modals & Confirmations
         ["ConfirmDeleteTitle"] = new() { ["en"] = "Confirm Deletion", ["my"] = "ဖျက်ထုတ်ခြင်းအား အတည်ပြုရန်" },
         ["ConfirmDeleteMessage"] = new() { ["en"] = "Are you sure you want to delete this record? This action cannot be undone.", ["my"] = "ဤအချက်အလက်ကို ဖျက်ရန် သေချာပါသလား။ ဤလုပ်ဆောင်ချက်ကို ပြန်ပြင်၍မရပါ။" },
         ["MoveUp"] = new() { ["en"] = "Up", ["my"] = "အထက်" },
         ["MoveDown"] = new() { ["en"] = "Down", ["my"] = "အောက်" },
         ["StopOrder"] = new() { ["en"] = "Stop Order", ["my"] = "အစီအစဉ်" },
-        ["Direction"] = new() { ["en"] = "Direction", ["my"] = "ဦးတည်ချက်" },
-        ["Outbound"] = new() { ["en"] = "Outbound", ["my"] = "အသွား" },
-        ["Return"] = new() { ["en"] = "Return", ["my"] = "အပြန်" },
         ["SelectBusLine"] = new() { ["en"] = "-- Select Bus Line --", ["my"] = "-- ယာဉ်လိုင်း ရွေးချယ်ပါ --" }
     };
 }
