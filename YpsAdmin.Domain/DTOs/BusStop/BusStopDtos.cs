@@ -1,47 +1,46 @@
+using System;
 using YpsAdmin.Shared;
 
 namespace YpsAdmin.Domain.DTOs.BusStop
 {
     public class BusStopDto
     {
-        public int StopId { get; set; }
-        public string NameMm { get; set; } = null!;
-        public string? NameEn { get; set; }
-        public int? TownshipId { get; set; }
-        public string? TownshipNameMm { get; set; }
-        public string? TownshipNameEn { get; set; }
-        public string? RoadMm { get; set; }
-        public string? RoadEn { get; set; }
-        public int TotalServingBusLines { get; set; }
+        public long Id { get; set; }
+        public string StopName { get; set; } = null!;
+        public double Lat { get; set; }
+        public double Lon { get; set; }
+        public int? RegionId { get; set; }
+        public string? RegionName { get; set; }
+        public bool DeleteFlag { get; set; }
+        public DateOnly CreatedAt { get; set; }
+        public DateOnly UpdatedAt { get; set; }
     }
 
     public class CreateBusStopRequest
     {
-        public int? StopId { get; set; }
-        public string NameMm { get; set; } = null!;
-        public string? NameEn { get; set; }
-        public int? TownshipId { get; set; }
-        public string? RoadMm { get; set; }
-        public string? RoadEn { get; set; }
+        public string StopName { get; set; } = null!;
+        public double Lat { get; set; }
+        public double Lon { get; set; }
+        public int? RegionId { get; set; }
     }
 
     public class UpdateBusStopRequest
     {
-        public string NameMm { get; set; } = null!;
-        public string? NameEn { get; set; }
-        public int? TownshipId { get; set; }
-        public string? RoadMm { get; set; }
-        public string? RoadEn { get; set; }
+        public string StopName { get; set; } = null!;
+        public double Lat { get; set; }
+        public double Lon { get; set; }
+        public int? RegionId { get; set; }
+        public bool? DeleteFlag { get; set; }
     }
 
     public class BusStopGetRequest : PaginationRequest
     {
-        public int? TownshipId { get; set; }
+        public int? RegionId { get; set; }
     }
 
     public class BusStopSearchRequest : PaginationRequest
     {
         public string? SearchTerm { get; set; }
-        public int? TownshipId { get; set; }
+        public int? RegionId { get; set; }
     }
 }

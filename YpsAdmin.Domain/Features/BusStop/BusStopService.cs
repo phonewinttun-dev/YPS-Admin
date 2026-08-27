@@ -1,3 +1,7 @@
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using YpsAdmin.Database.AppDbContextModels;
 using YpsAdmin.Domain.DTOs.BusStop;
@@ -16,31 +20,31 @@ namespace YpsAdmin.Domain.Features.BusStop
 
         public async Task<PagedResult<BusStopDto>> GetBusStopsAsync(BusStopGetRequest request, CancellationToken cancellationToken = default)
         {
-            var baseQuery = _context.TblBusStops.AsNoTracking();
+            var query = _context.TblBusStops.AsNoTracking().Where(s => s.DeleteFlag != true);
 
-            if (request.TownshipId.HasValue)
+            if (request.RegionId.HasValue)
             {
-                baseQuery = baseQuery.Where(s => s.TownshipId == request.TownshipId.Value);
+                query = query.Where(s => s.RegionId == request.RegionId.Value);
             }
 
-            int totalCount = await baseQuery.CountAsync(cancellationToken);
+            int totalCount = await query.CountAsync(cancellationToken);
             int skip = (request.PageNumber - 1) * request.PageSize;
 
-            var items = await baseQuery
-                .OrderBy(s => s.StopId)
+            var items = await query
+                .OrderBy(s => s.Id)
                 .Skip(skip)
                 .Take(request.PageSize)
                 .Select(s => new BusStopDto
                 {
-                    StopId = s.StopId,
-                    NameMm = s.NameMm,
-                    NameEn = s.NameEn,
-                    TownshipId = s.TownshipId,
-                    TownshipNameMm = s.Township != null ? s.Township.TownshipNameMm : null,
-                    TownshipNameEn = s.Township != null ? s.Township.TownshipNameEn : null,
-                    RoadMm = s.RoadMm,
-                    RoadEn = s.RoadEn,
-                    TotalServingBusLines = s.TotalServingBusLines ?? 0
+                    Id = s.Id,
+                    StopName = s.StopName,
+                    Lat = s.Lat,
+                    Lon = s.Lon,
+                    RegionId = s.RegionId,
+                    RegionName = s.Region != null ? s.Region.RegionName : null,
+                    DeleteFlag = s.DeleteFlag ?? false,
+                    CreatedAt = s.CreatedAt,
+                    UpdatedAt = s.UpdatedAt
                 })
                 .ToListAsync(cancellationToken);
 
@@ -50,41 +54,37 @@ namespace YpsAdmin.Domain.Features.BusStop
 
         public async Task<PagedResult<BusStopDto>> SearchBusStopsAsync(BusStopSearchRequest request, CancellationToken cancellationToken = default)
         {
-            var baseQuery = _context.TblBusStops.AsNoTracking();
+            var query = _context.TblBusStops.AsNoTracking().Where(s => s.DeleteFlag != true);
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 string search = $"%{request.SearchTerm.Trim()}%";
-                baseQuery = baseQuery.Where(s =>
-                    EF.Functions.ILike(s.NameMm, search) ||
-                    (s.NameEn != null && EF.Functions.ILike(s.NameEn, search)) ||
-                    (s.RoadMm != null && EF.Functions.ILike(s.RoadMm, search)) ||
-                    (s.RoadEn != null && EF.Functions.ILike(s.RoadEn, search)));
+                query = query.Where(s => EF.Functions.ILike(s.StopName, search));
             }
 
-            if (request.TownshipId.HasValue)
+            if (request.RegionId.HasValue)
             {
-                baseQuery = baseQuery.Where(s => s.TownshipId == request.TownshipId.Value);
+                query = query.Where(s => s.RegionId == request.RegionId.Value);
             }
 
-            int totalCount = await baseQuery.CountAsync(cancellationToken);
+            int totalCount = await query.CountAsync(cancellationToken);
             int skip = (request.PageNumber - 1) * request.PageSize;
 
-            var items = await baseQuery
-                .OrderBy(s => s.StopId)
+            var items = await query
+                .OrderBy(s => s.Id)
                 .Skip(skip)
                 .Take(request.PageSize)
                 .Select(s => new BusStopDto
                 {
-                    StopId = s.StopId,
-                    NameMm = s.NameMm,
-                    NameEn = s.NameEn,
-                    TownshipId = s.TownshipId,
-                    TownshipNameMm = s.Township != null ? s.Township.TownshipNameMm : null,
-                    TownshipNameEn = s.Township != null ? s.Township.TownshipNameEn : null,
-                    RoadMm = s.RoadMm,
-                    RoadEn = s.RoadEn,
-                    TotalServingBusLines = s.TotalServingBusLines ?? 0
+                    Id = s.Id,
+                    StopName = s.StopName,
+                    Lat = s.Lat,
+                    Lon = s.Lon,
+                    RegionId = s.RegionId,
+                    RegionName = s.Region != null ? s.Region.RegionName : null,
+                    DeleteFlag = s.DeleteFlag ?? false,
+                    CreatedAt = s.CreatedAt,
+                    UpdatedAt = s.UpdatedAt
                 })
                 .ToListAsync(cancellationToken);
 
@@ -92,29 +92,29 @@ namespace YpsAdmin.Domain.Features.BusStop
             return PagedResult<BusStopDto>.Success(items, pagination, "Bus stop search completed successfully.");
         }
 
-        public async Task<Result<BusStopDto>> GetBusStopByIdAsync(int stopId, CancellationToken cancellationToken = default)
+        public async Task<Result<BusStopDto>> GetBusStopByIdAsync(long id, CancellationToken cancellationToken = default)
         {
             var busStop = await _context.TblBusStops
                 .AsNoTracking()
-                .Include(s => s.Township)
-                .FirstOrDefaultAsync(s => s.StopId == stopId, cancellationToken);
+                .Include(s => s.Region)
+                .FirstOrDefaultAsync(s => s.Id == id && s.DeleteFlag != true, cancellationToken);
 
             if (busStop == null)
             {
-                return Result<BusStopDto>.Failure($"Bus stop with Stop ID '{stopId}' was not found.");
+                return Result<BusStopDto>.Failure($"Bus stop with ID '{id}' was not found.");
             }
 
             var dto = new BusStopDto
             {
-                StopId = busStop.StopId,
-                NameMm = busStop.NameMm,
-                NameEn = busStop.NameEn,
-                TownshipId = busStop.TownshipId,
-                TownshipNameMm = busStop.Township?.TownshipNameMm,
-                TownshipNameEn = busStop.Township?.TownshipNameEn,
-                RoadMm = busStop.RoadMm,
-                RoadEn = busStop.RoadEn,
-                TotalServingBusLines = busStop.TotalServingBusLines ?? 0
+                Id = busStop.Id,
+                StopName = busStop.StopName,
+                Lat = busStop.Lat,
+                Lon = busStop.Lon,
+                RegionId = busStop.RegionId,
+                RegionName = busStop.Region?.RegionName,
+                DeleteFlag = busStop.DeleteFlag ?? false,
+                CreatedAt = busStop.CreatedAt,
+                UpdatedAt = busStop.UpdatedAt
             };
 
             return Result<BusStopDto>.Success(dto, "Bus stop retrieved successfully.");
@@ -122,109 +122,100 @@ namespace YpsAdmin.Domain.Features.BusStop
 
         public async Task<Result<BusStopDto>> CreateBusStopAsync(CreateBusStopRequest request, CancellationToken cancellationToken = default)
         {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var busStop = new TblBusStop
             {
-                NameMm = request.NameMm?.Trim() ?? string.Empty,
-                NameEn = request.NameEn?.Trim(),
-                TownshipId = request.TownshipId,
-                RoadMm = request.RoadMm?.Trim(),
-                RoadEn = request.RoadEn?.Trim(),
-                TotalServingBusLines = 0
+                StopName = request.StopName.Trim(),
+                Lat = request.Lat,
+                Lon = request.Lon,
+                RegionId = request.RegionId,
+                DeleteFlag = false,
+                CreatedAt = today,
+                UpdatedAt = today
             };
-
-            if (request.StopId.HasValue && request.StopId.Value > 0)
-            {
-                bool exists = await _context.TblBusStops.AnyAsync(s => s.StopId == request.StopId.Value, cancellationToken);
-                if (exists)
-                {
-                    return Result<BusStopDto>.Failure($"A bus stop with Stop ID '{request.StopId.Value}' already exists.");
-                }
-                busStop.StopId = request.StopId.Value;
-            }
 
             _context.TblBusStops.Add(busStop);
             await _context.SaveChangesAsync(cancellationToken);
 
-            // Load Township details if applicable
-            string? townshipNameMm = null;
-            string? townshipNameEn = null;
-            if (busStop.TownshipId.HasValue)
+            string? regionName = null;
+            if (busStop.RegionId.HasValue)
             {
-                var township = await _context.TblTownships.FindAsync(new object[] { busStop.TownshipId.Value }, cancellationToken);
-                townshipNameMm = township?.TownshipNameMm;
-                townshipNameEn = township?.TownshipNameEn;
+                var region = await _context.TblRegions.FindAsync(new object[] { busStop.RegionId.Value }, cancellationToken);
+                regionName = region?.RegionName;
             }
 
             var dto = new BusStopDto
             {
-                StopId = busStop.StopId,
-                NameMm = busStop.NameMm,
-                NameEn = busStop.NameEn,
-                TownshipId = busStop.TownshipId,
-                TownshipNameMm = townshipNameMm,
-                TownshipNameEn = townshipNameEn,
-                RoadMm = busStop.RoadMm,
-                RoadEn = busStop.RoadEn,
-                TotalServingBusLines = 0
+                Id = busStop.Id,
+                StopName = busStop.StopName,
+                Lat = busStop.Lat,
+                Lon = busStop.Lon,
+                RegionId = busStop.RegionId,
+                RegionName = regionName,
+                DeleteFlag = false,
+                CreatedAt = busStop.CreatedAt,
+                UpdatedAt = busStop.UpdatedAt
             };
 
             return Result<BusStopDto>.Success(dto, "Bus stop created successfully.");
         }
 
-        public async Task<Result<BusStopDto>> UpdateBusStopAsync(int stopId, UpdateBusStopRequest request, CancellationToken cancellationToken = default)
+        public async Task<Result<BusStopDto>> UpdateBusStopAsync(long id, UpdateBusStopRequest request, CancellationToken cancellationToken = default)
         {
             var busStop = await _context.TblBusStops
-                .Include(s => s.Township)
-                .FirstOrDefaultAsync(s => s.StopId == stopId, cancellationToken);
+                .Include(s => s.Region)
+                .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
 
             if (busStop == null)
             {
-                return Result<BusStopDto>.Failure($"Bus stop with Stop ID '{stopId}' was not found.");
+                return Result<BusStopDto>.Failure($"Bus stop with ID '{id}' was not found.");
             }
 
-            busStop.NameMm = request.NameMm?.Trim() ?? busStop.NameMm;
-            busStop.NameEn = request.NameEn?.Trim();
-            busStop.TownshipId = request.TownshipId;
-            busStop.RoadMm = request.RoadMm?.Trim();
-            busStop.RoadEn = request.RoadEn?.Trim();
+            busStop.StopName = request.StopName.Trim();
+            busStop.Lat = request.Lat;
+            busStop.Lon = request.Lon;
+            busStop.RegionId = request.RegionId;
+            if (request.DeleteFlag.HasValue)
+            {
+                busStop.DeleteFlag = request.DeleteFlag.Value;
+            }
+            busStop.UpdatedAt = DateOnly.FromDateTime(DateTime.UtcNow);
 
             await _context.SaveChangesAsync(cancellationToken);
 
-            // Reload Township if changed
-            string? townshipNameMm = null;
-            string? townshipNameEn = null;
-            if (busStop.TownshipId.HasValue)
+            string? regionName = null;
+            if (busStop.RegionId.HasValue)
             {
-                var township = await _context.TblTownships.FindAsync(new object[] { busStop.TownshipId.Value }, cancellationToken);
-                townshipNameMm = township?.TownshipNameMm;
-                townshipNameEn = township?.TownshipNameEn;
+                var region = await _context.TblRegions.FindAsync(new object[] { busStop.RegionId.Value }, cancellationToken);
+                regionName = region?.RegionName;
             }
 
             var dto = new BusStopDto
             {
-                StopId = busStop.StopId,
-                NameMm = busStop.NameMm,
-                NameEn = busStop.NameEn,
-                TownshipId = busStop.TownshipId,
-                TownshipNameMm = townshipNameMm,
-                TownshipNameEn = townshipNameEn,
-                RoadMm = busStop.RoadMm,
-                RoadEn = busStop.RoadEn,
-                TotalServingBusLines = busStop.TotalServingBusLines ?? 0
+                Id = busStop.Id,
+                StopName = busStop.StopName,
+                Lat = busStop.Lat,
+                Lon = busStop.Lon,
+                RegionId = busStop.RegionId,
+                RegionName = regionName,
+                DeleteFlag = busStop.DeleteFlag ?? false,
+                CreatedAt = busStop.CreatedAt,
+                UpdatedAt = busStop.UpdatedAt
             };
 
             return Result<BusStopDto>.Success(dto, "Bus stop updated successfully.");
         }
 
-        public async Task<Result<bool>> DeleteBusStopAsync(int stopId, CancellationToken cancellationToken = default)
+        public async Task<Result<bool>> DeleteBusStopAsync(long id, CancellationToken cancellationToken = default)
         {
-            var busStop = await _context.TblBusStops.FirstOrDefaultAsync(s => s.StopId == stopId, cancellationToken);
+            var busStop = await _context.TblBusStops.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
             if (busStop == null)
             {
-                return Result<bool>.Failure($"Bus stop with Stop ID '{stopId}' was not found.");
+                return Result<bool>.Failure($"Bus stop with ID '{id}' was not found.");
             }
 
-            _context.TblBusStops.Remove(busStop);
+            busStop.DeleteFlag = true;
+            busStop.UpdatedAt = DateOnly.FromDateTime(DateTime.UtcNow);
             await _context.SaveChangesAsync(cancellationToken);
 
             return Result<bool>.Success(true, "Bus stop deleted successfully.");

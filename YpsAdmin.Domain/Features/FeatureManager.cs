@@ -3,11 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using YpsAdmin.Database.AppDbContextModels;
-using YpsAdmin.Domain.Features.BusLine;
+using YpsAdmin.Domain.Features.Bus;
+using YpsAdmin.Domain.Features.BusRoute;
 using YpsAdmin.Domain.Features.BusStop;
-using YpsAdmin.Domain.Features.RouteStop;
+using YpsAdmin.Domain.Features.Region;
 using YpsAdmin.Domain.Features.Store;
-using YpsAdmin.Domain.Features.Township;
 
 namespace YpsAdmin.Domain.Features
 {
@@ -15,13 +15,12 @@ namespace YpsAdmin.Domain.Features
     {
         public static void AddDomain(this WebApplicationBuilder builder)
         {
-            // Register DbContext with PostgreSQL & NetTopologySuite PostGIS support
+            // Register DbContext with PostgreSQL
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(
                     builder.Configuration.GetConnectionString("DefaultConnection"),
                     o =>
                     {
-                        o.UseNetTopologySuite();
                         o.CommandTimeout(30);
                     }));
 
@@ -29,11 +28,11 @@ namespace YpsAdmin.Domain.Features
             builder.Services.AddMemoryCache();
 
             // Register Feature Services
-            builder.Services.AddScoped<IBusLineService, BusLineService>();
+            builder.Services.AddScoped<IBusService, BusService>();
             builder.Services.AddScoped<IBusStopService, BusStopService>();
-            builder.Services.AddScoped<IRouteStopService, RouteStopService>();
-            builder.Services.AddScoped<IYpsStoreService, YpsStoreService>();
-            builder.Services.AddScoped<ITownshipService, TownshipService>();
+            builder.Services.AddScoped<IBusRouteService, BusRouteService>();
+            builder.Services.AddScoped<IRegionService, RegionService>();
+            builder.Services.AddScoped<IStoreService, StoreService>();
         }
     }
 }
