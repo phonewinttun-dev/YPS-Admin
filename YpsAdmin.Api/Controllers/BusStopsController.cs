@@ -1,7 +1,8 @@
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using YpsAdmin.Domain.DTOs.BusStop;
 using YpsAdmin.Domain.Features.BusStop;
-using YpsAdmin.Shared;
 
 namespace YpsAdmin.Api.Controllers
 {
@@ -31,7 +32,7 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetBusStopById(int id, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetBusStopById(long id, CancellationToken cancellationToken)
         {
             var result = await _busStopService.GetBusStopByIdAsync(id, cancellationToken);
             if (result.IsFailure)
@@ -49,11 +50,11 @@ namespace YpsAdmin.Api.Controllers
             {
                 return BadRequest(result);
             }
-            return CreatedAtAction(nameof(GetBusStopById), new { id = result.Data!.StopId }, result);
+            return CreatedAtAction(nameof(GetBusStopById), new { id = result.Data!.Id }, result);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateBusStop(int id, [FromBody] UpdateBusStopRequest request, CancellationToken cancellationToken)
+        public async Task<IActionResult> UpdateBusStop(long id, [FromBody] UpdateBusStopRequest request, CancellationToken cancellationToken)
         {
             var result = await _busStopService.UpdateBusStopAsync(id, request, cancellationToken);
             if (result.IsFailure)
@@ -64,7 +65,7 @@ namespace YpsAdmin.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteBusStop(int id, CancellationToken cancellationToken)
+        public async Task<IActionResult> DeleteBusStop(long id, CancellationToken cancellationToken)
         {
             var result = await _busStopService.DeleteBusStopAsync(id, cancellationToken);
             if (result.IsFailure)
