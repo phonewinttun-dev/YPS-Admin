@@ -2,17 +2,17 @@
 
 @if (TotalPages > 0)
 {
-    <div class="p-3.5 border-t border-outline-variant bg-surface-container/40 flex flex-col sm:flex-row items-center justify-between gap-3 select-none">
+    <div class="p-3.5 border-t border-border bg-muted/30 flex flex-col sm:flex-row items-center justify-between gap-3 select-none">
         <!-- Item Range Summary -->
-        <div class="text-xs text-tertiary font-mono">
-            Showing <span class="font-semibold text-on-surface">@StartItem</span> to <span class="font-semibold text-on-surface">@EndItem</span> of <span class="font-semibold text-on-surface">@TotalCount</span> entries
+        <div class="text-xs text-muted-foreground font-mono">
+            Showing <span class="font-semibold text-foreground">@StartItem</span> to <span class="font-semibold text-foreground">@EndItem</span> of <span class="font-semibold text-foreground">@TotalCount</span> entries
         </div>
 
         <!-- Numbered Page Controls -->
         <div class="flex items-center gap-1.5" aria-label="Pagination">
             <!-- Previous Button -->
             <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Icon" Disabled="@(!HasPreviousPage)" OnClick="() => ChangePage(PageNumber - 1)" Title="Previous Page">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                 </svg>
             </Button>
@@ -22,7 +22,7 @@
             {
                 if (pageItem == -1)
                 {
-                    <span class="px-2 text-xs text-tertiary font-mono">...</span>
+                    <span class="px-2 text-xs text-muted-foreground font-mono">...</span>
                 }
                 else
                 {
@@ -39,7 +39,7 @@
 
             <!-- Next Button -->
             <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Icon" Disabled="@(!HasNextPage)" OnClick="() => ChangePage(PageNumber + 1)" Title="Next Page">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                 </svg>
             </Button>
@@ -104,11 +104,11 @@
 
     private string GetPageButtonClass(bool isActive)
     {
-        var baseClass = "min-w-[34px] h-8 px-2.5 text-xs font-semibold rounded-md border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50 font-mono select-none cursor-pointer";
+        var baseClass = "min-w-[32px] h-8 px-2 text-xs font-semibold rounded-md border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring font-mono select-none cursor-pointer";
         if (isActive)
         {
-            return $"{baseClass} bg-secondary text-white border-secondary shadow-2xs";
+            return $"{baseClass} bg-primary text-white border-primary shadow-xs";
         }
-        return $"{baseClass} bg-white text-on-surface border-outline-variant hover:bg-surface-container";
+        return $"{baseClass} bg-card text-foreground border-input hover:bg-accent hover:text-accent-foreground";
     }
 }

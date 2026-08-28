@@ -3,7 +3,7 @@
 <span class="@GetBadgeClass()">
     @if (ShowDot)
     {
-        <span class="w-1.5 h-1.5 rounded-full bg-current opacity-80 mr-1.5 inline-block"></span>
+        <span class="w-1.5 h-1.5 rounded-full bg-current opacity-80 mr-1.5 inline-block" aria-hidden="true"></span>
     }
     @Text
 </span>
@@ -20,7 +20,10 @@
         Retail,
         ServiceCenter,
         YpsAccepted,
-        Outline
+        Outline,
+        Route,
+        Gps,
+        Danger
     }
 
     private string GetBadgeClass()
@@ -29,12 +32,15 @@
 
         var variantClasses = Variant switch
         {
-            BadgeVariant.TopUp => "bg-amber-50 text-amber-900 border-amber-200/80",
-            BadgeVariant.Retail => "bg-sky-50 text-sky-900 border-sky-200/80",
-            BadgeVariant.ServiceCenter => "bg-slate-100 text-slate-800 border-slate-200",
-            BadgeVariant.YpsAccepted => "bg-primary-container/60 text-on-primary-container border-primary/30",
-            BadgeVariant.Outline => "bg-transparent text-tertiary border-outline-variant",
-            _ => "bg-surface-container text-on-surface border-outline-variant"
+            BadgeVariant.YpsAccepted => "bg-[#FFF1A8] text-[#6B5600] border-[#6B5600]/20",
+            BadgeVariant.Retail => "bg-[#FFE3DA] text-[#A23F2B] border-[#A23F2B]/20",
+            BadgeVariant.TopUp => "bg-[#DCEEFF] text-[#0B5F9B] border-[#0B5F9B]/20",
+            BadgeVariant.ServiceCenter => "bg-[#DFF7EC] text-[#137455] border-[#137455]/20",
+            BadgeVariant.Route => "bg-[#EEE7FF] text-[#6546AD] border-[#6546AD]/20",
+            BadgeVariant.Gps => "bg-[#DFF7EC] text-[#137455] border-[#137455]/20",
+            BadgeVariant.Danger => "bg-[#FFE3EF] text-[#A83D69] border-[#A83D69]/20",
+            BadgeVariant.Outline => "bg-transparent text-muted-foreground border-border",
+            _ => "bg-muted text-foreground border-border"
         };
 
         return $"{baseClasses} {variantClasses}".Trim();

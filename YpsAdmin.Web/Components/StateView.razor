@@ -2,28 +2,28 @@
 
 @if (IsLoading)
 {
-    <div class="p-12 text-center flex flex-col items-center justify-center space-y-3 min-h-[220px]">
-        <div class="w-8 h-8 border-3 border-secondary/20 border-t-secondary rounded-full animate-spin"></div>
-        <p class="text-xs font-medium text-tertiary tracking-wide uppercase font-mono">@LoadingText</p>
+    <div class="p-12 text-center flex flex-col items-center justify-center space-y-3 min-h-[220px]" role="status" aria-live="polite">
+        <div class="w-8 h-8 border-3 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+        <p class="text-xs font-medium text-muted-foreground tracking-wider uppercase font-mono">@LoadingText</p>
     </div>
 }
 else if (HasError)
 {
-    <div class="p-8 text-center flex flex-col items-center justify-center space-y-3 bg-red-50/50 border border-red-200/80 rounded-lg m-4">
-        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <div class="p-8 text-center flex flex-col items-center justify-center space-y-3 bg-destructive/10 border border-destructive/20 rounded-lg m-4" role="alert">
+        <div class="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center text-destructive">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
             </svg>
         </div>
         <div class="space-y-1 max-w-md">
-            <h4 class="text-sm font-semibold text-red-900">@ErrorTitle</h4>
-            <p class="text-xs text-red-700">@(ErrorMessage ?? "An unexpected error occurred while fetching data.")</p>
+            <h4 class="text-sm font-semibold text-foreground">@ErrorTitle</h4>
+            <p class="text-xs text-muted-foreground">@(ErrorMessage ?? "An unexpected error occurred while fetching data.")</p>
         </div>
         @if (OnRetry.HasDelegate)
         {
             <div class="pt-2">
                 <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick="OnRetry">
-                    <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                     </svg>
                     Retry Loading
@@ -35,14 +35,14 @@ else if (HasError)
 else if (IsEmpty)
 {
     <div class="p-12 text-center flex flex-col items-center justify-center space-y-3 min-h-[220px]">
-        <div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-tertiary">
-            <svg class="w-6 h-6 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <div class="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+            <svg class="w-6 h-6 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
             </svg>
         </div>
         <div class="space-y-1 max-w-sm">
-            <h4 class="text-sm font-semibold text-on-surface">@EmptyTitle</h4>
-            <p class="text-xs text-tertiary">@EmptyDescription</p>
+            <h4 class="text-sm font-semibold text-foreground">@EmptyTitle</h4>
+            <p class="text-xs text-muted-foreground">@EmptyDescription</p>
         </div>
     </div>
 }
