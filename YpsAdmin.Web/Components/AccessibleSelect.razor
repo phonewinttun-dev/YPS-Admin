@@ -1,0 +1,302 @@
+@namespace YpsAdmin.Web.Components
+@typeparam TValue
+
+<div class="relative w-full @Class">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <label id="@labelId" class="block text-xs font-medium text-on-surface mb-1">
+            @Label
+            @if (Required)
+            {
+                <span class="text-red-500 ml-0.5" aria-hidden="true">*</span>
+            }
+        </label>
+    }
+
+    <!-- Combobox Trigger Button -->
+    <button type="button"
+            id="@buttonId"
+            @ref="triggerButtonRef"
+            role="combobox"
+            aria-haspopup="listbox"
+            aria-expanded="@(isOpen ? "true" : "false")"
+            aria-controls="@listboxId"
+            aria-labelledby="@(string.IsNullOrEmpty(Label) ? null : labelId)"
+            aria-label="@(string.IsNullOrEmpty(Label) ? AriaLabel ?? Placeholder : null)"
+            aria-activedescendant="@(isOpen && highlightedIndex >= 0 && highlightedIndex < itemsList.Count ? GetOptionId(highlightedIndex) : null)"
+            aria-disabled="@(Disabled ? "true" : "false")"
+            disabled="@Disabled"
+            @onclick="ToggleOpen"
+            @onkeydown="HandleKeyDown"
+            class="w-full min-h-[38px] px-3 py-1.5 text-sm bg-white border @(HasError ? "border-red-500 bg-red-50/20" : "border-outline-variant") rounded-md flex items-center justify-between gap-2 text-left cursor-pointer transition-all hover:border-secondary/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:border-secondary @(Disabled ? "opacity-60 cursor-not-allowed bg-surface-container/40" : "")">
+        
+        <span class="truncate flex-1 @(SelectedDisplayItem == null ? "text-tertiary" : "text-on-surface font-medium")">
+            @(SelectedDisplayItem?.Text ?? Placeholder ?? "Select option...")
+        </span>
+
+        <div class="flex items-center gap-1 shrink-0 text-tertiary">
+            @if (AllowClear && Value != null && !Disabled)
+            {
+                <span role="button"
+                      tabindex="0"
+                      aria-label="Clear selection"
+                      @onclick:stopPropagation="true"
+                      @onclick="ClearSelection"
+                      @onkeydown:stopPropagation="true"
+                      @onkeydown="HandleClearKeyDown"
+                      class="p-0.5 rounded hover:text-on-surface hover:bg-surface-container text-tertiary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </span>
+            }
+            <svg class="w-4 h-4 transition-transform duration-200 @(isOpen ? "rotate-180 text-secondary" : "text-tertiary")" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </div>
+    </button>
+
+    <!-- Dropdown Listbox Popup -->
+    @if (isOpen)
+    {
+        <!-- Backdrop click-away overlay -->
+        <div class="fixed inset-0 z-40" @onclick="CloseDropdown" aria-hidden="true"></div>
+
+        <div class="absolute z-50 w-full mt-1 bg-white border border-outline-variant rounded-md shadow-lg max-h-60 overflow-y-auto focus:outline-none animate-fade-in p-1"
+             role="region"
+             aria-label="@(Label ?? AriaLabel ?? "Options list")">
+            <ul id="@listboxId"
+                role="listbox"
+                tabindex="-1"
+                aria-labelledby="@(string.IsNullOrEmpty(Label) ? null : labelId)"
+                aria-label="@(string.IsNullOrEmpty(Label) ? AriaLabel ?? Placeholder : null)"
+                class="space-y-0.5">
+                
+                @if (itemsList.Count == 0)
+                {
+                    <li class="px-3 py-2 text-xs text-tertiary text-center select-none" role="presentation">
+                        @EmptyText
+                    </li>
+                }
+                else
+                {
+                    @for (int i = 0; i < itemsList.Count; i++)
+                    {
+                        var index = i;
+                        var item = itemsList[index];
+                        var isSelected = IsItemValueSelected(item.Value);
+                        var isHighlighted = highlightedIndex == index;
+
+                        <li id="@GetOptionId(index)"
+                            role="option"
+                            aria-selected="@(isSelected ? "true" : "false")"
+                            @onclick="() => SelectItem(item)"
+                            @onmouseenter="() => highlightedIndex = index"
+                            class="px-3 py-2 text-sm rounded-md flex items-center justify-between gap-2 cursor-pointer select-none transition-colors @(isHighlighted ? "bg-secondary/10 text-secondary font-medium" : "text-on-surface hover:bg-surface-container/50") @(isSelected ? "font-bold text-secondary" : "")">
+                            
+                            <div class="flex flex-col flex-1 min-w-0">
+                                <span class="truncate">@item.Text</span>
+                                @if (!string.IsNullOrEmpty(item.SubText))
+                                {
+                                    <span class="text-2xs text-tertiary font-normal truncate">@item.SubText</span>
+                                }
+                            </div>
+
+                            @if (isSelected)
+                            {
+                                <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            }
+                        </li>
+                    }
+                }
+            </ul>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public TValue? Value { get; set; }
+    [Parameter] public EventCallback<TValue?> ValueChanged { get; set; }
+    [Parameter] public IEnumerable<SelectItem<TValue>>? Items { get; set; }
+    [Parameter] public string? Placeholder { get; set; } = "Select option...";
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string? AriaLabel { get; set; }
+    [Parameter] public bool Required { get; set; } = false;
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public bool AllowClear { get; set; } = false;
+    [Parameter] public bool HasError { get; set; } = false;
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string EmptyText { get; set; } = "No options available";
+    [Parameter] public EventCallback<TValue?> OnSelected { get; set; }
+
+    private ElementReference triggerButtonRef;
+    private bool isOpen = false;
+    private int highlightedIndex = -1;
+    private readonly string uniqueId = Guid.NewGuid().ToString("N")[..8];
+
+    private string buttonId => $"select_btn_{uniqueId}";
+    private string listboxId => $"select_list_{uniqueId}";
+    private string labelId => $"select_lbl_{uniqueId}";
+
+    private List<SelectItem<TValue>> itemsList => Items?.ToList() ?? new List<SelectItem<TValue>>();
+
+    private SelectItem<TValue>? SelectedDisplayItem
+    {
+        get
+        {
+            if (Value == null) return null;
+            return itemsList.FirstOrDefault(item => IsItemValueSelected(item.Value));
+        }
+    }
+
+    private string GetOptionId(int index) => $"select_opt_{uniqueId}_{index}";
+
+    private bool IsItemValueSelected(TValue? itemVal)
+    {
+        if (Value == null && itemVal == null) return true;
+        if (Value == null || itemVal == null) return false;
+        return EqualityComparer<TValue>.Default.Equals(Value, itemVal);
+    }
+
+    private void ToggleOpen()
+    {
+        if (Disabled) return;
+        isOpen = !isOpen;
+        if (isOpen)
+        {
+            SetInitialHighlight();
+        }
+    }
+
+    private void CloseDropdown()
+    {
+        isOpen = false;
+        highlightedIndex = -1;
+    }
+
+    private void SetInitialHighlight()
+    {
+        if (Value != null)
+        {
+            var idx = itemsList.FindIndex(item => IsItemValueSelected(item.Value));
+            highlightedIndex = idx >= 0 ? idx : 0;
+        }
+        else if (itemsList.Count > 0)
+        {
+            highlightedIndex = 0;
+        }
+        else
+        {
+            highlightedIndex = -1;
+        }
+    }
+
+    private async Task SelectItem(SelectItem<TValue> item)
+    {
+        Value = item.Value;
+        isOpen = false;
+        await ValueChanged.InvokeAsync(Value);
+        if (OnSelected.HasDelegate)
+        {
+            await OnSelected.InvokeAsync(Value);
+        }
+    }
+
+    private async Task ClearSelection()
+    {
+        Value = default;
+        isOpen = false;
+        await ValueChanged.InvokeAsync(Value);
+        if (OnSelected.HasDelegate)
+        {
+            await OnSelected.InvokeAsync(Value);
+        }
+    }
+
+    private async Task HandleClearKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key is "Enter" or " " or "Spacebar")
+        {
+            await ClearSelection();
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (Disabled) return;
+
+        switch (e.Key)
+        {
+            case "ArrowDown":
+                if (!isOpen)
+                {
+                    isOpen = true;
+                    SetInitialHighlight();
+                }
+                else if (itemsList.Count > 0)
+                {
+                    highlightedIndex = (highlightedIndex + 1) % itemsList.Count;
+                }
+                break;
+
+            case "ArrowUp":
+                if (!isOpen)
+                {
+                    isOpen = true;
+                    SetInitialHighlight();
+                }
+                else if (itemsList.Count > 0)
+                {
+                    highlightedIndex = (highlightedIndex - 1 + itemsList.Count) % itemsList.Count;
+                }
+                break;
+
+            case "Home":
+                if (isOpen && itemsList.Count > 0)
+                {
+                    highlightedIndex = 0;
+                }
+                break;
+
+            case "End":
+                if (isOpen && itemsList.Count > 0)
+                {
+                    highlightedIndex = itemsList.Count - 1;
+                }
+                break;
+
+            case "Enter":
+            case " ":
+            case "Spacebar":
+                if (isOpen)
+                {
+                    if (highlightedIndex >= 0 && highlightedIndex < itemsList.Count)
+                    {
+                        await SelectItem(itemsList[highlightedIndex]);
+                    }
+                }
+                else
+                {
+                    isOpen = true;
+                    SetInitialHighlight();
+                }
+                break;
+
+            case "Escape":
+                if (isOpen)
+                {
+                    CloseDropdown();
+                }
+                break;
+
+            case "Tab":
+                if (isOpen)
+                {
+                    CloseDropdown();
+                }
+                break;
+        }
+    }
+}

@@ -120,6 +120,30 @@ namespace YpsAdmin.Domain.Features.BusStop
             return Result<BusStopDto>.Success(dto, "Bus stop retrieved successfully.");
         }
 
+        public async Task<Result<List<BusStopDto>>> GetBusStopByRegionAsync(int regionId, CancellationToken cancellationToken = default)
+        {
+            var busStops = await _context.TblBusStops
+                .AsNoTracking()
+                .Where(s => s.RegionId == regionId && s.DeleteFlag != true)
+                .OrderBy(s => s.StopName)
+                .Select(s => new BusStopDto
+                {
+                     Id = s.Id,
+                     StopName = s.StopName,
+                     Lat = s.Lat,
+                     Lon = s.Lon,
+                     RegionId = s.RegionId,
+                     RegionName = s.Region != null ? s.Region.RegionName : null,
+                     DeleteFlag = s.DeleteFlag ?? false,
+                     CreatedAt = s.CreatedAt,
+                     UpdatedAt = s.UpdatedAt
+                })
+                 .ToListAsync(cancellationToken);
+
+
+            return Result<List<BusStopDto>>.Success(busStops, "Bus stop retrieved successfully.");
+        }
+
         public async Task<Result<BusStopDto>> CreateBusStopAsync(CreateBusStopRequest request, CancellationToken cancellationToken = default)
         {
             var today = DateOnly.FromDateTime(DateTime.UtcNow);

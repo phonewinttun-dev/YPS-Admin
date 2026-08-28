@@ -33,7 +33,7 @@ namespace YpsAdmin.Domain.Features.BusRoute
             var routes = await _context.TblBusRoutes
                 .AsNoTracking()
                 .Include(br => br.BusStop)
-                    .ThenInclude(s => s.Region)
+                .ThenInclude(s => s.Region)
                 .Where(br => br.BusId == busId)
                 .OrderBy(br => br.StopOrder)
                 .Select(br => new BusRouteStopItemDto

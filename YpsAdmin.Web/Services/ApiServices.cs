@@ -48,6 +48,7 @@ public interface IBusStopService
 {
     Task<PagedResult<BusStopDto>?> GetBusStopsAsync(int pageNumber, int pageSize, string? searchStopName, int? regionId = null);
     Task<Result<BusStopDto>?> GetByIdAsync(long id);
+    Task<Result<List<BusStopDto>>?> GetBusStopByRegionAsync(int regionId);
     Task<Result<BusStopDto>?> CreateAsync(CreateBusStopRequest request);
     Task<Result<BusStopDto>?> UpdateAsync(long id, UpdateBusStopRequest request);
     Task<Result<bool>?> DeleteAsync(long id);
@@ -218,6 +219,22 @@ public class BusStopService : IBusStopService
         catch (HttpRequestException ex)
         {
             return Result<BusStopDto>.Failure($"API request failed: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<List<BusStopDto>>?> GetBusStopByRegionAsync(int regionId)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<Result<List<BusStopDto>>>($"/api/bus-stops/by-region/{regionId}");
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<List<BusStopDto>>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<List<BusStopDto>>.Failure($"API request failed: {ex.Message}");
         }
     }
 

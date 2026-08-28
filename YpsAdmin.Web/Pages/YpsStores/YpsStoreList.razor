@@ -164,17 +164,12 @@
                 <input type="text" @bind="formCategory" placeholder="e.g. Top-Up Point, Retail Store" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" />
             </div>
             <div>
-                <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("Region")</label>
-                <select @bind="formRegionId" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary bg-white">
-                    <option value="">Select Region</option>
-                    @if (regions != null)
-                    {
-                        @foreach (var r in regions)
-                        {
-                            <option value="@r.Id">@r.RegionName</option>
-                        }
-                    }
-                </select>
+                <AccessibleSelect TValue="int?"
+                                  Label="@Lang.GetText("Region")"
+                                  @bind-Value="formRegionId"
+                                  Items="@regionSelectItems"
+                                  Placeholder="Select Region"
+                                  AllowClear="true" />
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
@@ -204,8 +199,17 @@
              Title="@($"{Lang.GetText("AssignStops")} - {activeStore?.MmName ?? activeStore?.EngName}")"
              Description="Select nearest bus stops that serve this YPS store location.">
     <ChildContent>
-        <div class="flex items-center justify-between mb-3">
-            <label class="inline-flex items-center gap-2 text-xs font-medium text-on-surface cursor-pointer select-none border border-outline-variant px-3 py-1.5 rounded-md hover:bg-surface-container/50 transition-colors">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-3">
+            <div class="flex-1">
+                <AccessibleSelect TValue="int?"
+                                  Value="@stopsModalRegionId"
+                                  ValueChanged="OnStopsModalRegionChanged"
+                                  Items="@regionSelectItems"
+                                  Placeholder="All Regions"
+                                  AllowClear="true"
+                                  AriaLabel="Filter nearest stops by Region" />
+            </div>
+            <label class="inline-flex items-center gap-2 text-xs font-medium text-on-surface cursor-pointer select-none border border-outline-variant px-3 py-1.5 rounded-md hover:bg-surface-container/50 transition-colors h-[38px]">
                 <input type="checkbox" @bind="showOnlyLinkedStops" class="h-4 w-4 rounded border-outline text-secondary focus:ring-secondary/50" />
                 <span>Linked Stops</span>
             </label>
@@ -305,9 +309,12 @@
     // Nearest Stops Modal
     private bool showStopsModal = false;
     private bool showOnlyLinkedStops = false;
+    private int? stopsModalRegionId = null;
     private StoreDto? activeStore;
     private List<BusStopDto>? allBusStops;
     private Dictionary<long, double> selectedStopMap = new();
+
+    private IEnumerable<SelectItem<int?>>? regionSelectItems => regions?.Select(r => new SelectItem<int?>(r.Id, r.RegionName));
 
     // Delete Modal
     private bool showDeleteModal = false;
@@ -462,6 +469,7 @@
     {
         activeStore = item;
         showOnlyLinkedStops = false;
+        stopsModalRegionId = item.RegionId;
         selectedStopMap.Clear();
         if (item.NearestStops != null)
         {
@@ -470,8 +478,45 @@
                 selectedStopMap[ns.BusStopId] = ns.DistanceKm ?? 0.1;
             }
         }
-        await EnsureBusStopsLoadedAsync();
+        await EnsureRegionsLoadedAsync();
+        if (stopsModalRegionId.HasValue)
+        {
+            var res = await BusStopService.GetBusStopByRegionAsync(stopsModalRegionId.Value);
+            if (res != null && res.IsSuccess && res.Data != null)
+            {
+                allBusStops = res.Data;
+            }
+            else
+            {
+                await EnsureBusStopsLoadedAsync();
+            }
+        }
+        else
+        {
+            await EnsureBusStopsLoadedAsync();
+        }
         showStopsModal = true;
+    }
+
+    private async Task OnStopsModalRegionChanged(int? newRegionId)
+    {
+        stopsModalRegionId = newRegionId;
+        if (stopsModalRegionId.HasValue)
+        {
+            var res = await BusStopService.GetBusStopByRegionAsync(stopsModalRegionId.Value);
+            if (res != null && res.IsSuccess && res.Data != null)
+            {
+                allBusStops = res.Data;
+            }
+        }
+        else
+        {
+            var res = await BusStopService.GetBusStopsAsync(1, 500, null);
+            if (res != null && res.Data != null)
+            {
+                allBusStops = res.Data;
+            }
+        }
     }
 
     private void ToggleStopSelection(long busStopId, object? isChecked)

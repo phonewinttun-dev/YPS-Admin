@@ -2,6 +2,7 @@
 @inject IBusRouteService RouteStopService
 @inject IBusService BusService
 @inject IBusStopService BusStopService
+@inject IRegionService RegionService
 @inject IToastService Toast
 @inject LanguageService Lang
 
@@ -207,21 +208,37 @@
              Description="Check the bus stops to include in this route sequence.">
     <ChildContent>
         <div class="space-y-3">
-            <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-tertiary">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
+            <div class="flex flex-col sm:flex-row gap-2">
+                <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-tertiary">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <input type="text"
+                           @bind="modalSearchQuery"
+                           @bind:event="oninput"
+                           placeholder="Filter bus stops by name..."
+                           aria-label="Filter bus stops by name"
+                           class="w-full h-9 pl-8 pr-3 text-xs border border-outline-variant rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:border-secondary" />
                 </div>
-                <input type="text"
-                       @bind="modalSearchQuery"
-                       @bind:event="oninput"
-                       placeholder="Filter bus stops by name..."
-                       class="w-full h-9 pl-8 pr-3 text-xs border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" />
+                <div class="w-full sm:w-44">
+                    <AccessibleSelect TValue="int?"
+                                      Value="@modalRegionFilterId"
+                                      ValueChanged="OnModalRegionFilterChanged"
+                                      Items="@modalRegionSelectItems"
+                                      Placeholder="All Regions"
+                                      AllowClear="true"
+                                      AriaLabel="Filter by Region" />
+                </div>
             </div>
 
             <div class="max-h-64 overflow-y-auto space-y-1.5 border border-outline-variant p-3 rounded-md bg-surface-container/30">
-                @if (filteredBusStops == null || !filteredBusStops.Any())
+                @if (isModalStopsLoading)
+                {
+                    <p class="text-xs text-tertiary text-center p-4">Loading bus stops...</p>
+                }
+                else if (filteredBusStops == null || !filteredBusStops.Any())
                 {
                     <p class="text-xs text-tertiary text-center p-4">No matching bus stops found.</p>
                 }
@@ -268,8 +285,13 @@
     // Assign modal state
     private bool showAssignModal = false;
     private List<BusStopDto>? allBusStops;
+    private List<RegionDto>? regions;
     private HashSet<long> selectedStopIds = new();
     private string modalSearchQuery = "";
+    private int? modalRegionFilterId = null;
+    private bool isModalStopsLoading = false;
+
+    private IEnumerable<SelectItem<int?>>? modalRegionSelectItems => regions?.Select(r => new SelectItem<int?>(r.Id, r.RegionName));
 
     private IEnumerable<BusStopDto>? filteredBusStops => string.IsNullOrWhiteSpace(modalSearchQuery)
         ? allBusStops
@@ -280,13 +302,20 @@
     {
         var selectorTask = LoadBusesSelectorPageAsync(1);
         var stopsTask = BusStopService.GetBusStopsAsync(1, 500, null);
+        var regionsTask = RegionService.GetRegionsAsync(1, 200, null);
 
-        await Task.WhenAll(selectorTask, stopsTask);
+        await Task.WhenAll(selectorTask, stopsTask, regionsTask);
 
         var stopsRes = await stopsTask;
         if (stopsRes != null && stopsRes.Data != null)
         {
             allBusStops = stopsRes.Data;
+        }
+
+        var regionsRes = await regionsTask;
+        if (regionsRes != null && regionsRes.Data != null)
+        {
+            regions = regionsRes.Data;
         }
     }
 
@@ -403,6 +432,7 @@
     private void OpenAssignModal()
     {
         modalSearchQuery = "";
+        modalRegionFilterId = null;
         selectedStopIds.Clear();
         if (fullRoute != null && fullRoute.Stops != null)
         {
@@ -412,6 +442,39 @@
             }
         }
         showAssignModal = true;
+    }
+
+    private async Task OnModalRegionFilterChanged(int? newRegionId)
+    {
+        modalRegionFilterId = newRegionId;
+        isModalStopsLoading = true;
+        try
+        {
+            if (modalRegionFilterId.HasValue)
+            {
+                var res = await BusStopService.GetBusStopByRegionAsync(modalRegionFilterId.Value);
+                if (res != null && res.IsSuccess && res.Data != null)
+                {
+                    allBusStops = res.Data;
+                }
+            }
+            else
+            {
+                var stopsRes = await BusStopService.GetBusStopsAsync(1, 500, null);
+                if (stopsRes != null && stopsRes.Data != null)
+                {
+                    allBusStops = stopsRes.Data;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Failed to load bus stops: {ex.Message}");
+        }
+        finally
+        {
+            isModalStopsLoading = false;
+        }
     }
 
     private void ToggleStopSelection(long busStopId, object? isChecked)

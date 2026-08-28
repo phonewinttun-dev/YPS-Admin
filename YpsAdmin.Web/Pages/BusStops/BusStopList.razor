@@ -11,8 +11,8 @@
             <h2 class="text-lg font-bold text-on-surface tracking-tight">@Lang.GetText("NavBusStops")</h2>
             <p class="text-xs text-tertiary">Manage bus stop stations, geographic regions, and GPS coordinates.</p>
         </div>
-        <div class="flex items-center gap-3 w-full sm:w-auto">
-            <div class="relative flex-1 sm:w-64">
+        <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
+            <div class="relative flex-1 sm:w-60 min-w-[180px]">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-tertiary">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -23,7 +23,18 @@
                        @bind:event="oninput"
                        @onkeyup="HandleSearch"
                        placeholder="@Lang.GetText("Search")..."
-                       class="w-full h-10 pl-9 pr-3 text-sm border border-outline-variant rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all" />
+                       aria-label="Search bus stops"
+                       class="w-full h-10 pl-9 pr-3 text-sm border border-outline-variant rounded-md bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:border-secondary transition-all" />
+            </div>
+
+            <div class="w-full sm:w-48">
+                <AccessibleSelect TValue="int?"
+                                  Value="@selectedRegionId"
+                                  ValueChanged="HandleRegionFilterChanged"
+                                  Items="@regionSelectItems"
+                                  Placeholder="All Regions"
+                                  AllowClear="true"
+                                  AriaLabel="Filter by Region" />
             </div>
 
             <Button Variant="ButtonVariant.Default" Size="ButtonSize.Md" OnClick="OpenCreateModal">
@@ -123,17 +134,12 @@
                 }
             </div>
             <div>
-                <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("Region")</label>
-                <select @bind="formRegionId" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary bg-white">
-                    <option value="">Select Region</option>
-                    @if (regions != null)
-                    {
-                        @foreach (var r in regions)
-                        {
-                            <option value="@r.Id">@r.RegionName</option>
-                        }
-                    }
-                </select>
+                <AccessibleSelect TValue="int?"
+                                  Label="@Lang.GetText("Region")"
+                                  @bind-Value="formRegionId"
+                                  Items="@regionSelectItems"
+                                  Placeholder="Select Region"
+                                  AllowClear="true" />
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
@@ -186,6 +192,9 @@
     private int pageNumber = 1;
     private int pageSize = 10;
     private string searchQuery = "";
+    private int? selectedRegionId = null;
+
+    private IEnumerable<SelectItem<int?>>? regionSelectItems => regions?.Select(r => new SelectItem<int?>(r.Id, r.RegionName));
 
     // Form Modal state & validation
     private bool showFormModal = false;
@@ -219,7 +228,24 @@
         errorMessage = null;
         try
         {
-            busStops = await BusStopService.GetBusStopsAsync(pageNumber, pageSize, searchQuery);
+            if (selectedRegionId.HasValue && string.IsNullOrWhiteSpace(searchQuery))
+            {
+                var res = await BusStopService.GetBusStopByRegionAsync(selectedRegionId.Value);
+                if (res != null && res.IsSuccess && res.Data != null)
+                {
+                    var items = res.Data;
+                    var pagination = new YpsAdmin.Shared.Pagination(1, items.Count > 0 ? items.Count : 10, items.Count);
+                    busStops = PagedResult<BusStopDto>.Success(items, pagination, res.Message);
+                }
+                else
+                {
+                    busStops = PagedResult<BusStopDto>.Failure(res?.Message ?? "Failed to load bus stops for region.");
+                }
+            }
+            else
+            {
+                busStops = await BusStopService.GetBusStopsAsync(pageNumber, pageSize, searchQuery, selectedRegionId);
+            }
         }
         catch (Exception ex)
         {
@@ -230,6 +256,13 @@
         {
             isLoading = false;
         }
+    }
+
+    private async Task HandleRegionFilterChanged(int? newRegionId)
+    {
+        selectedRegionId = newRegionId;
+        pageNumber = 1;
+        await LoadData();
     }
 
     private async Task HandleSearch() { pageNumber = 1; await LoadData(); }

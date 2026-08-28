@@ -1,5 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using YpsAdmin.Domain.DTOs.BusStop;
 using YpsAdmin.Domain.Features.BusStop;
@@ -39,6 +37,13 @@ namespace YpsAdmin.Api.Controllers
             {
                 return NotFound(result);
             }
+            return Ok(result);
+        }
+
+        [HttpGet("by-region/{regionId}")]
+        public async Task<IActionResult> GetBusStopsByRegion(int regionId, CancellationToken cancellationToken)
+        {
+            var result = await _busStopService.GetBusStopByRegionAsync(regionId, cancellationToken);
             return Ok(result);
         }
 
