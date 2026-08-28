@@ -1,0 +1,134 @@
+@namespace YpsAdmin.Web.Pages.RouteStops.Components
+@inject IBusService BusService
+@inject IToastService Toast
+@inject LanguageService Lang
+
+<div class="bg-card p-5 rounded-xl border border-border shadow-xs space-y-4">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border pb-3.5">
+        <div>
+            <h2 class="text-base font-semibold text-foreground tracking-tight">@Lang.GetText("NavRouteMapping")</h2>
+            <p class="text-xs text-muted-foreground mt-0.5">Select a bus line from the catalog below to inspect its map route and sequence.</p>
+        </div>
+        @if (busesPagedResult?.Pagination != null)
+        {
+            <div class="flex items-center gap-2.5">
+                <span class="text-xs font-mono font-medium text-muted-foreground">
+                    Page @busPageNumber of @busesPagedResult.Pagination.TotalPages (@busesPagedResult.Pagination.TotalCount Buses)
+                </span>
+                <div class="flex items-center gap-1">
+                    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Disabled="@(busPageNumber <= 1)" OnClick="PreviousBusPage">
+                        Previous
+                    </Button>
+                    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Disabled="@(busPageNumber >= busesPagedResult.Pagination.TotalPages)" OnClick="NextBusPage">
+                        Next
+                    </Button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Bus Grid Selector -->
+    <div>
+        @if (isSelectorLoading)
+        {
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                @for (int i = 0; i < 10; i++)
+                {
+                    <div class="h-16 bg-muted animate-pulse rounded-lg border border-border"></div>
+                }
+            </div>
+        }
+        else if (busesPagedResult?.Data != null && busesPagedResult.Data.Any())
+        {
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5" role="radiogroup" aria-label="Select Bus Line">
+                @foreach (var bus in busesPagedResult.Data)
+                {
+                    var isSelected = bus.Id == SelectedBusId;
+                    <button type="button"
+                            role="radio"
+                            aria-checked="@(isSelected ? "true" : "false")"
+                            @onclick="() => SelectBus(bus)"
+                            class="p-3 rounded-lg text-left transition-all border flex flex-col justify-between h-20 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring @(isSelected ? "border-primary bg-primary/5 shadow-xs ring-2 ring-primary/20" : "border-border bg-card hover:border-primary/50 hover:bg-accent/40")">
+                        <div class="flex items-center justify-between w-full">
+                            <span class="font-mono font-bold text-sm @(isSelected ? "text-primary" : "text-foreground")">Bus @bus.BusNumber</span>
+                            @if (bus.IsCardAccepted)
+                            {
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-xs" title="YPS Card Accepted"></span>
+                            }
+                        </div>
+                        <div class="text-xs text-muted-foreground truncate font-medium w-full flex items-center justify-between mt-1">
+                            <span class="truncate">@(bus.VariantId ?? "Default")</span>
+                            @if (bus.IsReversed)
+                            {
+                                <span class="text-2xs bg-amber-100 text-amber-900 border border-amber-300/60 font-mono font-bold px-1.5 py-0.2 rounded shrink-0">REV</span>
+                            }
+                        </div>
+                    </button>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="p-6 text-center border border-dashed border-border rounded-lg">
+                <p class="text-xs text-muted-foreground">No bus lines found in system.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public long SelectedBusId { get; set; }
+    [Parameter] public EventCallback<BusDto> OnBusSelected { get; set; }
+
+    private PagedResult<BusDto>? busesPagedResult;
+    private int busPageNumber = 1;
+    private int busPageSize = 10;
+    private bool isSelectorLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBusesSelectorPageAsync(1);
+    }
+
+    private async Task LoadBusesSelectorPageAsync(int page)
+    {
+        isSelectorLoading = true;
+        try
+        {
+            busPageNumber = page;
+            busesPagedResult = await BusService.GetBusesAsync(busPageNumber, busPageSize, null);
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Failed to load buses: {ex.Message}");
+        }
+        finally
+        {
+            isSelectorLoading = false;
+        }
+    }
+
+    private async Task PreviousBusPage()
+    {
+        if (busPageNumber > 1)
+        {
+            await LoadBusesSelectorPageAsync(busPageNumber - 1);
+        }
+    }
+
+    private async Task NextBusPage()
+    {
+        if (busesPagedResult?.Pagination != null && busPageNumber < busesPagedResult.Pagination.TotalPages)
+        {
+            await LoadBusesSelectorPageAsync(busPageNumber + 1);
+        }
+    }
+
+    private async Task SelectBus(BusDto bus)
+    {
+        if (OnBusSelected.HasDelegate)
+        {
+            await OnBusSelected.InvokeAsync(bus);
+        }
+    }
+}

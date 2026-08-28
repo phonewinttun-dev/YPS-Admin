@@ -5,15 +5,15 @@
 
 <div class="space-y-6">
     <!-- Header Controls -->
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-lg border border-outline-variant shadow-2xs">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-card p-4 rounded-xl border border-border shadow-xs">
         <div>
-            <h2 class="text-lg font-bold text-on-surface tracking-tight">@Lang.GetText("NavBusLines")</h2>
-            <p class="text-xs text-tertiary">Manage YBS transit buses, variant IDs, route directions, and YPS payment card acceptance.</p>
+            <h2 class="text-base font-semibold text-foreground tracking-tight">@Lang.GetText("NavBusLines")</h2>
+            <p class="text-xs text-muted-foreground mt-0.5">Manage YBS transit buses, variant IDs, route directions, and YPS payment card acceptance.</p>
         </div>
         <div class="flex items-center gap-3 w-full sm:w-auto">
             <div class="relative flex-1 sm:w-64">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-tertiary">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                 </div>
@@ -22,11 +22,12 @@
                        @bind:event="oninput"
                        @onkeyup="HandleSearch"
                        placeholder="Search by bus number..."
-                       class="w-full h-10 pl-9 pr-3 text-sm border border-outline-variant rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all" />
+                       aria-label="Search by bus number"
+                       class="w-full h-9 pl-9 pr-3 text-sm border border-input rounded-md bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary shadow-xs transition-all" />
             </div>
 
             <Button Variant="ButtonVariant.Default" Size="ButtonSize.Md" OnClick="OpenCreateModal">
-                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
                 @Lang.GetText("Add")
@@ -35,7 +36,7 @@
     </div>
 
     <!-- Data Table & State Wrapper -->
-    <div class="bg-white rounded-lg border border-outline-variant shadow-2xs overflow-hidden">
+    <div class="bg-card rounded-xl border border-border shadow-xs overflow-hidden">
         <StateView IsLoading="@isLoading"
                    HasError="@hasError"
                    ErrorMessage="@errorMessage"
@@ -47,7 +48,7 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm border-collapse">
                         <thead>
-                            <tr class="bg-surface-container/60 border-b border-outline-variant text-xs font-semibold text-tertiary uppercase tracking-wider">
+                            <tr class="bg-muted/40 border-b border-border text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                 <th class="p-3.5">@Lang.GetText("BusNumber")</th>
                                 <th class="p-3.5">@Lang.GetText("VariantId")</th>
                                 <th class="p-3.5">@Lang.GetText("Direction")</th>
@@ -55,37 +56,37 @@
                                 <th class="p-3.5 text-right">@Lang.GetText("Actions")</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-outline-variant">
-                            @if (buses != null && buses.Data != null)
+                        <tbody class="divide-y divide-border">
+                            @if (buses?.Data != null)
                             {
                                 @foreach (var item in buses.Data)
                                 {
-                                    <tr class="hover:bg-surface-container/30 transition-colors">
-                                        <td class="p-3.5 font-bold font-mono text-secondary text-base">
+                                    <tr class="hover:bg-accent/40 transition-colors">
+                                        <td class="p-3.5 font-bold font-mono text-primary text-base">
                                             Bus @item.BusNumber
                                         </td>
-                                        <td class="p-3.5 text-on-surface">
+                                        <td class="p-3.5 text-foreground">
                                             @if (!string.IsNullOrEmpty(item.VariantId))
                                             {
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-surface-container text-on-surface border border-outline-variant">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-muted text-foreground border border-border">
                                                     @item.VariantId
                                                 </span>
                                             }
                                             else
                                             {
-                                                <span class="text-xs text-tertiary">Default</span>
+                                                <span class="text-xs text-muted-foreground">Default</span>
                                             }
                                         </td>
                                         <td class="p-3.5">
                                             @if (item.IsReversed)
                                             {
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-900 border border-amber-300">
                                                     @Lang.GetText("Return")
                                                 </span>
                                             }
                                             else
                                             {
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary/10 text-secondary border border-secondary/20">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-900 border border-blue-200">
                                                     @Lang.GetText("Outbound")
                                                 </span>
                                             }
@@ -105,7 +106,7 @@
                                                 <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick="() => OpenEditModal(item)">
                                                     @Lang.GetText("Edit")
                                                 </Button>
-                                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Sm" Class="text-error hover:bg-red-50 hover:text-error" OnClick="() => PromptDelete(item)">
+                                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Sm" Class="text-destructive hover:bg-destructive/10 hover:text-destructive" OnClick="() => PromptDelete(item)">
                                                     @Lang.GetText("Delete")
                                                 </Button>
                                             </div>
@@ -118,7 +119,7 @@
                 </div>
 
                 <!-- Pagination -->
-                @if (buses != null && buses.Pagination != null)
+                @if (buses?.Pagination != null)
                 {
                     <Pagination PageNumber="@pageNumber" TotalPages="@buses.Pagination.TotalPages" TotalCount="@buses.Pagination.TotalCount" PageSize="@pageSize" PageChanged="OnPageChanged" />
                 }
@@ -135,34 +136,34 @@
     <ChildContent>
         @if (!string.IsNullOrEmpty(formValidationError))
         {
-            <div class="p-3 bg-red-50 border border-red-200 rounded-md text-xs text-red-700 flex items-center gap-2">
-                <svg class="w-4 h-4 shrink-0 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="p-3 bg-destructive/10 border border-destructive/20 rounded-md text-xs text-destructive flex items-center gap-2" role="alert">
+                <svg class="w-4 h-4 shrink-0 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
                 <span>@formValidationError</span>
             </div>
         }
 
-        <div class="space-y-3">
+        <div class="space-y-3.5">
             <div>
-                <label class="block text-xs font-medium text-on-surface mb-1">@Lang.GetText("BusNumber") *</label>
-                <input type="number" @bind="formBusNumber" min="1" class="w-full h-9 px-3 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono @(!string.IsNullOrEmpty(formBusNumberError) ? "border-red-500 bg-red-50/20" : "border-outline-variant")" />
+                <label class="block text-xs font-medium text-foreground mb-1">@Lang.GetText("BusNumber") *</label>
+                <input type="number" @bind="formBusNumber" min="1" class="w-full h-9 px-3 text-sm border rounded-md bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary font-mono shadow-xs @(!string.IsNullOrEmpty(formBusNumberError) ? "border-destructive bg-destructive/5" : "border-input")" />
                 @if (!string.IsNullOrEmpty(formBusNumberError))
                 {
-                    <p class="text-2xs text-red-600 mt-1">@formBusNumberError</p>
+                    <p class="text-2xs text-destructive mt-1">@formBusNumberError</p>
                 }
             </div>
             <div>
-                <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("VariantId") (e.g. Main, Inbound, Express)</label>
-                <input type="text" @bind="formVariantId" placeholder="Optional variant identifier" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono" />
+                <label class="block text-xs font-medium text-muted-foreground mb-1">@Lang.GetText("VariantId") (e.g. Main, Inbound, Express)</label>
+                <input type="text" @bind="formVariantId" placeholder="Optional variant identifier" class="w-full h-9 px-3 text-sm border border-input rounded-md bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary font-mono shadow-xs" />
             </div>
             <div class="flex items-center gap-2 pt-2">
-                <input type="checkbox" id="reversedCheck" @bind="formIsReversed" class="h-4 w-4 rounded border-outline text-secondary focus:ring-secondary/50" />
-                <label for="reversedCheck" class="text-sm font-medium text-on-surface cursor-pointer select-none">@Lang.GetText("IsReversed")</label>
+                <input type="checkbox" id="reversedCheck" @bind="formIsReversed" class="h-4 w-4 rounded border-input text-primary focus:ring-ring" />
+                <label for="reversedCheck" class="text-sm font-medium text-foreground cursor-pointer select-none">@Lang.GetText("IsReversed")</label>
             </div>
             <div class="flex items-center gap-2 pt-1">
-                <input type="checkbox" id="ypsCheck" @bind="formYpsAccepted" class="h-4 w-4 rounded border-outline text-secondary focus:ring-secondary/50" />
-                <label for="ypsCheck" class="text-sm font-medium text-on-surface cursor-pointer select-none">@Lang.GetText("YpsAccepted")</label>
+                <input type="checkbox" id="ypsCheck" @bind="formYpsAccepted" class="h-4 w-4 rounded border-input text-primary focus:ring-ring" />
+                <label for="ypsCheck" class="text-sm font-medium text-foreground cursor-pointer select-none">@Lang.GetText("YpsAccepted")</label>
             </div>
         </div>
     </ChildContent>
@@ -182,7 +183,7 @@
              Title="@Lang.GetText("ConfirmDeleteTitle")"
              Description="@Lang.GetText("ConfirmDeleteMessage")">
     <ChildContent>
-        <p class="text-xs text-tertiary">Deleting this bus line will also remove any mapped route stop sequences associated with it.</p>
+        <p class="text-xs text-muted-foreground">Deleting this bus line will also remove any mapped route stop sequences associated with it.</p>
     </ChildContent>
     <Footer>
         <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick="() => showDeleteModal = false">

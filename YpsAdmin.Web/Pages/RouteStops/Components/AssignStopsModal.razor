@@ -1,0 +1,305 @@
+@namespace YpsAdmin.Web.Pages.RouteStops.Components
+@inject IBusStopService BusStopService
+@inject IRegionService RegionService
+@inject IToastService Toast
+@inject LanguageService Lang
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<ModalDialog IsOpen="@IsOpen"
+             IsOpenChanged="HandleIsOpenChanged"
+             Title="@Lang.GetText("AssignStops")"
+             Description="@($"Select the bus stop stations to include in Bus {Bus?.BusNumber} route sequence.")"
+             MaxWidthClass="max-w-4xl">
+    <ChildContent>
+        <div class="space-y-4">
+            <!-- Filter Toolbar -->
+            <div class="flex flex-col sm:flex-row gap-2.5">
+                <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-muted-foreground">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <input type="text"
+                           @bind="searchQuery"
+                           @bind:event="oninput"
+                           placeholder="Filter stops by name..."
+                           aria-label="Filter bus stops by name"
+                           class="w-full h-9 pl-8 pr-3 text-xs border border-input rounded-md bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary shadow-xs" />
+                </div>
+                <div class="w-full sm:w-48">
+                    <AccessibleSelect TValue="int?"
+                                      Value="@selectedRegionId"
+                                      ValueChanged="OnRegionFilterChanged"
+                                      Items="@regionSelectItems"
+                                      Placeholder="All Regions"
+                                      AllowClear="true"
+                                      AriaLabel="Filter by Region" />
+                </div>
+            </div>
+
+            <!-- Dual View: Catalog List & Interactive Map Picker -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <!-- Left: Accessible Checkbox List -->
+                <div class="space-y-2 flex flex-col">
+                    <div class="flex items-center justify-between text-2xs text-muted-foreground px-1">
+                        <span class="font-mono">Catalog (@(filteredBusStops?.Count() ?? 0) stops)</span>
+                        <div class="flex items-center gap-2">
+                            <button type="button" @onclick="SelectAllVisible" class="hover:text-primary transition-colors font-medium">Select All</button>
+                            <span>•</span>
+                            <button type="button" @onclick="ClearAll" class="hover:text-destructive transition-colors font-medium">Clear</button>
+                        </div>
+                    </div>
+
+                    <div class="h-72 overflow-y-auto space-y-1.5 border border-border p-2.5 rounded-lg bg-muted/20" role="group" aria-label="Available bus stops list">
+                        @if (isLoadingStops)
+                        {
+                            <div class="p-8 text-center text-xs text-muted-foreground">Loading bus stops catalog...</div>
+                        }
+                        else if (filteredBusStops == null || !filteredBusStops.Any())
+                        {
+                            <div class="p-8 text-center text-xs text-muted-foreground">No matching bus stops found.</div>
+                        }
+                        else
+                        {
+                            @foreach (var stop in filteredBusStops)
+                            {
+                                var isChecked = selectedStopIds.Contains(stop.Id);
+                                <label for="@($"chk_modal_{stop.Id}")"
+                                       class="flex items-center gap-2.5 p-2 rounded-md text-xs transition-colors border cursor-pointer select-none @(isChecked ? "bg-primary/5 border-primary/40" : "bg-card border-transparent hover:border-border hover:bg-accent/40")">
+                                    <input type="checkbox"
+                                           id="@($"chk_modal_{stop.Id}")"
+                                           checked="@isChecked"
+                                           @onchange='(e) => ToggleStop(stop.Id, e.Value)'
+                                           class="h-4 w-4 rounded border-input text-primary focus:ring-ring shrink-0" />
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-medium text-foreground truncate">@stop.StopName</div>
+                                        <div class="text-2xs text-muted-foreground font-mono truncate">
+                                            @(stop.RegionName ?? "No Region") • @stop.Lat.ToString("F3"), @stop.Lon.ToString("F3")
+                                        </div>
+                                    </div>
+                                </label>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <!-- Right: Interactive Map Picker -->
+                <div class="space-y-2 flex flex-col">
+                    <div class="flex items-center justify-between text-2xs text-muted-foreground px-1">
+                        <span class="font-mono">Map View (Click pins to toggle)</span>
+                        <span class="font-mono text-primary font-bold">@selectedStopIds.Count selected</span>
+                    </div>
+                    <div id="@modalMapId"
+                         class="h-72 w-full rounded-lg border border-border bg-muted/30 relative z-0"
+                         role="region"
+                         aria-label="Interactive map for selecting bus stops">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ChildContent>
+    <Footer>
+        <div class="flex items-center justify-between w-full">
+            <div class="text-xs font-mono text-muted-foreground">
+                Total selected: <strong class="text-foreground">@selectedStopIds.Count</strong>
+            </div>
+            <div class="flex items-center gap-2">
+                <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick="CloseModal">
+                    @Lang.GetText("Cancel")
+                </Button>
+                <Button Variant="ButtonVariant.Default" Size="ButtonSize.Sm" IsLoading="@IsSaving" OnClick="SaveSelection">
+                    @Lang.GetText("Save")
+                </Button>
+            </div>
+        </div>
+    </Footer>
+</ModalDialog>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public BusDto? Bus { get; set; }
+    [Parameter] public IEnumerable<long>? InitialSelectedStopIds { get; set; }
+    [Parameter] public List<BusStopDto>? AllBusStops { get; set; }
+    [Parameter] public List<RegionDto>? Regions { get; set; }
+    [Parameter] public bool IsSaving { get; set; }
+    [Parameter] public EventCallback<List<long>> OnSave { get; set; }
+
+    private readonly string modalMapId = $"modal_osm_map_{Guid.NewGuid().ToString("N")[..8]}";
+    private DotNetObjectReference<AssignStopsModal>? dotNetRef;
+    private bool isMapInitialized = false;
+
+    private HashSet<long> selectedStopIds = new();
+    private string searchQuery = "";
+    private int? selectedRegionId = null;
+    private bool isLoadingStops = false;
+    private List<BusStopDto>? localBusStops;
+
+    private IEnumerable<SelectItem<int?>>? regionSelectItems => Regions?.Select(r => new SelectItem<int?>(r.Id, r.RegionName));
+
+    private IEnumerable<BusStopDto>? currentStopsList => localBusStops ?? AllBusStops;
+
+    private IEnumerable<BusStopDto>? filteredBusStops => string.IsNullOrWhiteSpace(searchQuery)
+        ? currentStopsList
+        : currentStopsList?.Where(s => s.StopName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                                      (s.RegionName != null && s.RegionName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)));
+
+    protected override void OnParametersSet()
+    {
+        if (IsOpen && InitialSelectedStopIds != null)
+        {
+            selectedStopIds = new HashSet<long>(InitialSelectedStopIds);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (IsOpen && !isMapInitialized)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            var firstStop = currentStopsList?.FirstOrDefault();
+            double lat = firstStop?.Lat ?? 16.8661;
+            double lon = firstStop?.Lon ?? 96.1951;
+
+            isMapInitialized = await JS.InvokeAsync<bool>("YpsRouteMap.initMap", modalMapId, dotNetRef, lat, lon, 12);
+            if (isMapInitialized)
+            {
+                await RefreshMapCatalogAsync();
+            }
+        }
+        else if (!IsOpen && isMapInitialized)
+        {
+            await DestroyMapAsync();
+        }
+    }
+
+    private async Task RefreshMapCatalogAsync()
+    {
+        if (isMapInitialized && currentStopsList != null)
+        {
+            await JS.InvokeVoidAsync("YpsRouteMap.renderSelectableCatalog", modalMapId, currentStopsList, selectedStopIds.ToList());
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnMapStopToggled(long stopId)
+    {
+        if (selectedStopIds.Contains(stopId))
+        {
+            selectedStopIds.Remove(stopId);
+        }
+        else
+        {
+            selectedStopIds.Add(stopId);
+        }
+
+        StateHasChanged();
+        await RefreshMapCatalogAsync();
+    }
+
+    private async Task ToggleStop(long stopId, object? isChecked)
+    {
+        if (isChecked is bool b && b)
+        {
+            selectedStopIds.Add(stopId);
+        }
+        else
+        {
+            selectedStopIds.Remove(stopId);
+        }
+
+        await RefreshMapCatalogAsync();
+    }
+
+    private async Task SelectAllVisible()
+    {
+        if (filteredBusStops != null)
+        {
+            foreach (var stop in filteredBusStops)
+            {
+                selectedStopIds.Add(stop.Id);
+            }
+            await RefreshMapCatalogAsync();
+        }
+    }
+
+    private async Task ClearAll()
+    {
+        selectedStopIds.Clear();
+        await RefreshMapCatalogAsync();
+    }
+
+    private async Task OnRegionFilterChanged(int? newRegionId)
+    {
+        selectedRegionId = newRegionId;
+        isLoadingStops = true;
+        try
+        {
+            if (selectedRegionId.HasValue)
+            {
+                var res = await BusStopService.GetBusStopByRegionAsync(selectedRegionId.Value);
+                if (res?.Data != null)
+                {
+                    localBusStops = res.Data;
+                }
+            }
+            else
+            {
+                localBusStops = AllBusStops;
+            }
+            await RefreshMapCatalogAsync();
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Failed to load stops for region: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingStops = false;
+        }
+    }
+
+    private async Task SaveSelection()
+    {
+        if (OnSave.HasDelegate)
+        {
+            await OnSave.InvokeAsync(selectedStopIds.ToList());
+        }
+    }
+
+    private async Task CloseModal()
+    {
+        await HandleIsOpenChanged(false);
+    }
+
+    private async Task HandleIsOpenChanged(bool open)
+    {
+        IsOpen = open;
+        if (!open)
+        {
+            await DestroyMapAsync();
+        }
+        await IsOpenChanged.InvokeAsync(open);
+    }
+
+    private async Task DestroyMapAsync()
+    {
+        if (isMapInitialized)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("YpsRouteMap.destroyMap", modalMapId);
+            }
+            catch { }
+            isMapInitialized = false;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await DestroyMapAsync();
+        dotNetRef?.Dispose();
+    }
+}

@@ -1,0 +1,149 @@
+@namespace YpsAdmin.Web.Pages.RouteStops.Components
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div class="relative bg-card rounded-xl border border-border overflow-hidden shadow-xs flex flex-col">
+    <!-- Map Toolbar / Header -->
+    <div class="p-3 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-2">
+            <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.818V8.049a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                </svg>
+            </span>
+            <span class="font-semibold text-foreground">Interactive Route Map</span>
+            <span class="text-muted-foreground font-mono text-2xs">(OpenStreetMap)</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+            @if (Stops != null && Stops.Any())
+            {
+                <span class="text-2xs font-mono text-muted-foreground hidden sm:inline-block">
+                    Start: <strong class="text-foreground">@Stops.First().StopName</strong> → End: <strong class="text-foreground">@Stops.Last().StopName</strong>
+                </span>
+                <button type="button"
+                        @onclick="RecenterMap"
+                        class="px-2 py-1 text-2xs font-medium bg-card hover:bg-accent text-foreground border border-input rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        title="Fit all route stops in view">
+                    Fit Bounds
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Map Container -->
+    <div id="@mapContainerId"
+         class="@(string.IsNullOrEmpty(HeightClass) ? "h-[440px]" : HeightClass) w-full bg-muted/20 relative z-0"
+         role="region"
+         aria-label="@(AriaLabel ?? "Interactive OpenStreetMap showing route stops and connected path")">
+    </div>
+
+    <!-- Map Legend -->
+    <div class="px-3.5 py-2 bg-muted/30 border-t border-border flex flex-wrap items-center justify-between gap-2 text-2xs text-muted-foreground font-mono">
+        <div class="flex items-center gap-3">
+            <span class="flex items-center gap-1">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#137455] inline-block"></span> First Stop
+            </span>
+            <span class="flex items-center gap-1">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#0B5F9B] inline-block"></span> Intermediate
+            </span>
+            <span class="flex items-center gap-1">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#A23F2B] inline-block"></span> Terminus Stop
+            </span>
+        </div>
+        <div>
+            Click marker to inspect station details
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<BusRouteStopItemDto>? Stops { get; set; }
+    [Parameter] public long? HighlightedStopId { get; set; }
+    [Parameter] public EventCallback<long> OnStopMarkerClicked { get; set; }
+    [Parameter] public string? HeightClass { get; set; }
+    [Parameter] public string? AriaLabel { get; set; }
+
+    private readonly string mapContainerId = $"osm_map_{Guid.NewGuid().ToString("N")[..8]}";
+    private DotNetObjectReference<RouteStopMap>? dotNetRef;
+    private bool isMapInitialized = false;
+    private string lastRenderedSignature = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            double initialLat = Stops?.FirstOrDefault()?.Lat ?? 16.8661;
+            double initialLon = Stops?.FirstOrDefault()?.Lon ?? 96.1951;
+
+            isMapInitialized = await JS.InvokeAsync<bool>("YpsRouteMap.initMap", mapContainerId, dotNetRef, initialLat, initialLon, 12);
+            if (isMapInitialized && Stops != null && Stops.Any())
+            {
+                await RenderRouteOnMapAsync();
+            }
+        }
+        else if (isMapInitialized)
+        {
+            var currentSignature = GenerateStopsSignature();
+            if (currentSignature != lastRenderedSignature)
+            {
+                await RenderRouteOnMapAsync();
+            }
+        }
+    }
+
+    private string GenerateStopsSignature()
+    {
+        if (Stops == null) return "";
+        return string.Join("|", Stops.Select(s => $"{s.BusStopId}_{s.StopOrder}"));
+    }
+
+    private async Task RenderRouteOnMapAsync()
+    {
+        if (!isMapInitialized) return;
+        lastRenderedSignature = GenerateStopsSignature();
+        await JS.InvokeVoidAsync("YpsRouteMap.renderRoute", mapContainerId, Stops ?? new List<BusRouteStopItemDto>());
+    }
+
+    public async Task HighlightStopAsync(long stopId)
+    {
+        if (isMapInitialized)
+        {
+            await JS.InvokeVoidAsync("YpsRouteMap.highlightStop", mapContainerId, stopId);
+        }
+    }
+
+    public async Task RecenterMap()
+    {
+        if (isMapInitialized && Stops != null && Stops.Any())
+        {
+            await JS.InvokeVoidAsync("YpsRouteMap.renderRoute", mapContainerId, Stops);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnMapStopClicked(long busStopId)
+    {
+        if (OnStopMarkerClicked.HasDelegate)
+        {
+            await OnStopMarkerClicked.InvokeAsync(busStopId);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (isMapInitialized)
+            {
+                await JS.InvokeVoidAsync("YpsRouteMap.destroyMap", mapContainerId);
+            }
+            dotNetRef?.Dispose();
+        }
+        catch
+        {
+            // Ignored on disposal
+        }
+    }
+}

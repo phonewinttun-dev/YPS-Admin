@@ -1,0 +1,140 @@
+@namespace YpsAdmin.Web.Pages.RouteStops.Components
+@inject LanguageService Lang
+
+<div class="bg-card rounded-xl border border-border p-5 space-y-4 shadow-xs">
+    <div class="flex items-center justify-between border-b border-border pb-3.5">
+        <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 bg-primary rounded-full inline-block"></span>
+            <h3 class="font-semibold text-sm text-foreground">Stop Sequence List (@(Stops?.Count ?? 0) Stops)</h3>
+        </div>
+        <div class="text-2xs font-mono text-muted-foreground">
+            Use arrows to reorder
+        </div>
+    </div>
+
+    <!-- Live screen reader status announcement -->
+    <div class="sr-only" role="status" aria-live="polite">
+        @accessibilityAnnouncement
+    </div>
+
+    <div class="space-y-3 max-h-[440px] overflow-y-auto pr-1" role="list" aria-label="Bus Stop Route Sequence">
+        @if (Stops != null && Stops.Any())
+        {
+            <div class="relative border-l-2 border-primary/20 ml-3.5 space-y-2.5 pl-3.5 pt-1">
+                @for (int i = 0; i < Stops.Count; i++)
+                {
+                    var index = i;
+                    var item = Stops[i];
+                    var isSelected = SelectedStopId == item.BusStopId;
+
+                    <div role="listitem"
+                         @onmouseenter="() => HandleStopHover(item.BusStopId)"
+                         @onclick="() => HandleStopClick(item.BusStopId)"
+                         class="relative flex items-center justify-between p-3 rounded-lg border text-xs transition-all cursor-pointer @(isSelected ? "border-primary bg-primary/5 shadow-xs ring-1 ring-primary/30" : "border-border bg-card hover:border-primary/40 hover:bg-accent/40")">
+
+                        <!-- Stepper node indicator -->
+                        <div class="absolute -left-[21.5px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-card border-2 border-primary"></div>
+
+                        <div class="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
+                            <span class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center font-mono font-bold text-2xs shrink-0">
+                                @(item.StopOrder)
+                            </span>
+                            <div class="truncate">
+                                <div class="font-semibold text-foreground text-xs truncate">@item.StopName</div>
+                                <div class="text-muted-foreground font-mono text-2xs mt-0.5 flex items-center gap-1.5 truncate">
+                                    <span>@(item.RegionName ?? "No Region")</span>
+                                    <span>•</span>
+                                    <span>@item.Lat.ToString("F4"), @item.Lon.ToString("F4")</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-1 shrink-0" @onclick:stopPropagation="true">
+                            <Button Variant="ButtonVariant.Outline"
+                                    Size="ButtonSize.Icon"
+                                    Disabled="@(index == 0)"
+                                    OnClick="() => HandleMove(index, -1, item.StopName)"
+                                    Title="@Lang.GetText("MoveUp")"
+                                    aria-label="@($"Move {item.StopName} up")">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                </svg>
+                            </Button>
+                            <Button Variant="ButtonVariant.Outline"
+                                    Size="ButtonSize.Icon"
+                                    Disabled="@(index == Stops.Count - 1)"
+                                    OnClick="() => HandleMove(index, 1, item.StopName)"
+                                    Title="@Lang.GetText("MoveDown")"
+                                    aria-label="@($"Move {item.StopName} down")">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </Button>
+                            <Button Variant="ButtonVariant.Ghost"
+                                    Size="ButtonSize.Icon"
+                                    Class="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                    OnClick="() => HandleRemove(item.StopOrder, item.StopName)"
+                                    Title="@Lang.GetText("Delete")"
+                                    aria-label="@($"Remove {item.StopName} from route")">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </Button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="p-8 text-center border border-dashed border-border rounded-lg">
+                <p class="text-xs text-muted-foreground">No stops in this sequence yet. Click "Assign Stops" to populate.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<BusRouteStopItemDto>? Stops { get; set; }
+    [Parameter] public long? SelectedStopId { get; set; }
+    [Parameter] public EventCallback<long> OnStopSelected { get; set; }
+    [Parameter] public EventCallback<long> OnStopHovered { get; set; }
+    [Parameter] public EventCallback<(int CurrentIndex, int Delta)> OnReorderRequested { get; set; }
+    [Parameter] public EventCallback<int> OnRemoveRequested { get; set; }
+
+    private string accessibilityAnnouncement = "";
+
+    private async Task HandleStopHover(long stopId)
+    {
+        if (OnStopHovered.HasDelegate)
+        {
+            await OnStopHovered.InvokeAsync(stopId);
+        }
+    }
+
+    private async Task HandleStopClick(long stopId)
+    {
+        if (OnStopSelected.HasDelegate)
+        {
+            await OnStopSelected.InvokeAsync(stopId);
+        }
+    }
+
+    private async Task HandleMove(int index, int delta, string stopName)
+    {
+        accessibilityAnnouncement = $"Moved {stopName} to position {index + delta + 1}";
+        if (OnReorderRequested.HasDelegate)
+        {
+            await OnReorderRequested.InvokeAsync((index, delta));
+        }
+    }
+
+    private async Task HandleRemove(int stopOrder, string stopName)
+    {
+        accessibilityAnnouncement = $"Removed {stopName} from sequence";
+        if (OnRemoveRequested.HasDelegate)
+        {
+            await OnRemoveRequested.InvokeAsync(stopOrder);
+        }
+    }
+}

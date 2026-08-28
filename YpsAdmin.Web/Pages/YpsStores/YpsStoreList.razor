@@ -7,15 +7,15 @@
 
 <div class="space-y-6">
     <!-- Header Controls -->
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-lg border border-outline-variant shadow-2xs">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-card p-4 rounded-xl border border-border shadow-xs">
         <div>
-            <h2 class="text-lg font-bold text-on-surface tracking-tight">@Lang.GetText("NavYpsStores")</h2>
-            <p class="text-xs text-tertiary">Manage top-up agencies, retail partners, and customer service centers.</p>
+            <h2 class="text-base font-semibold text-foreground tracking-tight">@Lang.GetText("NavYpsStores")</h2>
+            <p class="text-xs text-muted-foreground mt-0.5">Manage top-up agencies, retail partners, and customer service centers.</p>
         </div>
         <div class="flex items-center gap-3 w-full sm:w-auto">
             <div class="relative flex-1 sm:w-64">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-tertiary">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                 </div>
@@ -23,11 +23,12 @@
                        value="@searchQuery"
                        @oninput="OnSearchInput"
                        placeholder="Search stores..."
-                       class="w-full h-10 pl-9 pr-3 text-sm border border-outline-variant rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all" />
+                       aria-label="Search stores"
+                       class="w-full h-9 pl-9 pr-3 text-sm border border-input rounded-md bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary shadow-xs transition-all" />
             </div>
 
             <Button Variant="ButtonVariant.Default" Size="ButtonSize.Md" OnClick="OpenCreateModal">
-                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
                 @Lang.GetText("Add")
@@ -36,7 +37,7 @@
     </div>
 
     <!-- Data Table & State Container -->
-    <div class="bg-white rounded-lg border border-outline-variant shadow-2xs overflow-hidden">
+    <div class="bg-card rounded-xl border border-border shadow-xs overflow-hidden">
         <StateView IsLoading="@isLoading"
                    HasError="@hasError"
                    ErrorMessage="@errorMessage"
@@ -48,7 +49,7 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm border-collapse">
                         <thead>
-                            <tr class="bg-surface-container/60 border-b border-outline-variant text-xs font-semibold text-tertiary uppercase tracking-wider">
+                            <tr class="bg-muted/40 border-b border-border text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                 <th class="p-3.5">@Lang.GetText("StoreName")</th>
                                 <th class="p-3.5">@Lang.GetText("Category")</th>
                                 <th class="p-3.5">@Lang.GetText("Region")</th>
@@ -57,24 +58,24 @@
                                 <th class="p-3.5 text-right">@Lang.GetText("Actions")</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-outline-variant">
-                            @if (stores != null && stores.Data != null)
+                        <tbody class="divide-y divide-border">
+                            @if (stores?.Data != null)
                             {
                                 @foreach (var item in stores.Data)
                                 {
-                                    <tr class="hover:bg-surface-container/30 transition-colors">
+                                    <tr class="hover:bg-accent/40 transition-colors">
                                         <td class="p-3.5">
-                                            <div class="font-bold text-on-surface">@(item.MmName ?? item.EngName ?? "Unnamed Store")</div>
+                                            <div class="font-semibold text-foreground">@(item.MmName ?? item.EngName ?? "Unnamed Store")</div>
                                             @if (!string.IsNullOrEmpty(item.EngName) && item.EngName != item.MmName)
                                             {
-                                                <div class="text-xs text-tertiary font-mono mt-0.5">@item.EngName</div>
+                                                <div class="text-xs text-muted-foreground font-mono mt-0.5">@item.EngName</div>
                                             }
                                         </td>
                                         <td class="p-3.5">
                                             <CategoryBadge Text="@item.Category" Variant="@CategoryBadge.ResolveStoreCategoryVariant(item.Category)" ShowDot="true" />
                                         </td>
-                                        <td class="p-3.5 text-on-surface">@(item.RegionName ?? "Unassigned")</td>
-                                        <td class="p-3.5 font-mono text-xs text-secondary">
+                                        <td class="p-3.5 text-foreground">@(item.RegionName ?? "Unassigned")</td>
+                                        <td class="p-3.5 font-mono text-xs text-primary">
                                             @item.Lat.ToString("F6"), @item.Lon.ToString("F6")
                                         </td>
                                         <td class="p-3.5">
@@ -83,13 +84,13 @@
                                                 <div class="flex flex-wrap gap-1">
                                                     @foreach (var bNum in item.ServingBusNumbers.Take(4))
                                                     {
-                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-2xs font-mono font-bold bg-secondary/10 text-secondary border border-secondary/20">
+                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-2xs font-mono font-semibold bg-primary/10 text-primary border border-primary/20">
                                                             Bus @bNum
                                                         </span>
                                                     }
                                                     @if (item.ServingBusNumbers.Count > 4)
                                                     {
-                                                        <span class="text-2xs text-tertiary font-mono self-center">
+                                                        <span class="text-2xs text-muted-foreground font-mono self-center">
                                                             +@(item.ServingBusNumbers.Count - 4) more
                                                         </span>
                                                     }
@@ -97,7 +98,7 @@
                                             }
                                             else
                                             {
-                                                <span class="text-xs text-tertiary">-</span>
+                                                <span class="text-xs text-muted-foreground">-</span>
                                             }
                                         </td>
                                         <td class="p-3.5 text-right">
@@ -108,7 +109,7 @@
                                                 <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Sm" OnClick="() => OpenEditModal(item)">
                                                     @Lang.GetText("Edit")
                                                 </Button>
-                                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Sm" Class="text-error hover:bg-red-50 hover:text-error" OnClick="() => PromptDelete(item)">
+                                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Sm" Class="text-destructive hover:bg-destructive/10 hover:text-destructive" OnClick="() => PromptDelete(item)">
                                                     @Lang.GetText("Delete")
                                                 </Button>
                                             </div>
@@ -121,7 +122,7 @@
                 </div>
 
                 <!-- Pagination -->
-                @if (stores != null && stores.Pagination != null)
+                @if (stores?.Pagination != null)
                 {
                     <Pagination PageNumber="@pageNumber" TotalPages="@stores.Pagination.TotalPages" TotalCount="@stores.Pagination.TotalCount" PageSize="@pageSize" PageChanged="OnPageChanged" />
                 }
@@ -138,30 +139,30 @@
     <ChildContent>
         @if (!string.IsNullOrEmpty(formValidationError))
         {
-            <div class="p-3 bg-red-50 border border-red-200 rounded-md text-xs text-red-700 flex items-center gap-2">
-                <svg class="w-4 h-4 shrink-0 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="p-3 bg-destructive/10 border border-destructive/20 rounded-md text-xs text-destructive flex items-center gap-2" role="alert">
+                <svg class="w-4 h-4 shrink-0 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
                 <span>@formValidationError</span>
             </div>
         }
 
-        <div class="space-y-3">
+        <div class="space-y-3.5">
             <div>
-                <label class="block text-xs font-medium text-on-surface mb-1">Name (MM) *</label>
-                <input type="text" @bind="formMmName" class="w-full h-9 px-3 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary @(!string.IsNullOrEmpty(formMmNameError) ? "border-red-500 bg-red-50/20" : "border-outline-variant")" />
+                <label class="block text-xs font-medium text-foreground mb-1">Name (MM) *</label>
+                <input type="text" @bind="formMmName" class="w-full h-9 px-3 text-sm border rounded-md bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary shadow-xs @(!string.IsNullOrEmpty(formMmNameError) ? "border-destructive bg-destructive/5" : "border-input")" />
                 @if (!string.IsNullOrEmpty(formMmNameError))
                 {
-                    <p class="text-2xs text-red-600 mt-1">@formMmNameError</p>
+                    <p class="text-2xs text-destructive mt-1">@formMmNameError</p>
                 }
             </div>
             <div>
-                <label class="block text-xs font-medium text-tertiary mb-1">Name (EN)</label>
-                <input type="text" @bind="formEngName" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono" />
+                <label class="block text-xs font-medium text-muted-foreground mb-1">Name (EN)</label>
+                <input type="text" @bind="formEngName" class="w-full h-9 px-3 text-sm border border-input rounded-md bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary font-mono shadow-xs" />
             </div>
             <div>
-                <label class="block text-xs font-medium text-tertiary mb-1">@Lang.GetText("Category")</label>
-                <input type="text" @bind="formCategory" placeholder="e.g. Top-Up Point, Retail Store" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" />
+                <label class="block text-xs font-medium text-muted-foreground mb-1">@Lang.GetText("Category")</label>
+                <input type="text" @bind="formCategory" placeholder="e.g. Top-Up Point, Retail Store" class="w-full h-9 px-3 text-sm border border-input rounded-md bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary shadow-xs" />
             </div>
             <div>
                 <AccessibleSelect TValue="int?"
@@ -173,12 +174,12 @@
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block text-xs font-medium text-tertiary mb-1">Latitude</label>
-                    <input type="number" step="any" @bind="formLat" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono" />
+                    <label class="block text-xs font-medium text-muted-foreground mb-1">Latitude</label>
+                    <input type="number" step="any" @bind="formLat" class="w-full h-9 px-3 text-sm border border-input rounded-md bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary font-mono shadow-xs" />
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-tertiary mb-1">Longitude</label>
-                    <input type="number" step="any" @bind="formLon" class="w-full h-9 px-3 text-sm border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary font-mono" />
+                    <label class="block text-xs font-medium text-muted-foreground mb-1">Longitude</label>
+                    <input type="number" step="any" @bind="formLon" class="w-full h-9 px-3 text-sm border border-input rounded-md bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary font-mono shadow-xs" />
                 </div>
             </div>
         </div>
@@ -197,7 +198,8 @@
 <ModalDialog IsOpen="@showStopsModal"
              IsOpenChanged="v => showStopsModal = v"
              Title="@($"{Lang.GetText("AssignStops")} - {activeStore?.MmName ?? activeStore?.EngName}")"
-             Description="Select nearest bus stops that serve this YPS store location.">
+             Description="Select nearest bus stops that serve this YPS store location."
+             MaxWidthClass="max-w-xl">
     <ChildContent>
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-3">
             <div class="flex-1">
@@ -209,12 +211,12 @@
                                   AllowClear="true"
                                   AriaLabel="Filter nearest stops by Region" />
             </div>
-            <label class="inline-flex items-center gap-2 text-xs font-medium text-on-surface cursor-pointer select-none border border-outline-variant px-3 py-1.5 rounded-md hover:bg-surface-container/50 transition-colors h-[38px]">
-                <input type="checkbox" @bind="showOnlyLinkedStops" class="h-4 w-4 rounded border-outline text-secondary focus:ring-secondary/50" />
+            <label class="inline-flex items-center gap-2 text-xs font-medium text-foreground cursor-pointer select-none border border-input px-3 py-1.5 rounded-md hover:bg-accent transition-colors h-[38px]">
+                <input type="checkbox" @bind="showOnlyLinkedStops" class="h-4 w-4 rounded border-input text-primary focus:ring-ring" />
                 <span>Linked Stops</span>
             </label>
         </div>
-        <div class="max-h-64 overflow-y-auto space-y-1.5 border border-outline-variant p-3 rounded-md bg-surface-container/30">
+        <div class="max-h-64 overflow-y-auto space-y-1.5 border border-border p-2.5 rounded-lg bg-muted/20" role="group" aria-label="Nearest bus stops selection">
             @{
                 var displayedStops = showOnlyLinkedStops
                     ? allBusStops?.Where(s => selectedStopMap.ContainsKey(s.Id)).ToList()
@@ -222,7 +224,7 @@
             }
             @if (displayedStops == null || !displayedStops.Any())
             {
-                <p class="text-xs text-tertiary text-center p-4">
+                <p class="text-xs text-muted-foreground text-center p-4">
                     @(showOnlyLinkedStops ? "No linked bus stops found." : "No bus stops available.")
                 </p>
             }
@@ -231,22 +233,22 @@
                 @foreach (var stop in displayedStops)
                 {
                     var isChecked = selectedStopMap.ContainsKey(stop.Id);
-                    <div class="flex items-center justify-between gap-2.5 p-2 hover:bg-white rounded-md text-xs transition-colors border border-transparent hover:border-outline-variant">
-                        <div class="flex items-center gap-2.5 flex-1">
-                            <input type="checkbox" id="@($"store_stop_{stop.Id}")" checked="@isChecked" @onchange='(e) => ToggleStopSelection(stop.Id, e.Value)' class="h-4 w-4 rounded border-outline text-secondary focus:ring-secondary/50" />
-                            <label for="@($"store_stop_{stop.Id}")" class="cursor-pointer select-none">
-                                <span class="font-bold text-on-surface">@stop.StopName</span>
-                                <span class="text-tertiary font-mono ml-1.5">(@(stop.RegionName ?? "No Region"))</span>
+                    <div class="flex items-center justify-between gap-2.5 p-2 hover:bg-card rounded-md text-xs transition-colors border border-transparent hover:border-border">
+                        <div class="flex items-center gap-2.5 flex-1 min-w-0">
+                            <input type="checkbox" id="@($"store_stop_{stop.Id}")" checked="@isChecked" @onchange='(e) => ToggleStopSelection(stop.Id, e.Value)' class="h-4 w-4 rounded border-input text-primary focus:ring-ring shrink-0" />
+                            <label for="@($"store_stop_{stop.Id}")" class="cursor-pointer select-none truncate">
+                                <span class="font-semibold text-foreground">@stop.StopName</span>
+                                <span class="text-muted-foreground font-mono ml-1.5">(@(stop.RegionName ?? "No Region"))</span>
                             </label>
                         </div>
                         @if (isChecked)
                         {
-                            <div class="flex items-center gap-1">
-                                <span class="text-2xs text-tertiary font-mono">km:</span>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <span class="text-2xs text-muted-foreground font-mono">km:</span>
                                 <input type="number" step="0.01" min="0" 
                                        value="@(selectedStopMap.TryGetValue(stop.Id, out var dist) ? dist : 0.1)"
                                        @onchange='(e) => UpdateDistance(stop.Id, e.Value)'
-                                       class="w-16 h-7 px-1.5 text-xs border border-outline-variant rounded font-mono" />
+                                       class="w-16 h-7 px-1.5 text-xs border border-input rounded bg-card text-foreground font-mono shadow-xs" />
                             </div>
                         }
                     </div>
@@ -270,7 +272,7 @@
              Title="@Lang.GetText("ConfirmDeleteTitle")"
              Description="@Lang.GetText("ConfirmDeleteMessage")">
     <ChildContent>
-        <p class="text-xs text-tertiary">This action cannot be undone. Removing this store will un-assign its nearest bus stops.</p>
+        <p class="text-xs text-muted-foreground">This action cannot be undone. Removing this store will un-assign its nearest bus stops.</p>
     </ChildContent>
     <Footer>
         <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick="() => showDeleteModal = false">
@@ -332,7 +334,7 @@
         if (regions == null)
         {
             var res = await RegionService.GetRegionsAsync(1, 500, null);
-            if (res != null && res.Data != null) regions = res.Data;
+            if (res?.Data != null) regions = res.Data;
         }
     }
 
@@ -341,7 +343,7 @@
         if (allBusStops == null)
         {
             var res = await BusStopService.GetBusStopsAsync(1, 500, null);
-            if (res != null && res.Data != null) allBusStops = res.Data;
+            if (res?.Data != null) allBusStops = res.Data;
         }
     }
 
@@ -512,7 +514,7 @@
         else
         {
             var res = await BusStopService.GetBusStopsAsync(1, 500, null);
-            if (res != null && res.Data != null)
+            if (res?.Data != null)
             {
                 allBusStops = res.Data;
             }

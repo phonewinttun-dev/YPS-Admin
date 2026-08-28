@@ -1,187 +1,48 @@
 @page "/route-stops"
 @inject IBusRouteService RouteStopService
-@inject IBusService BusService
 @inject IBusStopService BusStopService
 @inject IRegionService RegionService
 @inject IToastService Toast
 @inject LanguageService Lang
 
 <div class="space-y-6">
-    <!-- Header & Paginated Bus Line Selector -->
-    <div class="bg-white p-5 rounded-lg border border-outline-variant shadow-2xs space-y-4">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-outline-variant pb-4">
-            <div>
-                <h2 class="text-lg font-bold text-on-surface tracking-tight">@Lang.GetText("NavRouteMapping")</h2>
-                <p class="text-xs text-tertiary">Select a bus line from the paginated list below to configure its ordered stop sequence.</p>
-            </div>
-            @if (busesPagedResult != null && busesPagedResult.Pagination != null)
-            {
-                <div class="flex items-center gap-2">
-                    <span class="text-xs font-mono font-semibold text-tertiary">
-                        Page @busPageNumber of @busesPagedResult.Pagination.TotalPages (@busesPagedResult.Pagination.TotalCount Total Buses)
-                    </span>
-                    <div class="flex items-center gap-1">
-                        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Disabled="@(busPageNumber <= 1)" OnClick="PreviousBusPage">
-                            Previous
-                        </Button>
-                        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Disabled="@(busPageNumber >= busesPagedResult.Pagination.TotalPages)" OnClick="NextBusPage">
-                            Next
-                        </Button>
-                    </div>
-                </div>
-            }
-        </div>
+    <!-- Bus Line Selector Bar -->
+    <BusLineSelectorBar SelectedBusId="@selectedBusId" OnBusSelected="HandleBusSelected" />
 
-        <!-- Bus Grid Selector -->
-        <div>
-            @if (isSelectorLoading)
-            {
-                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                    @for (int i = 0; i < 10; i++)
-                    {
-                        <div class="h-16 bg-surface-container animate-pulse rounded-md border border-outline-variant"></div>
-                    }
-                </div>
-            }
-            else if (busesPagedResult != null && busesPagedResult.Data != null && busesPagedResult.Data.Any())
-            {
-                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                    @foreach (var bus in busesPagedResult.Data)
-                    {
-                        var isSelected = bus.Id == selectedBusId;
-                        <button type="button"
-                                @onclick="() => SelectBus(bus)"
-                                class="p-3 rounded-md text-left transition-all border flex flex-col justify-between h-20 @(isSelected ? "border-secondary bg-secondary/10 shadow-2xs ring-2 ring-secondary/30" : "border-outline-variant bg-white hover:border-secondary/50 hover:bg-surface-container/30")">
-                            <div class="flex items-center justify-between w-full">
-                                <span class="font-mono font-bold text-sm text-secondary">Bus @bus.BusNumber</span>
-                                @if (bus.IsCardAccepted)
-                                {
-                                    <span class="w-2 h-2 rounded-full bg-secondary" title="YPS Accepted"></span>
-                                }
-                            </div>
-                            <div class="text-xs text-on-surface truncate font-medium w-full flex items-center justify-between">
-                                <span>@(bus.VariantId ?? "Default")</span>
-                                @if (bus.IsReversed)
-                                {
-                                    <span class="text-2xs text-primary font-mono font-bold">REV</span>
-                                }
-                            </div>
-                        </button>
-                    }
-                </div>
-            }
-            else
-            {
-                <div class="p-4 text-center border border-dashed border-outline-variant rounded-md">
-                    <p class="text-xs text-tertiary">No bus lines available.</p>
-                </div>
-            }
-        </div>
-    </div>
-
-    @if (selectedBusId > 0)
+    @if (selectedBusId > 0 && selectedBus != null)
     {
-        <!-- Active Bus Line Card Details -->
-        @if (selectedBus != null)
-        {
-            <div class="bg-white p-4 rounded-lg border border-outline-variant shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div class="space-y-1">
-                    <div class="flex items-center gap-3">
-                        <h3 class="text-base font-bold font-mono text-secondary">Bus @selectedBus.BusNumber</h3>
-                        @if (!string.IsNullOrEmpty(selectedBus.VariantId))
-                        {
-                            <span class="px-2 py-0.5 rounded text-xs font-mono font-medium bg-surface-container text-on-surface border border-outline-variant">
-                                @selectedBus.VariantId
-                            </span>
-                        }
-                        @if (selectedBus.IsReversed)
-                        {
-                            <span class="px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                                @Lang.GetText("Return")
-                            </span>
-                        }
-                        @if (selectedBus.IsCardAccepted)
-                        {
-                            <CategoryBadge Text="YPS ACCEPTED" Variant="CategoryBadge.BadgeVariant.YpsAccepted" ShowDot="true" />
-                        }
-                    </div>
-                </div>
-                @if (fullRoute != null)
-                {
-                    <div class="flex items-center gap-3 text-xs font-mono bg-surface-container/50 px-3 py-2 rounded-md border border-outline-variant">
-                        <span class="text-tertiary">Total Route Stops: <strong class="text-on-surface font-bold">@fullRoute.Stops.Count</strong></span>
-                    </div>
-                }
-            </div>
-        }
+        <!-- Active Bus Line Card -->
+        <RouteHeaderCard Bus="@selectedBus"
+                         StopCount="@(fullRoute?.Stops?.Count ?? 0)"
+                         OnAssignStopsClicked="OpenAssignModal" />
 
-        <!-- Route Stop Sequence Stepper -->
+        <!-- Route Stop Sequence & Map View -->
         <StateView IsLoading="@isLoading"
                    HasError="@hasError"
                    ErrorMessage="@errorMessage"
                    OnRetry="LoadRoute"
-                   IsEmpty="@(fullRoute == null || !fullRoute.Stops.Any())"
+                   IsEmpty="@(fullRoute == null || fullRoute.Stops == null || !fullRoute.Stops.Any())"
                    EmptyTitle="No route stops assigned"
                    EmptyDescription="Click 'Assign Stops' to configure the sequence of bus stops for this bus line.">
             <ChildContent>
-                <div class="bg-white rounded-lg border border-outline-variant p-5 space-y-4 shadow-2xs">
-                    <div class="flex items-center justify-between border-b border-outline-variant pb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="w-3 h-3 bg-secondary rounded-full inline-block"></span>
-                            <h3 class="font-bold text-sm text-on-surface">Route Stop Sequence (@fullRoute?.Stops.Count Stops)</h3>
-                        </div>
-                        <Button Variant="ButtonVariant.Default" Size="ButtonSize.Sm" OnClick="OpenAssignModal">
-                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                            @Lang.GetText("AssignStops")
-                        </Button>
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Left: Interactive OpenStreetMap (7 Cols) -->
+                    <div class="lg:col-span-7">
+                        <RouteStopMap @ref="routeMapRef"
+                                      Stops="@fullRoute?.Stops"
+                                      HighlightedStopId="@highlightedStopId"
+                                      OnStopMarkerClicked="HandleMapStopClicked"
+                                      HeightClass="h-[460px]" />
                     </div>
 
-                    <div class="space-y-3 min-h-[200px]">
-                        @if (fullRoute != null && fullRoute.Stops.Any())
-                        {
-                            <div class="relative border-l-2 border-secondary/30 ml-4 space-y-3 pl-4 pt-1">
-                                @for (int i = 0; i < fullRoute.Stops.Count; i++)
-                                {
-                                    var index = i;
-                                    var item = fullRoute.Stops[i];
-                                    <div class="relative flex items-center justify-between p-3.5 bg-surface-container/30 rounded-md border border-outline-variant text-xs hover:border-secondary/50 transition-all">
-                                        <!-- Stepper node marker -->
-                                        <div class="absolute -left-[23px] top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-white border-2 border-secondary"></div>
-                                        
-                                        <div class="flex items-center gap-3">
-                                            <span class="w-7 h-7 rounded-full bg-secondary/10 text-secondary flex items-center justify-center font-mono font-bold text-xs shrink-0">@(item.StopOrder)</span>
-                                            <div>
-                                                <div class="font-bold text-on-surface text-sm">@item.StopName</div>
-                                                <div class="text-tertiary font-mono text-2xs mt-0.5 flex items-center gap-2">
-                                                    <span>@(item.RegionName ?? "No Region")</span>
-                                                    <span>•</span>
-                                                    <span>@item.Lat.ToString("F4"), @item.Lon.ToString("F4")</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center gap-1">
-                                            <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Icon" Disabled="@(index == 0)" OnClick='() => MoveStop(index, -1)' Title="@Lang.GetText("MoveUp")">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-                                                </svg>
-                                            </Button>
-                                            <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Icon" Disabled="@(index == fullRoute.Stops.Count - 1)" OnClick='() => MoveStop(index, 1)' Title="@Lang.GetText("MoveDown")">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                                </svg>
-                                            </Button>
-                                            <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Class="text-error hover:bg-red-50 hover:text-error" OnClick="() => RemoveRouteStop(item.StopOrder)">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                </svg>
-                                            </Button>
-                                        </div>
-                                    </div>
-                                }
-                            </div>
-                        }
+                    <!-- Right: Ordered Stop Sequence List (5 Cols) -->
+                    <div class="lg:col-span-5">
+                        <RouteStopList Stops="@fullRoute?.Stops"
+                                       SelectedStopId="@highlightedStopId"
+                                       OnStopSelected="HandleListStopSelected"
+                                       OnStopHovered="HandleListStopHovered"
+                                       OnReorderRequested="HandleReorder"
+                                       OnRemoveRequested="HandleRemove" />
                     </div>
                 </div>
             </ChildContent>
@@ -189,91 +50,31 @@
     }
     else
     {
-        <div class="bg-white rounded-lg border border-outline-variant p-12 text-center shadow-2xs">
-            <div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-tertiary mx-auto mb-3">
-                <svg class="w-6 h-6 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-card rounded-xl border border-border p-12 text-center shadow-xs">
+            <div class="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground mx-auto mb-3">
+                <svg class="w-6 h-6 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.818V8.049a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
                 </svg>
             </div>
-            <h3 class="text-base font-semibold text-on-surface">Please select a bus line above</h3>
-            <p class="text-xs text-tertiary mt-1">Click on any bus from the paginated list above to manage its ordered route stop sequence.</p>
+            <h3 class="text-base font-semibold text-foreground">Please select a bus line</h3>
+            <p class="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                Choose a bus line from the catalog above to view its live OpenStreetMap path and manage its stop sequence.
+            </p>
         </div>
     }
 </div>
 
-<!-- Assign Bus Stops Modal -->
-<ModalDialog IsOpen="@showAssignModal"
-             IsOpenChanged="v => showAssignModal = v"
-             Title="@Lang.GetText("AssignStops")"
-             Description="Check the bus stops to include in this route sequence.">
-    <ChildContent>
-        <div class="space-y-3">
-            <div class="flex flex-col sm:flex-row gap-2">
-                <div class="relative flex-1">
-                    <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-tertiary">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                    </div>
-                    <input type="text"
-                           @bind="modalSearchQuery"
-                           @bind:event="oninput"
-                           placeholder="Filter bus stops by name..."
-                           aria-label="Filter bus stops by name"
-                           class="w-full h-9 pl-8 pr-3 text-xs border border-outline-variant rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:border-secondary" />
-                </div>
-                <div class="w-full sm:w-44">
-                    <AccessibleSelect TValue="int?"
-                                      Value="@modalRegionFilterId"
-                                      ValueChanged="OnModalRegionFilterChanged"
-                                      Items="@modalRegionSelectItems"
-                                      Placeholder="All Regions"
-                                      AllowClear="true"
-                                      AriaLabel="Filter by Region" />
-                </div>
-            </div>
-
-            <div class="max-h-64 overflow-y-auto space-y-1.5 border border-outline-variant p-3 rounded-md bg-surface-container/30">
-                @if (isModalStopsLoading)
-                {
-                    <p class="text-xs text-tertiary text-center p-4">Loading bus stops...</p>
-                }
-                else if (filteredBusStops == null || !filteredBusStops.Any())
-                {
-                    <p class="text-xs text-tertiary text-center p-4">No matching bus stops found.</p>
-                }
-                else
-                {
-                    @foreach (var stop in filteredBusStops)
-                    {
-                        <div class="flex items-center gap-2.5 p-2 hover:bg-white rounded-md text-xs transition-colors border border-transparent hover:border-outline-variant">
-                            <input type="checkbox" id="@($"chk_{stop.Id}")" checked="@selectedStopIds.Contains(stop.Id)" @onchange='(e) => ToggleStopSelection(stop.Id, e.Value)' class="h-4 w-4 rounded border-outline text-secondary focus:ring-secondary/50" />
-                            <label for="@($"chk_{stop.Id}")" class="flex-1 cursor-pointer select-none">
-                                <span class="font-bold text-on-surface">@stop.StopName</span>
-                                <span class="text-tertiary font-mono ml-1.5">(@(stop.RegionName ?? "No Region"))</span>
-                            </label>
-                        </div>
-                    }
-                }
-            </div>
-        </div>
-    </ChildContent>
-    <Footer>
-        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" OnClick="() => showAssignModal = false">
-            @Lang.GetText("Cancel")
-        </Button>
-        <Button Variant="ButtonVariant.Default" Size="ButtonSize.Sm" IsLoading="@isSaving" OnClick="SaveAssignedStops">
-            @Lang.GetText("Save")
-        </Button>
-    </Footer>
-</ModalDialog>
+<!-- Assign Bus Stops Modal with Dual List + Map View -->
+<AssignStopsModal IsOpen="@showAssignModal"
+                  IsOpenChanged="v => showAssignModal = v"
+                  Bus="@selectedBus"
+                  InitialSelectedStopIds="@assignedStopIds"
+                  AllBusStops="@allBusStops"
+                  Regions="@regions"
+                  IsSaving="@isSaving"
+                  OnSave="SaveAssignedStops" />
 
 @code {
-    private PagedResult<BusDto>? busesPagedResult;
-    private int busPageNumber = 1;
-    private int busPageSize = 10;
-    private bool isSelectorLoading = false;
-
     private long selectedBusId = 0;
     private BusDto? selectedBus;
     private FullRouteResponseDto? fullRoute;
@@ -282,81 +83,35 @@
     private string? errorMessage = null;
     private bool isSaving = false;
 
-    // Assign modal state
+    private long? highlightedStopId = null;
+    private RouteStopMap? routeMapRef;
+
+    // Modal state
     private bool showAssignModal = false;
     private List<BusStopDto>? allBusStops;
     private List<RegionDto>? regions;
-    private HashSet<long> selectedStopIds = new();
-    private string modalSearchQuery = "";
-    private int? modalRegionFilterId = null;
-    private bool isModalStopsLoading = false;
 
-    private IEnumerable<SelectItem<int?>>? modalRegionSelectItems => regions?.Select(r => new SelectItem<int?>(r.Id, r.RegionName));
-
-    private IEnumerable<BusStopDto>? filteredBusStops => string.IsNullOrWhiteSpace(modalSearchQuery)
-        ? allBusStops
-        : allBusStops?.Where(s => s.StopName.Contains(modalSearchQuery, StringComparison.OrdinalIgnoreCase) ||
-                                  (s.RegionName != null && s.RegionName.Contains(modalSearchQuery, StringComparison.OrdinalIgnoreCase)));
+    private IEnumerable<long> assignedStopIds => fullRoute?.Stops?.Select(s => s.BusStopId) ?? Enumerable.Empty<long>();
 
     protected override async Task OnInitializedAsync()
     {
-        var selectorTask = LoadBusesSelectorPageAsync(1);
         var stopsTask = BusStopService.GetBusStopsAsync(1, 500, null);
         var regionsTask = RegionService.GetRegionsAsync(1, 200, null);
 
-        await Task.WhenAll(selectorTask, stopsTask, regionsTask);
+        await Task.WhenAll(stopsTask, regionsTask);
 
         var stopsRes = await stopsTask;
-        if (stopsRes != null && stopsRes.Data != null)
-        {
-            allBusStops = stopsRes.Data;
-        }
+        if (stopsRes?.Data != null) allBusStops = stopsRes.Data;
 
         var regionsRes = await regionsTask;
-        if (regionsRes != null && regionsRes.Data != null)
-        {
-            regions = regionsRes.Data;
-        }
+        if (regionsRes?.Data != null) regions = regionsRes.Data;
     }
 
-    private async Task LoadBusesSelectorPageAsync(int page)
-    {
-        isSelectorLoading = true;
-        try
-        {
-            busPageNumber = page;
-            busesPagedResult = await BusService.GetBusesAsync(busPageNumber, busPageSize, null);
-        }
-        catch (Exception ex)
-        {
-            Toast.ShowError($"Failed to load buses: {ex.Message}");
-        }
-        finally
-        {
-            isSelectorLoading = false;
-        }
-    }
-
-    private async Task PreviousBusPage()
-    {
-        if (busPageNumber > 1)
-        {
-            await LoadBusesSelectorPageAsync(busPageNumber - 1);
-        }
-    }
-
-    private async Task NextBusPage()
-    {
-        if (busesPagedResult != null && busesPagedResult.Pagination != null && busPageNumber < busesPagedResult.Pagination.TotalPages)
-        {
-            await LoadBusesSelectorPageAsync(busPageNumber + 1);
-        }
-    }
-
-    private async Task SelectBus(BusDto bus)
+    private async Task HandleBusSelected(BusDto bus)
     {
         selectedBusId = bus.Id;
         selectedBus = bus;
+        highlightedStopId = null;
         await LoadRoute();
     }
 
@@ -390,15 +145,34 @@
         }
     }
 
-    private async Task MoveStop(int currentIndex, int delta)
+    private async Task HandleListStopSelected(long stopId)
     {
-        if (fullRoute == null || fullRoute.Stops == null) return;
-        int targetIndex = currentIndex + delta;
+        highlightedStopId = stopId;
+        if (routeMapRef != null)
+        {
+            await routeMapRef.HighlightStopAsync(stopId);
+        }
+    }
+
+    private async Task HandleListStopHovered(long stopId)
+    {
+        highlightedStopId = stopId;
+    }
+
+    private void HandleMapStopClicked(long stopId)
+    {
+        highlightedStopId = stopId;
+    }
+
+    private async Task HandleReorder((int CurrentIndex, int Delta) args)
+    {
+        if (fullRoute?.Stops == null) return;
+        int targetIndex = args.CurrentIndex + args.Delta;
         if (targetIndex < 0 || targetIndex >= fullRoute.Stops.Count) return;
 
         var list = fullRoute.Stops;
-        var temp = list[currentIndex];
-        list[currentIndex] = list[targetIndex];
+        var temp = list[args.CurrentIndex];
+        list[args.CurrentIndex] = list[targetIndex];
         list[targetIndex] = temp;
 
         try
@@ -406,7 +180,7 @@
             var items = list.Select((x, idx) => new ReorderBusRouteItem(x.BusStopId, x.StopOrder, idx + 1)).ToList();
             var req = new ReorderBusRoutesRequest(selectedBusId, items);
             await RouteStopService.ReorderRouteStopsAsync(req);
-            Toast.ShowSuccess("Stop order updated.");
+            Toast.ShowSuccess("Stop order updated successfully.");
             await LoadRoute();
         }
         catch (Exception ex)
@@ -415,7 +189,7 @@
         }
     }
 
-    private async Task RemoveRouteStop(int stopOrder)
+    private async Task HandleRemove(int stopOrder)
     {
         try
         {
@@ -431,64 +205,15 @@
 
     private void OpenAssignModal()
     {
-        modalSearchQuery = "";
-        modalRegionFilterId = null;
-        selectedStopIds.Clear();
-        if (fullRoute != null && fullRoute.Stops != null)
-        {
-            foreach (var s in fullRoute.Stops)
-            {
-                selectedStopIds.Add(s.BusStopId);
-            }
-        }
         showAssignModal = true;
     }
 
-    private async Task OnModalRegionFilterChanged(int? newRegionId)
-    {
-        modalRegionFilterId = newRegionId;
-        isModalStopsLoading = true;
-        try
-        {
-            if (modalRegionFilterId.HasValue)
-            {
-                var res = await BusStopService.GetBusStopByRegionAsync(modalRegionFilterId.Value);
-                if (res != null && res.IsSuccess && res.Data != null)
-                {
-                    allBusStops = res.Data;
-                }
-            }
-            else
-            {
-                var stopsRes = await BusStopService.GetBusStopsAsync(1, 500, null);
-                if (stopsRes != null && stopsRes.Data != null)
-                {
-                    allBusStops = stopsRes.Data;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Toast.ShowError($"Failed to load bus stops: {ex.Message}");
-        }
-        finally
-        {
-            isModalStopsLoading = false;
-        }
-    }
-
-    private void ToggleStopSelection(long busStopId, object? isChecked)
-    {
-        if (isChecked is bool b && b) selectedStopIds.Add(busStopId);
-        else selectedStopIds.Remove(busStopId);
-    }
-
-    private async Task SaveAssignedStops()
+    private async Task SaveAssignedStops(List<long> stopIds)
     {
         isSaving = true;
         try
         {
-            var items = selectedStopIds.Select((sId, idx) => new AssignBusRouteStopItem(sId, idx + 1)).ToList();
+            var items = stopIds.Select((sId, idx) => new AssignBusRouteStopItem(sId, idx + 1)).ToList();
             var req = new AssignBusRoutesRequest(selectedBusId, items);
             await RouteStopService.AssignRouteStopsAsync(req);
             Toast.ShowSuccess("Route stops sequence updated.");
