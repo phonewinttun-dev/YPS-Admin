@@ -18,9 +18,11 @@ namespace YpsAdmin.Domain.Features.Bus
             _context = context;
         }
 
+        private IQueryable<TblBus> activeBuses => _context.TblBuses.AsNoTracking().Where(b => b.DeleteFlag == false);
+
         public async Task<PagedResult<BusDto>> GetBusesAsync(BusGetRequest request, CancellationToken cancellationToken = default)
         {
-            var query = _context.TblBuses.AsNoTracking().Where(b => b.DeleteFlag != true);
+            var query = activeBuses;
 
             int totalCount = await query.CountAsync(cancellationToken);
             int skip = (request.PageNumber - 1) * request.PageSize;
@@ -49,7 +51,7 @@ namespace YpsAdmin.Domain.Features.Bus
 
         public async Task<PagedResult<BusDto>> SearchBusesAsync(BusSearchRequest request, CancellationToken cancellationToken = default)
         {
-            var query = _context.TblBuses.AsNoTracking().Where(b => b.DeleteFlag != true);
+            var query = activeBuses;
 
             if (!string.IsNullOrWhiteSpace(request.BusNumber))
             {
@@ -59,15 +61,8 @@ namespace YpsAdmin.Domain.Features.Bus
                 }
                 else
                 {
-                    string search = $"%{request.BusNumber.Trim()}%";
-                    query = query.Where(b => b.VariantId != null && EF.Functions.ILike(b.VariantId, search));
+                    query = query.Where(b => false);
                 }
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.VariantId))
-            {
-                string searchVariant = $"%{request.VariantId.Trim()}%";
-                query = query.Where(b => b.VariantId != null && EF.Functions.ILike(b.VariantId, searchVariant));
             }
 
             int totalCount = await query.CountAsync(cancellationToken);
@@ -97,9 +92,8 @@ namespace YpsAdmin.Domain.Features.Bus
 
         public async Task<Result<BusDto>> GetBusByIdAsync(long id, CancellationToken cancellationToken = default)
         {
-            var bus = await _context.TblBuses
-                .AsNoTracking()
-                .FirstOrDefaultAsync(b => b.Id == id && b.DeleteFlag != true, cancellationToken);
+            var bus = await activeBuses
+                .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
 
             if (bus == null)
             {

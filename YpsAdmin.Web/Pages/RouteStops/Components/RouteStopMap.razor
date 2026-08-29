@@ -1,60 +1,114 @@
 @namespace YpsAdmin.Web.Pages.RouteStops.Components
 @inject IJSRuntime JS
+@inject ThemeService Theme
+@inject LanguageService Lang
 @implements IAsyncDisposable
 
-<div class="relative bg-card rounded-xl border border-border overflow-hidden shadow-xs flex flex-col">
-    <!-- Map Toolbar / Header -->
-    <div class="p-3 bg-muted/40 border-b border-border flex items-center justify-between gap-3 text-xs">
-        <div class="flex items-center gap-2">
-            <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.818V8.049a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
-                </svg>
-            </span>
-            <span class="font-semibold text-foreground">Interactive Route Map</span>
-            <span class="text-muted-foreground font-mono text-2xs">(OpenStreetMap)</span>
-        </div>
-
-        <div class="flex items-center gap-2">
-            @if (Stops != null && Stops.Any())
-            {
-                <span class="text-2xs font-mono text-muted-foreground hidden sm:inline-block">
-                    Start: <strong class="text-foreground">@Stops.First().StopName</strong> → End: <strong class="text-foreground">@Stops.Last().StopName</strong>
-                </span>
-                <button type="button"
-                        @onclick="RecenterMap"
-                        class="px-2 py-1 text-2xs font-medium bg-card hover:bg-accent text-foreground border border-input rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        title="Fit all route stops in view">
-                    Fit Bounds
-                </button>
-            }
-        </div>
+<div class="relative bg-card rounded-2xl border border-border overflow-hidden shadow-xl flex flex-col transition-colors duration-300">
+    
+    <!-- Top-Right Actions HUD -->
+    <div class="absolute top-4 right-4 z-20 flex items-center gap-2 pointer-events-auto">
+        <button type="button"
+                @onclick="RecenterMap"
+                class="px-3.5 py-2 rounded-xl bg-[#0B5F9B] text-white dark:bg-[#F6D867] dark:text-[#121521] hover:opacity-95 active:scale-95 font-mono font-bold text-xs shadow-lg transition-all cursor-pointer flex items-center gap-2 border border-[#0B5F9B]/30 dark:border-[#F6D867]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="Fit map view to show all route stops"
+                title="Fit all route stops in view">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+            </svg>
+            <span>@Lang.GetText("FitBounds")</span>
+        </button>
     </div>
 
     <!-- Map Container -->
     <div id="@mapContainerId"
-         class="@(string.IsNullOrEmpty(HeightClass) ? "h-[440px]" : HeightClass) w-full bg-muted/20 relative z-0"
+         class="@(string.IsNullOrEmpty(HeightClass) ? "h-[500px]" : HeightClass) w-full bg-canvas relative z-0"
          role="region"
-         aria-label="@(AriaLabel ?? "Interactive OpenStreetMap showing route stops and connected path")">
+         aria-label="@(AriaLabel ?? "Interactive OpenStreetMap showing bus route path and sequential stops")">
     </div>
 
-    <!-- Map Legend -->
-    <div class="px-3.5 py-2 bg-muted/30 border-t border-border flex flex-wrap items-center justify-between gap-2 text-2xs text-muted-foreground font-mono">
-        <div class="flex items-center gap-3">
-            <span class="flex items-center gap-1">
-                <span class="w-2.5 h-2.5 rounded-full bg-[#137455] inline-block"></span> First Stop
-            </span>
-            <span class="flex items-center gap-1">
-                <span class="w-2.5 h-2.5 rounded-full bg-[#0B5F9B] inline-block"></span> Intermediate
-            </span>
-            <span class="flex items-center gap-1">
-                <span class="w-2.5 h-2.5 rounded-full bg-[#A23F2B] inline-block"></span> Terminus Stop
-            </span>
-        </div>
-        <div>
-            Click marker to inspect station details
+    <!-- Bottom-Left Distance Telemetry HUD -->
+    <div class="absolute bottom-4 left-4 z-20 pointer-events-auto">
+        <div class="p-3.5 rounded-xl bg-white/95 dark:bg-[#1B2030]/95 border border-slate-200/90 dark:border-[#262D42] backdrop-blur-md shadow-xl transition-all max-w-[280px]">
+            <div class="text-3xs font-mono uppercase tracking-widest text-[#0B5F9B] dark:text-[#F6D867] font-bold">
+                @Lang.GetText("RouteDistance")
+            </div>
+            <div class="text-xl sm:text-2xl font-mono font-extrabold text-slate-900 dark:text-white tracking-tight mt-0.5 flex items-baseline gap-1">
+                @displayDistanceKm.ToString("F1") <span class="text-xs font-bold text-[#0B5F9B] dark:text-[#F6D867] font-mono">km</span>
+            </div>
+            <div class="text-xs text-slate-600 dark:text-slate-300 font-sans mt-0.5 truncate">
+                @Lang.GetText("FromOrigin") <strong class="text-slate-950 dark:text-white font-semibold">@(Stops?.FirstOrDefault()?.StopName ?? "Origin")</strong>
+            </div>
+            @if (activeStop != null)
+            {
+                <div class="mt-2 pt-2 border-t border-slate-100 dark:border-[#262D42] flex items-center justify-between text-3xs font-mono text-slate-600 dark:text-slate-300">
+                    <span class="truncate mr-1.5">@Lang.GetText("TargetStop"): <strong class="text-slate-950 dark:text-white font-semibold">@activeStop.StopName</strong></span>
+                    <span class="shrink-0 font-bold text-[#0B5F9B] dark:text-[#F6D867]">Stop @activeStop.StopOrder</span>
+                </div>
+            }
         </div>
     </div>
+
+    <!-- Bottom-Right HUD Buttons -->
+    <div class="absolute bottom-4 right-4 z-20 flex flex-col items-end gap-2 pointer-events-auto">
+        <button type="button"
+                @onclick="RecenterMap"
+                class="px-3.5 py-1.5 rounded-lg bg-white/95 dark:bg-[#1B2030]/95 hover:bg-white dark:hover:bg-[#22293D] border border-slate-200/90 dark:border-[#262D42] text-3xs font-mono font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white backdrop-blur-md transition-all cursor-pointer shadow-md flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="Back to full map overview">
+            <span class="w-2 h-2 rounded-full bg-[#0B5F9B] dark:bg-[#F6D867]"></span>
+            <span>@Lang.GetText("BackToMap")</span>
+        </button>
+
+        <button type="button"
+                @onclick="ToggleDrawer"
+                class="px-3.5 py-2 rounded-xl bg-white/95 dark:bg-[#1B2030]/95 hover:bg-blue-50/80 dark:hover:bg-[#22293D] border border-blue-200/90 dark:border-[#F6D867]/40 text-xs font-mono font-bold tracking-wider text-[#0B5F9B] dark:text-[#F6D867] hover:text-blue-900 dark:hover:text-white backdrop-blur-md shadow-lg transition-all cursor-pointer flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-expanded="@isDrawerOpen"
+                aria-label="Toggle sequential bus stops drawer">
+            <svg class="w-4 h-4 text-[#0B5F9B] dark:text-[#F6D867]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.818V8.049a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+            </svg>
+            <span>@Lang.GetText("BusStopsSequence")</span>
+            <span class="px-2 py-0.5 rounded-md bg-[#DCEEFF] text-[#0B5F9B] dark:bg-[#2D2600] dark:text-[#F6D867] text-3xs font-bold border border-[#0B5F9B]/20 dark:border-[#F6D867]/30">@(Stops?.Count ?? 0) @Lang.GetText("TotalStops")</span>
+        </button>
+    </div>
+
+    <!-- Expandable Stop Sequence Drawer -->
+    @if (isDrawerOpen && Stops != null && Stops.Any())
+    {
+        <div class="border-t border-slate-200 dark:border-[#262D42] bg-white/95 dark:bg-[#121521]/95 backdrop-blur-xl p-3.5 sm:p-4 transition-all duration-300 z-30">
+            <div class="flex items-center justify-between mb-2.5">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#0B5F9B] dark:bg-[#F6D867]"></span>
+                    <span class="text-xs font-mono font-bold tracking-wider text-slate-900 dark:text-white uppercase">@Lang.GetText("BusStopsAlongRoute")</span>
+                </div>
+                <button type="button" @onclick="ToggleDrawer" class="text-xs font-mono text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded cursor-pointer" aria-label="Hide bus stops sequence drawer">
+                    ✕ @Lang.GetText("Hide")
+                </button>
+            </div>
+
+            <!-- Horizontal Grid of Sequential Stops (Zero # signs, high contrast light/dark mode) -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 max-h-36 overflow-y-auto pr-1">
+                @foreach (var stop in Stops)
+                {
+                    var isSelected = (HighlightedStopId.HasValue && HighlightedStopId.Value == stop.BusStopId) ||
+                                     (!HighlightedStopId.HasValue && stop == Stops.Last());
+                    var stopDist = stopDistancesMap.TryGetValue(stop.BusStopId, out var d) ? d : 0.0;
+
+                    <button type="button"
+                            @onclick="() => SelectStop(stop.BusStopId, stopDist)"
+                            aria-label="@($"Select stop {stop.StopOrder}: {stop.StopName}, {stopDist:F1} kilometers from start")"
+                            class="p-2.5 rounded-xl border text-left transition-all cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring @(isSelected ? "bg-[#DCEEFF] border-[#0B5F9B] text-[#0B5F9B] font-semibold shadow-xs ring-2 ring-[#0B5F9B]/40 dark:bg-[#2D2600] dark:border-[#F6D867] dark:text-[#F6D867] dark:ring-[#F6D867]/40" : "bg-white dark:bg-[#1B2030] border-slate-200 dark:border-[#262D42] hover:bg-slate-50 dark:hover:bg-[#22293D] text-slate-700 dark:text-slate-300")">
+                        <div class="flex items-center justify-between text-2xs font-mono font-bold">
+                            <span class="px-2 py-0.5 rounded @(isSelected ? "bg-[#0B5F9B] text-white dark:bg-[#F6D867] dark:text-[#121521]" : "bg-slate-100 dark:bg-[#262D42] text-slate-800 dark:text-slate-200")">@stop.StopOrder</span>
+                            <span class="text-xs font-mono text-slate-900 dark:text-white font-bold">@stopDist.ToString("F1") km</span>
+                        </div>
+                        <div class="text-xs font-semibold text-slate-900 dark:text-white truncate mt-1.5">@stop.StopName</div>
+                        <div class="text-3xs text-slate-500 dark:text-slate-400 truncate font-mono mt-0.5">@(stop.RegionName ?? "Yangon")</div>
+                    </button>
+                }
+            </div>
+        </div>
+    }
 </div>
 
 @code {
@@ -69,6 +123,19 @@
     private bool isMapInitialized = false;
     private string lastRenderedSignature = "";
 
+    private bool isDrawerOpen = true;
+    private double displayDistanceKm = 0.0;
+    private Dictionary<long, double> stopDistancesMap = new();
+
+    private BusRouteStopItemDto? activeStop =>
+        Stops?.FirstOrDefault(s => HighlightedStopId.HasValue ? s.BusStopId == HighlightedStopId.Value : s == Stops.Last());
+
+    protected override void OnInitialized()
+    {
+        Theme.OnThemeChanged += HandleThemeChanged;
+        Lang.OnLanguageChanged += StateHasChanged;
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -77,7 +144,15 @@
             double initialLat = Stops?.FirstOrDefault()?.Lat ?? 16.8661;
             double initialLon = Stops?.FirstOrDefault()?.Lon ?? 96.1951;
 
-            isMapInitialized = await JS.InvokeAsync<bool>("YpsRouteMap.initMap", mapContainerId, dotNetRef, initialLat, initialLon, 12);
+            isMapInitialized = await JS.InvokeAsync<bool>(
+                "YpsRouteMap.initMap",
+                mapContainerId,
+                dotNetRef,
+                initialLat,
+                initialLon,
+                12,
+                Theme.IsDark);
+
             if (isMapInitialized && Stops != null && Stops.Any())
             {
                 await RenderRouteOnMapAsync();
@@ -103,7 +178,7 @@
     {
         if (!isMapInitialized) return;
         lastRenderedSignature = GenerateStopsSignature();
-        await JS.InvokeVoidAsync("YpsRouteMap.renderRoute", mapContainerId, Stops ?? new List<BusRouteStopItemDto>());
+        await JS.InvokeVoidAsync("YpsRouteMap.renderRoute", mapContainerId, Stops ?? new List<BusRouteStopItemDto>(), Theme.IsDark);
     }
 
     public async Task HighlightStopAsync(long stopId)
@@ -111,28 +186,77 @@
         if (isMapInitialized)
         {
             await JS.InvokeVoidAsync("YpsRouteMap.highlightStop", mapContainerId, stopId);
+            if (stopDistancesMap.TryGetValue(stopId, out var dist))
+            {
+                displayDistanceKm = dist;
+            }
+            StateHasChanged();
         }
     }
 
     public async Task RecenterMap()
     {
-        if (isMapInitialized && Stops != null && Stops.Any())
+        if (isMapInitialized)
         {
-            await JS.InvokeVoidAsync("YpsRouteMap.renderRoute", mapContainerId, Stops);
+            await JS.InvokeVoidAsync("YpsRouteMap.fitBounds", mapContainerId);
+        }
+    }
+
+    private void ToggleDrawer()
+    {
+        isDrawerOpen = !isDrawerOpen;
+    }
+
+    private async Task SelectStop(long stopId, double distKm)
+    {
+        displayDistanceKm = distKm;
+        await HighlightStopAsync(stopId);
+        if (OnStopMarkerClicked.HasDelegate)
+        {
+            await OnStopMarkerClicked.InvokeAsync(stopId);
         }
     }
 
     [JSInvokable]
-    public async Task OnMapStopClicked(long busStopId)
+    public async Task OnMapStopClicked(long busStopId, double cumulativeKm)
     {
+        displayDistanceKm = cumulativeKm;
+        StateHasChanged();
         if (OnStopMarkerClicked.HasDelegate)
         {
             await OnStopMarkerClicked.InvokeAsync(busStopId);
         }
     }
 
+    [JSInvokable]
+    public void OnRouteTelemetryUpdated(double totalKm, string distancesJson)
+    {
+        try
+        {
+            displayDistanceKm = totalKm;
+            var list = System.Text.Json.JsonSerializer.Deserialize<List<StopDistanceItem>>(distancesJson);
+            if (list != null)
+            {
+                stopDistancesMap = list.ToDictionary(x => x.stopId, x => x.cumulativeKm);
+            }
+            StateHasChanged();
+        }
+        catch { }
+    }
+
+    private async void HandleThemeChanged()
+    {
+        if (isMapInitialized)
+        {
+            await JS.InvokeVoidAsync("YpsRouteMap.setTheme", mapContainerId, Theme.IsDark);
+            StateHasChanged();
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
+        Theme.OnThemeChanged -= HandleThemeChanged;
+        Lang.OnLanguageChanged -= StateHasChanged;
         try
         {
             if (isMapInitialized)
@@ -141,9 +265,8 @@
             }
             dotNetRef?.Dispose();
         }
-        catch
-        {
-            // Ignored on disposal
-        }
+        catch { }
     }
+
+    private record StopDistanceItem(long stopId, double cumulativeKm);
 }

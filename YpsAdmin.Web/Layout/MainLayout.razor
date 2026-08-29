@@ -1,21 +1,18 @@
 @inherits LayoutComponentBase
 @inject LanguageService Lang
+@inject ThemeService Theme
 @implements IDisposable
-
-<a href="#main-content" class="sr-only-focusable fixed top-2 left-2 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium text-xs shadow-md focus:not-sr-only focus:outline-none focus:ring-2 focus:ring-ring">
-    Skip to main content
-</a>
 
 <ToastNotification />
 
-<div class="min-h-screen flex flex-col md:flex-row bg-background text-foreground font-sans">
-    <!-- Sidebar Navigation -->
-    <aside class="w-full md:w-64 bg-card border-r border-border flex flex-col justify-between shrink-0 shadow-xs" aria-label="Sidebar Navigation">
+<div class="h-screen w-screen flex flex-col md:flex-row bg-background text-foreground font-sans transition-colors duration-300 overflow-hidden">
+    <!-- Sidebar Navigation: Fixed left column with sticky bottom controls -->
+    <aside class="w-full md:w-64 h-auto md:h-full bg-card border-r border-border flex flex-col justify-between shrink-0 shadow-xs z-30 overflow-y-auto" aria-label="Sidebar Navigation">
         <div>
             <!-- Header Brand -->
-            <div class="p-4 border-b border-border flex items-center justify-between">
+            <div class="p-4 border-b border-border flex items-center justify-between shrink-0">
                 <a href="/" class="flex items-center gap-2.5 text-foreground font-bold text-base tracking-tight hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md">
-                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-[#FFF1A8] text-[#6B5600] border border-[#6B5600]/20 font-bold text-xs shadow-xs font-mono">
+                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-brand-bg text-brand border border-brand/20 font-bold text-xs shadow-xs font-mono">
                         YPS
                     </span>
                     <span class="font-semibold text-sm">@Lang.GetText("AppTitle")</span>
@@ -55,44 +52,107 @@
             </nav>
         </div>
 
-        <!-- Footer & Language Switcher -->
-        <div class="p-3.5 border-t border-border bg-muted/40">
-            <div class="text-2xs text-muted-foreground mb-2 font-mono tracking-wider uppercase">Language / ဘာသာစကား</div>
-            <div class="flex items-center gap-1.5 bg-muted p-1 rounded-lg border border-border">
-                <button type="button" 
-                        @onclick='() => SetLang("en")' 
-                        class="flex-1 py-1 px-2.5 text-xs font-semibold rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring @(Lang.CurrentLanguage == "en" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground")">
-                    English
+        <!-- Footer & Controls (Theme & Language Switcher): Always pinned at bottom of sidebar -->
+        <div class="p-3.5 border-t border-border bg-muted/40 space-y-2.5 shrink-0">
+            <!-- Theme Toggle in Sidebar -->
+            <div>
+                <button type="button"
+                        @onclick="ToggleTheme"
+                        class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg bg-card text-foreground border border-border hover:bg-accent hover:text-accent-foreground transition-all shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                        aria-label="Toggle light and dark mode">
+                    <span class="flex items-center gap-2">
+                        @if (Theme.IsDark)
+                        {
+                            <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                            <span>Dark Mode</span>
+                        }
+                        else
+                        {
+                            <svg class="w-4 h-4 text-[#0B5F9B] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                            </svg>
+                            <span>Light Mode</span>
+                        }
+                    </span>
+                    <span class="text-2xs font-mono text-muted-foreground">@(Theme.IsDark ? "Switch to Light" : "Switch to Dark")</span>
                 </button>
-                <button type="button" 
-                        @onclick='() => SetLang("my")' 
-                        class="flex-1 py-1 px-2.5 text-xs font-semibold rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring @(Lang.CurrentLanguage == "my" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground")">
-                    မြန်မာ
-                </button>
+            </div>
+
+            <!-- Language Switcher -->
+            <div>
+                <div class="flex items-center gap-1.5 bg-muted p-1 rounded-lg border border-border">
+                    <button type="button" 
+                            @onclick='() => SetLang("en")' 
+                            class="flex-1 py-1.5 px-2.5 text-xs font-semibold rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer @(Lang.CurrentLanguage == "en" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground")">
+                        English
+                    </button>
+                    <button type="button" 
+                            @onclick='() => SetLang("my")' 
+                            class="flex-1 py-1.5 px-2.5 text-xs font-semibold rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer @(Lang.CurrentLanguage == "my" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground")">
+                        မြန်မာ
+                    </button>
+                </div>
             </div>
         </div>
     </aside>
 
-    <!-- Main Content Area -->
-    <main id="main-content" class="flex-1 flex flex-col min-w-0" tabindex="-1">
-        <!-- Top App Bar with Persistent Breadcrumb -->
-        <header class="h-14 bg-card border-b border-border px-6 flex items-center justify-between shadow-xs">
+    <!-- Main Content Area: Header at top, independent scrolling on body -->
+    <main id="main-content" class="flex-1 flex flex-col h-full min-w-0 overflow-hidden" tabindex="-1">
+        <!-- Top App Bar with Persistent Breadcrumb & Quick Theme Toggle -->
+        <header class="h-14 bg-card border-b border-border px-6 flex items-center justify-between shadow-xs shrink-0 z-20">
             <Breadcrumb />
-            <div class="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border">YPS Admin v1.1</div>
+            
+            <div class="flex items-center gap-3">
+                <button type="button"
+                        @onclick="ToggleTheme"
+                        class="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                        title="@(Theme.IsDark ? "Switch to Light Mode" : "Switch to Dark Mode")"
+                        aria-label="Toggle theme">
+                    @if (Theme.IsDark)
+                    {
+                        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                    }
+                    else
+                    {
+                        <svg class="w-4 h-4 text-[#0B5F9B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                    }
+                </button>
+            </div>
         </header>
 
-        <!-- Dynamic Body Page -->
-        <div class="p-6 flex-1 overflow-y-auto">
+        <!-- Body Viewport: Scrollable -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-6 bg-canvas">
             @Body
         </div>
     </main>
 </div>
 
 @code {
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         Lang.OnLanguageChanged += StateHasChanged;
-        await Lang.InitializeAsync();
+        Theme.OnThemeChanged += StateHasChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Theme.InitializeAsync();
+            await Lang.InitializeAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleTheme()
+    {
+        await Theme.ToggleThemeAsync();
     }
 
     private async Task SetLang(string langCode)
@@ -103,5 +163,6 @@
     public void Dispose()
     {
         Lang.OnLanguageChanged -= StateHasChanged;
+        Theme.OnThemeChanged -= StateHasChanged;
     }
 }

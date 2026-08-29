@@ -10,7 +10,7 @@ All component colors use RGB CSS variables so Tailwind opacity modifiers remain 
 | ------- | ------------------- | ------------------- | --------------------- |
 | Canvas  | `#F7F8FF`           | `#121521`           | Page and map shell    |
 | Surface | `#FFFFFF`           | `#1B2030`           | Cards and panels      |
-| Brand   | `#FFF1A8 / #6B5600` | `#F6D867 / #2D2600` | YPS identity          |
+| Brand   | `#FFF1A8 / #6B5600` | `#F6D867 / #2D2600` | YBS identity          |
 | Store   | `#FFE3DA / #A23F2B` | `#FF9C85 / #231B19` | Stores and pins       |
 | Bus     | `#DCEEFF / #0B5F9B` | `#75B9F7 / #10212F` | Buses and stops       |
 | GPS     | `#DFF7EC / #137455` | `#72D4B3 / #10251D` | Location and distance |

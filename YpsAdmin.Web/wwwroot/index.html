@@ -16,6 +16,52 @@
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link href="YpsAdmin.Web.styles.css" rel="stylesheet" />
+    <script>
+        window.YpsTheme = {
+            getTheme: function() {
+                try {
+                    return localStorage.getItem('yps_theme') || 'dark';
+                } catch (e) {
+                    return 'dark';
+                }
+            },
+            setTheme: function(theme) {
+                try {
+                    localStorage.setItem('yps_theme', theme);
+                } catch (e) {}
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }
+        };
+
+        window.YpsStorage = {
+            getItem: function(key) {
+                try {
+                    return localStorage.getItem(key);
+                } catch (e) {
+                    return null;
+                }
+            },
+            setItem: function(key, val) {
+                try {
+                    localStorage.setItem(key, val);
+                } catch (e) {}
+            }
+        };
+
+        // Immediate theme initialization
+        (function() {
+            try {
+                var theme = window.YpsTheme.getTheme();
+                window.YpsTheme.setTheme(theme);
+            } catch (e) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
 </head>
 
 <body class="bg-background text-foreground font-sans antialiased selection:bg-secondary/20 selection:text-secondary">

@@ -19,6 +19,7 @@ builder.Services.AddScoped(sp => new HttpClient
     Timeout = TimeSpan.FromSeconds(timeoutSeconds)
 });
 builder.Services.AddScoped<LanguageService>();
+builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<IBusService, BusService>();
 builder.Services.AddScoped<IBusStopService, BusStopService>();
 builder.Services.AddScoped<IBusRouteService, BusRouteService>();
