@@ -6,6 +6,7 @@ using YpsAdmin.Database.AppDbContextModels;
 using YpsAdmin.Domain.Features.Bus;
 using YpsAdmin.Domain.Features.BusRoute;
 using YpsAdmin.Domain.Features.BusStop;
+using YpsAdmin.Domain.Features.Dashboard;
 using YpsAdmin.Domain.Features.Region;
 using YpsAdmin.Domain.Features.Store;
 
@@ -33,6 +34,7 @@ namespace YpsAdmin.Domain.Features
             builder.Services.AddScoped<IBusRouteService, BusRouteService>();
             builder.Services.AddScoped<IRegionService, RegionService>();
             builder.Services.AddScoped<IStoreService, StoreService>();
+            builder.Services.AddScoped<IDashboardService, DashboardService>();
         }
     }
 }

@@ -45,6 +45,7 @@
 
     private string GetSegmentLabel(string segment) => segment.ToLowerInvariant() switch
     {
+        "dashboard" => Lang.GetText("NavDashboard"),
         "bus-lines" => Lang.GetText("NavBusLines"),
         "bus-stops" => Lang.GetText("NavBusStops"),
         "route-stops" => Lang.GetText("NavRouteMapping"),

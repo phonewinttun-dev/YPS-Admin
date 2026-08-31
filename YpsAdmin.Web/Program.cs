@@ -20,6 +20,7 @@ builder.Services.AddScoped(sp => new HttpClient
 });
 builder.Services.AddScoped<LanguageService>();
 builder.Services.AddScoped<ThemeService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IBusService, BusService>();
 builder.Services.AddScoped<IBusStopService, BusStopService>();
 builder.Services.AddScoped<IBusRouteService, BusRouteService>();

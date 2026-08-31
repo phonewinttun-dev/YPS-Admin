@@ -34,7 +34,20 @@ public record UpdateStoreRequest(string? EngName, string? MmName, string? Catego
 public record AssignNearestBusStopItem(long BusStopId, double? DistanceKm);
 public record AssignNearestStopsRequest(List<AssignNearestBusStopItem> NearestStops);
 
+public sealed record DashboardSummaryDto(
+    long TotalBusLines,
+    long TotalBusStops,
+    long TotalStores,
+    long TotalCardAcceptedBuses,
+    long TotalRegions,
+    long TotalRouteMappings);
+
 // Services Interfaces
+public interface IDashboardService
+{
+    Task<Result<DashboardSummaryDto>?> GetDashboardSummaryAsync();
+}
+
 public interface IBusService
 {
     Task<PagedResult<BusDto>?> GetBusesAsync(int pageNumber, int pageSize, string? searchBusNumber, string? variantId = null);
@@ -571,3 +584,26 @@ public class StoreService : IStoreService
         }
     }
 }
+
+public class DashboardService : IDashboardService
+{
+    private readonly HttpClient _http;
+    public DashboardService(HttpClient http) => _http = http;
+
+    public async Task<Result<DashboardSummaryDto>?> GetDashboardSummaryAsync()
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<Result<DashboardSummaryDto>>("/api/dashboard/summary");
+        }
+        catch (TaskCanceledException)
+        {
+            return Result<DashboardSummaryDto>.Failure("API request timed out. Please try again.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<DashboardSummaryDto>.Failure($"API request failed: {ex.Message}");
+        }
+    }
+}
+

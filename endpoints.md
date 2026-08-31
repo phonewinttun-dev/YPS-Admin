@@ -62,3 +62,12 @@ This document lists all REST API endpoints implemented for the YpsAdmin system, 
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `GET` | `/api/townships` | Get paginated list of townships | **US-15** | Query: `pageNumber`, `pageSize` | `PagedResult<TownshipDto>` |
 | `GET` | `/api/townships/search` | Search townships by name (MM and EN) | **US-15** | Query: `townshipName`, `pageNumber`, `pageSize` | `PagedResult<TownshipDto>` |
+
+---
+
+## 6. 📊 Dashboard & System Metrics (`/api/dashboard`)
+
+| Method | Endpoint | Description | Story ID | Request Body / Query | Response |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `GET` | `/api/dashboard/summary` | Get aggregated dashboard metrics (total bus lines, stops, stores, card-accepted buses, regions) | **US-00** | None | `Result<DashboardSummaryDto>` |
+

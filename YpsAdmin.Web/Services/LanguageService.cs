@@ -68,6 +68,7 @@ public class LanguageService
     {
         // Navigation
         ["AppTitle"] = new() { ["en"] = "YPS Transport Admin", ["my"] = "YPS ယာဉ်လိုင်း စီမံခန့်ခွဲမှု စနစ်" },
+        ["NavDashboard"] = new() { ["en"] = "Dashboard", ["my"] = "ပင်မဒိုင်ခွက်" },
         ["NavBusLines"] = new() { ["en"] = "Bus Lines", ["my"] = "ယာဉ်လိုင်းများ" },
         ["NavBusStops"] = new() { ["en"] = "Bus Stops", ["my"] = "ကားမှတ်တိုင်များ" },
         ["NavRouteMapping"] = new() { ["en"] = "Route Mapping", ["my"] = "လမ်းကြောင်း ချိတ်ဆက်မှု" },
@@ -91,6 +92,7 @@ public class LanguageService
         ["Hide"] = new() { ["en"] = "Hide", ["my"] = "ပိတ်ရန်" },
         ["Show"] = new() { ["en"] = "Show", ["my"] = "ပြသရန်" },
         ["Close"] = new() { ["en"] = "Close", ["my"] = "ပိတ်ရန်" },
+        ["Refresh"] = new() { ["en"] = "Refresh", ["my"] = "ပြန်လည်ရယူရန်" },
 
         // Common Fields & Terms
         ["BusNumber"] = new() { ["en"] = "Bus Number", ["my"] = "ယာဉ်လိုင်းအမှတ်" },
@@ -147,6 +149,24 @@ public class LanguageService
         ["Theme"] = new() { ["en"] = "Theme", ["my"] = "အသွင်အပြင်" },
         ["DarkMode"] = new() { ["en"] = "Dark Mode", ["my"] = "အမှောင် စနစ်" },
         ["LightMode"] = new() { ["en"] = "Light Mode", ["my"] = "အလင်း စနစ်" },
-        ["Language"] = new() { ["en"] = "Language", ["my"] = "ဘာသာစကား" }
+        ["Language"] = new() { ["en"] = "Language", ["my"] = "ဘာသာစကား" },
+
+        // Dashboard
+        ["DashboardTitle"] = new() { ["en"] = "System Overview", ["my"] = "စနစ် ခြုံငုံသုံးသပ်ချက်" },
+        ["DashboardSubtitle"] = new() { ["en"] = "Overview of Yangon bus transport network, stops, and YPS card stores.", ["my"] = "ရန်ကုန် ဘတ်စ်ကား လမ်းကြောင်းများ၊ မှတ်တိုင်များနှင့် YPS အရောင်းဆိုင်များ ခြုံငုံသုံးသပ်ချက်။" },
+        ["TotalBusLines"] = new() { ["en"] = "Total Bus Lines", ["my"] = "စုစုပေါင်း ယာဉ်လိုင်းများ" },
+        ["TotalBusStops"] = new() { ["en"] = "Total Bus Stops", ["my"] = "စုစုပေါင်း မှတ်တိုင်များ" },
+        ["TotalYpsStores"] = new() { ["en"] = "Total YPS Stores", ["my"] = "စုစုပေါင်း YPS အရောင်းဆိုင်များ" },
+        ["CardAcceptedBuses"] = new() { ["en"] = "YPS Card Accepted", ["my"] = "YPS ကတ် လက်ခံသော ယာဉ်လိုင်းများ" },
+        ["TotalTownships"] = new() { ["en"] = "Covered Townships", ["my"] = "လွှမ်းခြုံထားသော မြို့နယ်များ" },
+        ["TotalRouteMappings"] = new() { ["en"] = "Active Route Mappings", ["my"] = "ချိတ်ဆက်ထားသော မှတ်တိုင်အစီအစဉ်များ" },
+        ["QuickActions"] = new() { ["en"] = "Quick Management", ["my"] = "အမြန် စီမံခန့်ခွဲမှု" },
+        ["ManageBusLines"] = new() { ["en"] = "Manage Bus Lines", ["my"] = "ယာဉ်လိုင်းများ စီမံရန်" },
+        ["ManageBusStops"] = new() { ["en"] = "Manage Bus Stops", ["my"] = "မှတ်တိုင်များ စီမံရန်" },
+        ["ManageRouteMapping"] = new() { ["en"] = "Route Mapping", ["my"] = "လမ်းကြောင်း ချိတ်ဆက်ရန်" },
+        ["ManageYpsStores"] = new() { ["en"] = "Manage YPS Stores", ["my"] = "အရောင်းဆိုင်များ စီမံရန်" },
+        ["NetworkStatus"] = new() { ["en"] = "Network Status", ["my"] = "ကွန်ရက် အခြေအနေ" },
+        ["Operational"] = new() { ["en"] = "Operational", ["my"] = "ပုံမှန် လည်ပတ်နေသည်" },
+        ["ViewAll"] = new() { ["en"] = "View All", ["my"] = "အားလုံး ကြည့်ရှုရန်" }
     };
 }
