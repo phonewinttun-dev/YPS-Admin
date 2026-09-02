@@ -104,7 +104,11 @@
     "Active": "အသုံးပြုနိုင်သည်",
     "Inactive": "အသုံးမပြုပါ",
     "Record saved successfully.": "အချက်အလက်များကို အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။",
-    "Record deleted successfully.": "အချက်အလက်များကို အောင်မြင်စွာ ဖျက်ထုတ်ပြီးပါပြီ။"
+    "Record deleted successfully.": "အချက်အလက်များကို အောင်မြင်စွာ ဖျက်ထုတ်ပြီးပါပြီ။",
+    "Drag to reorder or use arrows": "ဆွဲယူ၍သော်လည်းကောင်း မြှားခလုတ်များဖြင့်သော်လည်းကောင်း အစီအစဉ်ပြောင်းနိုင်ပါသည်",
+    "Drag to reorder": "ဆွဲယူရွှေ့ပြောင်းရန်",
+    "Stop sequence updated successfully.": "မှတ်တိုင် အစီအစဉ် အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ။",
+    "Reordering route stops...": "မှတ်တိုင် အစီအစဉ် ပြင်ဆင်နေပါသည်..."
   },
   "keys": {
     "AppTitle": {
@@ -338,6 +342,22 @@
     "MoveDown": {
       "en": "Down",
       "my": "အောက်"
+    },
+    "DragToReorder": {
+      "en": "Drag to reorder or use arrows",
+      "my": "ဆွဲယူ၍သော်လည်းကောင်း မြှားခလုတ်များဖြင့်သော်လည်းကောင်း အစီအစဉ်ပြောင်းနိုင်ပါသည်"
+    },
+    "DragHandle": {
+      "en": "Drag to reorder",
+      "my": "ဆွဲယူရွှေ့ပြောင်းရန်"
+    },
+    "StopSequenceUpdated": {
+      "en": "Stop sequence updated successfully.",
+      "my": "မှတ်တိုင် အစီအစဉ် အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ။"
+    },
+    "ReorderingRouteStops": {
+      "en": "Reordering route stops...",
+      "my": "မှတ်တိုင် အစီအစဉ် ပြင်ဆင်နေပါသည်..."
     },
     "TotalStops": {
       "en": "Stops",

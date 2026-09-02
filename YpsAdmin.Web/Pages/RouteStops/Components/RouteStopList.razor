@@ -5,10 +5,22 @@
     <div class="flex items-center justify-between border-b border-border pb-3.5">
         <div class="flex items-center gap-2">
             <span class="w-2.5 h-2.5 bg-primary rounded-full inline-block"></span>
-            <h3 class="font-semibold text-sm text-foreground">Stop Sequence List (@(Stops?.Count ?? 0) Stops)</h3>
+            <h3 class="font-semibold text-sm text-foreground">@Lang.GetText("BusStopsSequence") (@(Stops?.Count ?? 0) @Lang.GetText("TotalStops"))</h3>
         </div>
-        <div class="text-2xs font-mono text-muted-foreground">
-            Use arrows to reorder
+        <div class="flex items-center gap-2">
+            @if (IsReordering)
+            {
+                <span class="text-2xs font-mono text-primary flex items-center gap-1.5 animate-pulse">
+                    <span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+                    @Lang.GetText("ReorderingRouteStops")
+                </span>
+            }
+            else
+            {
+                <span class="text-2xs font-mono text-muted-foreground">
+                    @Lang.GetText("DragToReorder")
+                </span>
+            }
         </div>
     </div>
 
@@ -17,7 +29,7 @@
         @accessibilityAnnouncement
     </div>
 
-    <div class="space-y-3 max-h-[440px] overflow-y-auto pr-1" role="list" aria-label="Bus Stop Route Sequence">
+    <div class="space-y-3 max-h-[440px] overflow-y-auto pr-1" role="list" aria-label="@Lang.GetText("BusStopsSequence")">
         @if (Stops != null && Stops.Any())
         {
             <div class="relative border-l-2 border-primary/20 ml-3.5 space-y-2.5 pl-3.5 pt-1">
@@ -26,14 +38,42 @@
                     var index = i;
                     var item = Stops[i];
                     var isSelected = SelectedStopId == item.BusStopId;
+                    var isBeingDragged = draggedIndex.HasValue && draggedIndex.Value == index;
+                    var isDropTarget = dropTargetIndex.HasValue && dropTargetIndex.Value == index && !isBeingDragged;
 
                     <div role="listitem"
+                         draggable="true"
+                         @ondragstart="() => HandleDragStart(index, item.StopName)"
+                         @ondragstart:stopPropagation="true"
+                         @ondragover="() => HandleDragOver(index)"
+                         @ondragover:preventDefault="true"
+                         @ondragenter="() => HandleDragEnter(index)"
+                         @ondragenter:preventDefault="true"
+                         @ondragleave="() => HandleDragLeave(index)"
+                         @ondrop="() => HandleDrop(index, item.StopName)"
+                         @ondrop:preventDefault="true"
+                         @ondragend="HandleDragEnd"
                          @onmouseenter="() => HandleStopHover(item.BusStopId)"
                          @onclick="() => HandleStopClick(item.BusStopId)"
-                         class="relative flex items-center justify-between p-3 rounded-lg border text-xs transition-all cursor-pointer @(isSelected ? "border-primary bg-primary/5 shadow-xs ring-1 ring-primary/30" : "border-border bg-card hover:border-primary/40 hover:bg-accent/40")">
+                         class="relative flex items-center justify-between p-3 rounded-lg border text-xs transition-all select-none cursor-pointer @(isBeingDragged ? "opacity-35 scale-[0.98] border-dashed border-primary bg-primary/10 shadow-none" : isDropTarget ? "border-primary bg-primary/10 ring-2 ring-primary/40 shadow-sm" : isSelected ? "border-primary bg-primary/5 shadow-xs ring-1 ring-primary/30" : "border-border bg-card hover:border-primary/40 hover:bg-accent/40")">
 
                         <!-- Stepper node indicator -->
-                        <div class="absolute -left-[21.5px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-card border-2 border-primary"></div>
+                        <div class="absolute -left-[21.5px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-card border-2 @(isDropTarget || isSelected ? "border-primary bg-primary" : "border-primary")"></div>
+
+                        <!-- Tactile Drag Grip Handle -->
+                        <div class="cursor-grab active:cursor-grabbing p-1 -ml-1 mr-1 text-muted-foreground hover:text-primary transition-colors touch-none shrink-0"
+                             title="@Lang.GetText("DragHandle")"
+                             aria-label="@Lang.GetText("DragHandle")"
+                             @onclick:stopPropagation="true">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="8" cy="5" r="1.5"/>
+                                <circle cx="8" cy="12" r="1.5"/>
+                                <circle cx="8" cy="19" r="1.5"/>
+                                <circle cx="16" cy="5" r="1.5"/>
+                                <circle cx="16" cy="12" r="1.5"/>
+                                <circle cx="16" cy="19" r="1.5"/>
+                            </svg>
+                        </div>
 
                         <div class="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
                             <span class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center font-mono font-bold text-2xs shrink-0">
@@ -52,7 +92,7 @@
                         <div class="flex items-center gap-1 shrink-0" @onclick:stopPropagation="true">
                             <Button Variant="ButtonVariant.Outline"
                                     Size="ButtonSize.Icon"
-                                    Disabled="@(index == 0)"
+                                    Disabled="@(index == 0 || IsReordering)"
                                     OnClick="() => HandleMove(index, -1, item.StopName)"
                                     Title="@Lang.GetText("MoveUp")"
                                     aria-label="@($"Move {item.StopName} up")">
@@ -62,7 +102,7 @@
                             </Button>
                             <Button Variant="ButtonVariant.Outline"
                                     Size="ButtonSize.Icon"
-                                    Disabled="@(index == Stops.Count - 1)"
+                                    Disabled="@(index == Stops.Count - 1 || IsReordering)"
                                     OnClick="() => HandleMove(index, 1, item.StopName)"
                                     Title="@Lang.GetText("MoveDown")"
                                     aria-label="@($"Move {item.StopName} down")">
@@ -72,6 +112,7 @@
                             </Button>
                             <Button Variant="ButtonVariant.Ghost"
                                     Size="ButtonSize.Icon"
+                                    Disabled="@IsReordering"
                                     Class="text-destructive hover:bg-destructive/10 hover:text-destructive"
                                     OnClick="() => HandleRemove(item.StopOrder, item.StopName)"
                                     Title="@Lang.GetText("Delete")"
@@ -97,12 +138,71 @@
 @code {
     [Parameter] public List<BusRouteStopItemDto>? Stops { get; set; }
     [Parameter] public long? SelectedStopId { get; set; }
+    [Parameter] public bool IsReordering { get; set; }
     [Parameter] public EventCallback<long> OnStopSelected { get; set; }
     [Parameter] public EventCallback<long> OnStopHovered { get; set; }
     [Parameter] public EventCallback<(int CurrentIndex, int Delta)> OnReorderRequested { get; set; }
+    [Parameter] public EventCallback<(int SourceIndex, int TargetIndex)> OnDragReordered { get; set; }
     [Parameter] public EventCallback<int> OnRemoveRequested { get; set; }
 
     private string accessibilityAnnouncement = "";
+    private int? draggedIndex;
+    private int? dropTargetIndex;
+
+    private void HandleDragStart(int index, string stopName)
+    {
+        draggedIndex = index;
+        dropTargetIndex = null;
+        accessibilityAnnouncement = $"Grabbed {stopName} at position {index + 1}";
+    }
+
+    private void HandleDragEnter(int index)
+    {
+        if (draggedIndex.HasValue && draggedIndex.Value != index)
+        {
+            dropTargetIndex = index;
+        }
+    }
+
+    private void HandleDragOver(int index)
+    {
+        if (draggedIndex.HasValue && draggedIndex.Value != index)
+        {
+            dropTargetIndex = index;
+        }
+    }
+
+    private void HandleDragLeave(int index)
+    {
+        if (dropTargetIndex == index)
+        {
+            dropTargetIndex = null;
+        }
+    }
+
+    private async Task HandleDrop(int targetIndex, string targetStopName)
+    {
+        if (!draggedIndex.HasValue || draggedIndex.Value == targetIndex)
+        {
+            HandleDragEnd();
+            return;
+        }
+
+        int sourceIndex = draggedIndex.Value;
+        HandleDragEnd();
+
+        accessibilityAnnouncement = $"Dropped {targetStopName} at position {targetIndex + 1}";
+        if (OnDragReordered.HasDelegate)
+        {
+            await OnDragReordered.InvokeAsync((sourceIndex, targetIndex));
+        }
+    }
+
+    private void HandleDragEnd()
+    {
+        draggedIndex = null;
+        dropTargetIndex = null;
+    }
 
     private async Task HandleStopHover(long stopId)
     {

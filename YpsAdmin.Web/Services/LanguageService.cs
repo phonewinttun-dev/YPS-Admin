@@ -224,6 +224,10 @@ public class LanguageService
         ["TargetStop"] = new() { ["en"] = "Target", ["my"] = "ဦးတည် မှတ်တိုင်" },
         ["MoveUp"] = new() { ["en"] = "Up", ["my"] = "အထက်" },
         ["MoveDown"] = new() { ["en"] = "Down", ["my"] = "အောက်" },
+        ["DragToReorder"] = new() { ["en"] = "Drag to reorder or use arrows", ["my"] = "ဆွဲယူ၍သော်လည်းကောင်း မြှားခလုတ်များဖြင့်သော်လည်းကောင်း အစီအစဉ်ပြောင်းနိုင်ပါသည်" },
+        ["DragHandle"] = new() { ["en"] = "Drag to reorder", ["my"] = "ဆွဲယူရွှေ့ပြောင်းရန်" },
+        ["StopSequenceUpdated"] = new() { ["en"] = "Stop sequence updated successfully.", ["my"] = "မှတ်တိုင် အစီအစဉ် အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ။" },
+        ["ReorderingRouteStops"] = new() { ["en"] = "Reordering route stops...", ["my"] = "မှတ်တိုင် အစီအစဉ် ပြင်ဆင်နေပါသည်..." },
 
         // YPS Store
         ["StoreName"] = new() { ["en"] = "Store Name", ["my"] = "ဆိုင်အမည်" },

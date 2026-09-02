@@ -39,9 +39,11 @@
                     <div class="lg:col-span-5">
                         <RouteStopList Stops="@fullRoute?.Stops"
                                        SelectedStopId="@highlightedStopId"
+                                       IsReordering="@isReordering"
                                        OnStopSelected="HandleListStopSelected"
                                        OnStopHovered="HandleListStopHovered"
                                        OnReorderRequested="HandleReorder"
+                                       OnDragReordered="HandleDragReorder"
                                        OnRemoveRequested="HandleRemove" />
                     </div>
                 </div>
@@ -82,6 +84,7 @@
     private bool hasError = false;
     private string? errorMessage = null;
     private bool isSaving = false;
+    private bool isReordering = false;
 
     private long? highlightedStopId = null;
     private RouteStopMap? routeMapRef;
@@ -164,29 +167,73 @@
         highlightedStopId = stopId;
     }
 
-    private async Task HandleReorder((int CurrentIndex, int Delta) args)
+    private async Task HandleDragReorder((int SourceIndex, int TargetIndex) args)
     {
-        if (fullRoute?.Stops == null) return;
-        int targetIndex = args.CurrentIndex + args.Delta;
-        if (targetIndex < 0 || targetIndex >= fullRoute.Stops.Count) return;
+        if (fullRoute?.Stops == null || isReordering) return;
+        if (args.SourceIndex < 0 || args.SourceIndex >= fullRoute.Stops.Count ||
+            args.TargetIndex < 0 || args.TargetIndex >= fullRoute.Stops.Count ||
+            args.SourceIndex == args.TargetIndex) return;
 
-        var list = fullRoute.Stops;
-        var temp = list[args.CurrentIndex];
-        list[args.CurrentIndex] = list[targetIndex];
-        list[targetIndex] = temp;
+        isReordering = true;
+
+        // Clone current state for rollback if network/database fails
+        var backupList = fullRoute.Stops.ToList();
+
+        // Optimistically update list in memory
+        var list = new List<BusRouteStopItemDto>(fullRoute.Stops);
+        var movedItem = list[args.SourceIndex];
+        list.RemoveAt(args.SourceIndex);
+        list.Insert(args.TargetIndex, movedItem);
+
+        // Sequentially update StopOrder in memory using record 'with' expression
+        for (int i = 0; i < list.Count; i++)
+        {
+            list[i] = list[i] with { StopOrder = i + 1 };
+        }
+
+        fullRoute = fullRoute with { Stops = list };
+        StateHasChanged();
 
         try
         {
-            var items = list.Select((x, idx) => new ReorderBusRouteItem(x.BusStopId, x.StopOrder, idx + 1)).ToList();
+            var items = list.Select((x, idx) =>
+            {
+                var oldStop = backupList.FirstOrDefault(b => b.BusStopId == x.BusStopId);
+                return new ReorderBusRouteItem(x.BusStopId, oldStop?.StopOrder ?? (idx + 1), idx + 1);
+            }).ToList();
+
             var req = new ReorderBusRoutesRequest(selectedBusId, items);
-            await RouteStopService.ReorderRouteStopsAsync(req);
-            Toast.ShowSuccess("Stop order updated successfully.");
-            await LoadRoute();
+            var res = await RouteStopService.ReorderRouteStopsAsync(req);
+
+            if (res != null && res.IsSuccess)
+            {
+                Toast.ShowSuccess(Lang.GetText("StopSequenceUpdated"));
+            }
+            else
+            {
+                fullRoute = fullRoute with { Stops = backupList };
+                Toast.ShowError(res?.Message ?? Lang.GetText("Error"));
+            }
         }
         catch (Exception ex)
         {
-            Toast.ShowError($"Failed to reorder stops: {ex.Message}");
+            fullRoute = fullRoute with { Stops = backupList };
+            Toast.ShowError($"{Lang.GetText("Error")}: {ex.Message}");
         }
+        finally
+        {
+            isReordering = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleReorder((int CurrentIndex, int Delta) args)
+    {
+        if (fullRoute?.Stops == null || isReordering) return;
+        int targetIndex = args.CurrentIndex + args.Delta;
+        if (targetIndex < 0 || targetIndex >= fullRoute.Stops.Count) return;
+
+        await HandleDragReorder((args.CurrentIndex, targetIndex));
     }
 
     private async Task HandleRemove(int stopOrder)
