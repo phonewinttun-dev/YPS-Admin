@@ -28,18 +28,18 @@
 
     private string GetBadgeClass()
     {
-        var baseClasses = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-tight transition-colors border select-none font-mono";
+        var baseClasses = "inline-flex items-center px-2.5 py-0.5 rounded-full text-2xs font-extrabold uppercase tracking-wider transition-colors border select-none font-mono";
 
         var variantClasses = Variant switch
         {
-            BadgeVariant.YpsAccepted => "bg-brand-bg text-brand border-brand/30",
-            BadgeVariant.Retail => "bg-store-bg text-store border-store/30",
-            BadgeVariant.TopUp => "bg-bus-bg text-bus border-bus/30",
-            BadgeVariant.ServiceCenter => "bg-gps-bg text-gps border-gps/30",
-            BadgeVariant.Route => "bg-route-bg text-route border-route/30",
-            BadgeVariant.Gps => "bg-gps-bg text-gps border-gps/30",
-            BadgeVariant.Danger => "bg-danger-bg text-danger border-danger/30",
-            BadgeVariant.Outline => "bg-transparent text-muted-foreground border-border",
+            BadgeVariant.YpsAccepted => "bg-brand-bg text-brand border-brand/40 shadow-xs",
+            BadgeVariant.Retail => "bg-store-bg text-store border-store/40 shadow-xs",
+            BadgeVariant.TopUp => "bg-bus-bg text-bus border-bus/40 shadow-xs",
+            BadgeVariant.ServiceCenter => "bg-gps-bg text-gps border-gps/40 shadow-xs",
+            BadgeVariant.Route => "bg-route-bg text-route border-route/40 shadow-xs",
+            BadgeVariant.Gps => "bg-gps-bg text-gps border-gps/40 shadow-xs",
+            BadgeVariant.Danger => "bg-danger-bg text-danger border-danger/40 shadow-xs",
+            BadgeVariant.Outline => "bg-card text-foreground border-border",
             _ => "bg-muted text-foreground border-border"
         };
 

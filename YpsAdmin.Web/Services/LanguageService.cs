@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.JSInterop;
 
@@ -9,6 +10,8 @@ public class LanguageService
 {
     private readonly IJSRuntime _jsRuntime;
     private string _currentLanguage = "en";
+    private readonly Dictionary<string, string> _englishToMyanmar = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Dictionary<string, string>> _translations = new(StringComparer.OrdinalIgnoreCase);
 
     public string CurrentLanguage => _currentLanguage;
     public event Action? OnLanguageChanged;
@@ -16,6 +19,19 @@ public class LanguageService
     public LanguageService(IJSRuntime jsRuntime)
     {
         _jsRuntime = jsRuntime;
+        InitializeBuiltins();
+    }
+
+    private void InitializeBuiltins()
+    {
+        foreach (var kvp in _flatTranslations)
+        {
+            _translations[kvp.Key] = new Dictionary<string, string>(kvp.Value, StringComparer.OrdinalIgnoreCase);
+            if (kvp.Value.TryGetValue("en", out var en) && kvp.Value.TryGetValue("my", out var my))
+            {
+                _englishToMyanmar[en] = my;
+            }
+        }
     }
 
     public async Task InitializeAsync()
@@ -37,6 +53,55 @@ public class LanguageService
         {
             _currentLanguage = "en";
         }
+
+        try
+        {
+            await LoadTranslationJsonAsync();
+        }
+        catch { }
+    }
+
+    public async Task LoadTranslationJsonAsync()
+    {
+        try
+        {
+            var json = await _jsRuntime.InvokeAsync<string>("eval", "fetch('translation.json').then(r => r.text()).catch(() => '')");
+            if (!string.IsNullOrWhiteSpace(json))
+            {
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("englishToMyanmar", out var e2m))
+                {
+                    foreach (var prop in e2m.EnumerateObject())
+                    {
+                        var val = prop.Value.GetString();
+                        if (!string.IsNullOrEmpty(val))
+                        {
+                            _englishToMyanmar[prop.Name] = val;
+                        }
+                    }
+                }
+
+                if (doc.RootElement.TryGetProperty("keys", out var keys))
+                {
+                    foreach (var prop in keys.EnumerateObject())
+                    {
+                        if (!_translations.ContainsKey(prop.Name))
+                        {
+                            _translations[prop.Name] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                        }
+                        if (prop.Value.TryGetProperty("en", out var en))
+                        {
+                            _translations[prop.Name]["en"] = en.GetString() ?? prop.Name;
+                        }
+                        if (prop.Value.TryGetProperty("my", out var my))
+                        {
+                            _translations[prop.Name]["my"] = my.GetString() ?? prop.Name;
+                        }
+                    }
+                }
+            }
+        }
+        catch { }
     }
 
     public async Task SetLanguageAsync(string lang)
@@ -52,16 +117,46 @@ public class LanguageService
         OnLanguageChanged?.Invoke();
     }
 
-    public string GetText(string key)
+    public string GetText(string keyOrEnglish)
     {
-        if (_flatTranslations.TryGetValue(key, out var dict))
+        if (string.IsNullOrEmpty(keyOrEnglish)) return keyOrEnglish;
+
+        if (_currentLanguage == "en")
         {
-            if (dict.TryGetValue(_currentLanguage, out var val))
+            if (_translations.TryGetValue(keyOrEnglish, out var dict) && dict.TryGetValue("en", out var val))
             {
                 return val;
             }
+            return keyOrEnglish;
         }
-        return key;
+
+        // Myanmar mode ("my")
+        // 1. Key lookup
+        if (_translations.TryGetValue(keyOrEnglish, out var langDict) && langDict.TryGetValue("my", out var myVal))
+        {
+            return myVal;
+        }
+
+        // 2. Direct English text conversion lookup (e.g. "Total Bus Lines" -> "စုစုပေါင်း ယာဉ်လိုင်းများ")
+        if (_englishToMyanmar.TryGetValue(keyOrEnglish, out var converted))
+        {
+            return converted;
+        }
+
+        return keyOrEnglish;
+    }
+
+    /// <summary>
+    /// Explicit English text to Myanmar text translation conversion
+    /// </summary>
+    public string ToMyanmar(string englishText)
+    {
+        if (string.IsNullOrEmpty(englishText)) return englishText;
+        if (_englishToMyanmar.TryGetValue(englishText, out var converted))
+        {
+            return converted;
+        }
+        return englishText;
     }
 
     private static readonly Dictionary<string, Dictionary<string, string>> _flatTranslations = new()

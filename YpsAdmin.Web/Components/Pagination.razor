@@ -12,8 +12,8 @@
         <div class="flex items-center gap-1.5" aria-label="Pagination">
             <!-- Previous Button -->
             <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Icon" Disabled="@(!HasPreviousPage)" OnClick="() => ChangePage(PageNumber - 1)" Title="Previous Page">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m15 18-6-6 6-6"/>
                 </svg>
             </Button>
 
@@ -39,8 +39,8 @@
 
             <!-- Next Button -->
             <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Icon" Disabled="@(!HasNextPage)" OnClick="() => ChangePage(PageNumber + 1)" Title="Next Page">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m9 18 6-6-6-6"/>
                 </svg>
             </Button>
         </div>
@@ -104,11 +104,11 @@
 
     private string GetPageButtonClass(bool isActive)
     {
-        var baseClass = "min-w-[32px] h-8 px-2 text-xs font-semibold rounded-md border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring font-mono select-none cursor-pointer";
+        var baseClass = "min-w-[34px] h-8 px-2 text-xs font-bold rounded-full border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring font-mono-numbers select-none cursor-pointer";
         if (isActive)
         {
-            return $"{baseClass} bg-primary text-white border-primary shadow-xs";
+            return $"{baseClass} bg-primary text-primary-foreground border-border shadow-[2px_2px_0px_var(--shadow-hard)]";
         }
-        return $"{baseClass} bg-card text-foreground border-input hover:bg-accent hover:text-accent-foreground";
+        return $"{baseClass} bg-card text-foreground border-border hover:bg-accent shadow-xs";
     }
 }

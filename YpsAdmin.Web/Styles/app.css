@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Sora", "Noto Sans Myanmar", "Work Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro", "Padauk", "Noto Sans Myanmar", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
@@ -32,12 +32,12 @@
   --color-popover-foreground: var(--foreground);
 
   --color-primary: var(--primary);
-  --color-primary-foreground: #FFFFFF;
+  --color-primary-foreground: var(--primary-foreground);
   --color-primary-container: var(--primary-container);
   --color-on-primary-container: var(--on-primary-container);
 
   --color-secondary: var(--secondary);
-  --color-secondary-foreground: #FFFFFF;
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary-container: var(--secondary-container);
 
   --color-muted: var(--muted);
@@ -50,86 +50,94 @@
   --color-destructive-foreground: #FFFFFF;
 }
 
+/* Light Mode: Night-Light Friendly (Warm Alabaster Paper, Charcoal Inks, Zero Fluorescent Glare) */
 :root {
-  --canvas: #F7F8FF;
-  --surface: #FFFFFF;
-  --foreground: #121521;
-  --border: #E2E6F2;
-  --input: #E2E6F2;
-  --ring: #0B5F9B;
-  --outline: #9BA4B8;
+  --canvas: #F4F2EC;
+  --surface: #FCFBF8;
+  --foreground: #1A1B1E;
+  --border: #1A1B1E;
+  --input: #EAE6DD;
+  --ring: #E65A20;
+  --outline: #61646D;
+  --shadow-hard: #1A1B1E;
 
-  --brand: #6B5600;
-  --brand-bg: #FFF1A8;
+  --brand: #E65A20;
+  --brand-bg: #FCECE4;
 
   --store: #A23F2B;
-  --store-bg: #FFE3DA;
+  --store-bg: #FBEBE8;
 
-  --bus: #0B5F9B;
-  --bus-bg: #DCEEFF;
+  --bus: #1E66B6;
+  --bus-bg: #EAF2FB;
 
-  --gps: #137455;
-  --gps-bg: #DFF7EC;
+  --gps: #15803D;
+  --gps-bg: #EBF8F0;
 
-  --route: #0B5F9B;
-  --route-bg: #DCEEFF;
+  --route: #1E66B6;
+  --route-bg: #EAF2FB;
 
-  --danger: #A83D69;
-  --danger-bg: #FFE3EF;
+  --danger: #DC2626;
+  --danger-bg: #FEE2E2;
 
-  --primary: #0B5F9B;
-  --primary-container: #FFF1A8;
-  --on-primary-container: #6B5600;
+  --primary: #1A1B1E;
+  --primary-foreground: #FCFBF8;
+  --primary-container: #EAE6DD;
+  --on-primary-container: #1A1B1E;
 
-  --secondary: #6546AD;
-  --secondary-container: #EEE7FF;
+  --secondary: #EAE6DD;
+  --secondary-foreground: #1A1B1E;
+  --secondary-container: #FCFBF8;
 
-  --muted: #F0F2FA;
-  --muted-foreground: #5A6275;
+  --muted: #EAE6DD;
+  --muted-foreground: #61646D;
 
-  --accent: #F0F2FA;
-  --accent-foreground: #121521;
+  --accent: #ECE9DF;
+  --accent-foreground: #1A1B1E;
 }
 
+/* Dark Mode: Night-Light Friendly (Warm Obsidian & Bone, Zero Harsh White Glow) */
 .dark {
-  --canvas: #121521;
-  --surface: #1B2030;
-  --foreground: #F7F8FF;
-  --border: #262D42;
-  --input: #262D42;
-  --ring: #F6D867;
-  --outline: #626D87;
+  --canvas: #111215;
+  --surface: #191B20;
+  --foreground: #E8E8E2;
+  --border: #383D48;
+  --input: #22252D;
+  --ring: #F26C35;
+  --outline: #8E929E;
+  --shadow-hard: #0A0A0C;
 
-  --brand: #F6D867;
-  --brand-bg: #2D2600;
+  --brand: #F26C35;
+  --brand-bg: #2C1810;
 
   --store: #FF9C85;
-  --store-bg: #381B15;
+  --store-bg: #2A1713;
 
-  --bus: #75B9F7;
-  --bus-bg: #10212F;
+  --bus: #4F8FE2;
+  --bus-bg: #142338;
 
-  --gps: #72D4B3;
-  --gps-bg: #10251D;
+  --gps: #22C55E;
+  --gps-bg: #12281C;
 
-  --route: #75B9F7;
-  --route-bg: #10212F;
+  --route: #4F8FE2;
+  --route-bg: #142338;
 
-  --danger: #FF85B3;
-  --danger-bg: #2B111C;
+  --danger: #EF4444;
+  --danger-bg: #2D1416;
 
-  --primary: #75B9F7;
-  --primary-container: #2D2600;
-  --on-primary-container: #F6D867;
+  --primary: #E8E8E2;
+  --primary-foreground: #111215;
+  --primary-container: #22252D;
+  --on-primary-container: #E8E8E2;
 
-  --secondary: #B59AFF;
-  --secondary-container: #211A32;
+  --secondary: #22252D;
+  --secondary-foreground: #E8E8E2;
+  --secondary-container: #191B20;
 
-  --muted: #181E2E;
-  --muted-foreground: #8E98B0;
+  --muted: #22252D;
+  --muted-foreground: #8E929E;
 
-  --accent: #22293D;
-  --accent-foreground: #F7F8FF;
+  --accent: #262932;
+  --accent-foreground: #E8E8E2;
 }
 
 @layer base {
@@ -153,6 +161,100 @@ body, aside, header, main, .bg-card, .bg-muted, .border-border, .text-foreground
   transition: background-color 220ms cubic-bezier(0.4, 0, 0.2, 1),
               border-color 220ms cubic-bezier(0.4, 0, 0.2, 1),
               color 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Language-targeted typography rules */
+:lang(en), [lang="en"] {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro", "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: -0.015em;
+}
+
+:lang(my), [lang="my"] {
+  font-family: "Padauk", "Noto Sans Myanmar", sans-serif;
+  line-height: 1.65;
+  letter-spacing: normal;
+}
+
+.font-mono-numbers {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+}
+
+/* Swiss Brutalist Core Component Utilities */
+.brutalist-card {
+  background-color: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: 3.5px 3.5px 0px var(--shadow-hard);
+  color: var(--foreground);
+  transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.15s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.brutalist-card-interactive {
+  cursor: pointer;
+}
+
+.brutalist-card-interactive:hover {
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 5px 5px 0px var(--shadow-hard);
+}
+
+.brutalist-card-interactive:active {
+  transform: translate(1.5px, 1.5px);
+  box-shadow: 1px 1px 0px var(--shadow-hard);
+}
+
+.brutalist-btn-primary {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border: 2px solid var(--border);
+  border-radius: 9999px;
+  box-shadow: 2.5px 2.5px 0px var(--shadow-hard);
+  transition: all 0.1s ease;
+  user-select: none;
+}
+
+.brutalist-btn-primary:hover {
+  opacity: 0.92;
+  transform: translate(-1px, -1px);
+  box-shadow: 3.5px 3.5px 0px var(--shadow-hard);
+}
+
+.brutalist-btn-primary:active {
+  transform: translate(1.5px, 1.5px);
+  box-shadow: 0px 0px 0px var(--shadow-hard);
+}
+
+.brutalist-btn-secondary {
+  background-color: var(--surface);
+  color: var(--foreground);
+  border: 2px solid var(--border);
+  border-radius: 9999px;
+  box-shadow: 2.5px 2.5px 0px var(--shadow-hard);
+  transition: all 0.1s ease;
+  user-select: none;
+}
+
+.brutalist-btn-secondary:hover {
+  background-color: var(--accent);
+  transform: translate(-1px, -1px);
+  box-shadow: 3.5px 3.5px 0px var(--shadow-hard);
+}
+
+.brutalist-btn-secondary:active {
+  transform: translate(1.5px, 1.5px);
+  box-shadow: 0px 0px 0px var(--shadow-hard);
+}
+
+/* High-Contrast Text Selection Rules (Zero Invisible Text) */
+::selection {
+  background-color: var(--brand);
+  color: #ffffff;
+}
+
+.dark ::selection {
+  background-color: var(--brand);
+  color: #111215;
 }
 
 /* Animations */

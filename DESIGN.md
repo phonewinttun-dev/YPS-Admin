@@ -1,44 +1,55 @@
-# YBS Admin Panel Design System
+# YPS Admin Panel Design System (Swiss + Brutalist Minimalism)
 
-The application uses a map-first transit console layout with a restrained soft-pastel palette. YBS yellow is the brand anchor; feature meaning is communicated with both color and iconography.
+The application uses a **Swiss + Brutalist Minimalism** interface designed for high legibility, tactile feedback, and eye comfort under OS Night Light (warm color temperatures 2700K–3400K).
 
-## Semantic color roles
+---
 
-All component colors use RGB CSS variables so Tailwind opacity modifiers remain available.
+## Core Philosophy
 
-| Role    | Light               | Dark                | Meaning               |
-| ------- | ------------------- | ------------------- | --------------------- |
-| Canvas  | `#F7F8FF`           | `#121521`           | Page and map shell    |
-| Surface | `#FFFFFF`           | `#1B2030`           | Cards and panels      |
-| Brand   | `#FFF1A8 / #6B5600` | `#F6D867 / #2D2600` | YBS identity          |
-| Store   | `#FFE3DA / #A23F2B` | `#FF9C85 / #231B19` | Stores and pins       |
-| Bus     | `#DCEEFF / #0B5F9B` | `#75B9F7 / #10212F` | Buses and stops       |
-| GPS     | `#DFF7EC / #137455` | `#72D4B3 / #10251D` | Location and distance |
-| Route   | `#EEE7FF / #6546AD` | `#B59AFF / #211A32` | Directions and focus  |
-| Danger  | `#FFE3EF / #A83D69` | `#F58CB3 / #2B111C` | Errors                |
+1. **Swiss Precision**: Bold geometric typography, structured grid layout, stark hierarchy, tight letter-spacing.
+2. **Neo-Brutalist Structure**: 2px solid outlines, hard offset drop shadows (`3.5px 3.5px 0px`), rounded pill buttons, tactile interactive states.
+3. **Strict Zero-Emoji Policy**: Zero emojis anywhere in the UI or codebase. All visual iconography uses clean, standardized vector SVGs from [reUI](https://reui.io/) (24×24 stroke icons with `stroke-width="2"`).
+4. **Night-Light Friendly Color Architecture**: Anti-glare warm-tinted base tokens prevent fluorescent white blinding glare and harsh haloing when Windows Night Light or macOS Night Shift is active.
+
+---
+
+## Semantic Color System
+
+| Role | Light Mode ("Warm Alabaster") | Dark Mode ("Warm Obsidian") | Meaning / Usage |
+| :--- | :--- | :--- | :--- |
+| **Canvas** | `#F4F2EC` (Warm Paper) | `#111215` (Deep Obsidian) | Page backdrop |
+| **Surface** | `#FCFBF8` (Soft Card) | `#191B20` (Warm Graphite) | Cards, panels, modals |
+| **Foreground**| `#1A1B1E` (Charcoal Ink) | `#E8E8E2` (Warm Bone) | Primary headings & text |
+| **Border** | `#1A1B1E` (2px Solid) | `#383D48` (2px Softened) | Brutalist outlines |
+| **Shadow** | `#1A1B1E` (`3.5px 3.5px`) | `#0A0A0C` (`3.5px 3.5px`) | Tactile hard offset shadow |
+| **Brand (YPS)**| `#E65A20` (Terracotta) | `#F26C35` (Amber Orange) | YPS branding & identity |
+| **Bus** | `#1E66B6` (Steel Navy) | `#4F8FE2` (Sky Blue) | Bus lines & transit routes |
+| **GPS / Stop**| `#15803D` (Forest Green) | `#22C55E` (Emerald Green) | Bus stops & geolocation |
+| **Store** | `#A23F2B` (Warm Coral) | `#FF9C85` (Salmon Peach) | YPS card stores & counters |
+| **Danger** | `#DC2626` (Crimson) | `#EF4444` (Coral Red) | Destructive actions |
+
+---
 
 ## Typography
 
-- Sora: English UI and display text.
-- Noto Sans Myanmar: Myanmar UI and content.
-- JetBrains Mono: route numbers, distances, counts, and other numeric metadata.
+- **English (`[lang="en"]`)**: **SF Pro** (`-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display"`) with tight Swiss tracking (`-0.015em`).
+- **Myanmar (`[lang="my"]`)**: **Padauk** with comfortable line height (`1.65`) and natural spacing.
+- **Numbers / Telemetry**: **JetBrains Mono** with tabular lining figures (`font-feature-settings: "tnum" 1`).
 
-Fonts are loaded with `next/font`; no render-blocking font stylesheet is used.
+---
 
-## Layout
+## Iconography Standard
 
-- Desktop: 80px navigation rail, 400–420px store explorer, remaining space for the live map.
-- Mobile: 64px utility bar, full map, and a draggable explorer with 112px, 55dvh, and 88dvh snap points.
-- Bus and detail routes reuse the same rail and mobile utility bar.
+- **Source**: [reUI](https://reui.io/) (Lucide vector specification).
+- **Style**: 24×24 viewBox, `fill="none"`, `stroke="currentColor"`, `stroke-width="2"`, `stroke-linecap="round"`, `stroke-linejoin="round"`.
+- **Policy**: Emojis (☀️, 🌙, 🚌, 📍, 🗺️, 💳, 🛡️, etc.) are strictly prohibited.
 
-## Interaction and accessibility
+---
 
-- Minimum interactive target: 44px.
-- Keyboard-visible violet focus ring.
-- Explorer handle: pointer drag plus Arrow Up/Down, Home, and End.
-- Dialogs trap focus, close with Escape, and restore focus.
-- Motion is disabled under `prefers-reduced-motion`.
-- Language, theme, and state labels are never communicated by color alone.
-- Browser zoom remains unrestricted.
+## Component Standards
 
-The transit ribbon is the signature accent: coral for stores, sky for buses, mint for GPS, and violet for routes. It is limited to shell and route hierarchy so map data remains visually dominant.
+- **Buttons**: Rounded pills (`rounded-full`) with 2px solid border, `2.5px 2.5px 0px` hard shadow, active click displacement (`translate(1.5px, 1.5px)` with zero shadow). Minimum 36px–44px touch targets.
+- **Cards**: `rounded-2xl`, 2px solid border, `3.5px 3.5px 0px` hard shadow.
+- **Badges**: Rounded pill tags (`rounded-full`) with uppercase monospace styling and 1.5px solid borders.
+- **Modals**: 2.5px solid border, `rounded-2xl`, `5px 5px 0px` hard shadow, reUI `X` close icon.
+- **A11y**: Minimum 4.5:1 contrast for regular text (exceeds 7:1 in practice), visible keyboard focus rings.

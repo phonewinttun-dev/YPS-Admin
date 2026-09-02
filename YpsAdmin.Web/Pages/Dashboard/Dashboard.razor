@@ -6,36 +6,18 @@
 
 <div class="space-y-6 max-w-7xl mx-auto" role="region" aria-label="@Lang.GetText("NavDashboard")">
     <!-- Header Section -->
-    <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-card p-5 rounded-2xl border border-border shadow-xs">
-        <div>
-            <div class="flex items-center gap-2.5">
-                <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-brand-bg text-brand border border-brand/20 font-bold text-xs shadow-xs font-mono" aria-hidden="true">
-                    YPS
-                </span>
-                <h1 id="dashboard-heading" class="text-lg md:text-xl font-bold text-foreground tracking-tight">
-                    @Lang.GetText("DashboardTitle")
-                </h1>
-            </div>
-            <p class="text-xs text-muted-foreground mt-1">
-                @Lang.GetText("DashboardSubtitle")
-            </p>
-        </div>
-
-        <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-2xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-mono">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true"></span>
-                @Lang.GetText("Operational")
+    <header class="brutalist-card p-5">
+        <div class="flex items-center gap-2.5">
+            <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground border-2 border-border font-extrabold text-xs shadow-xs font-mono-numbers" aria-hidden="true">
+                YPS
             </span>
-            <button type="button"
-                    @onclick="LoadDashboardAsync"
-                    class="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3 py-2 text-xs font-medium rounded-lg bg-secondary text-secondary-foreground hover:bg-accent hover:text-accent-foreground border border-border transition-colors shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    aria-label="Refresh dashboard data">
-                <svg class="w-4 h-4 mr-1.5 @(isLoading ? "animate-spin" : "")" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                </svg>
-                <span>@(isLoading ? Lang.GetText("Loading") : Lang.GetText("Refresh"))</span>
-            </button>
+            <h1 id="dashboard-heading" class="text-lg md:text-xl font-extrabold text-foreground tracking-tight">
+                @Lang.GetText("DashboardTitle")
+            </h1>
         </div>
+        <p class="text-xs text-muted-foreground mt-1">
+            @Lang.GetText("DashboardSubtitle")
+        </p>
     </header>
 
     <!-- StateView Wrapper for Loading / Error / Empty States -->
@@ -50,103 +32,127 @@
             @if (summary != null)
             {
                 <div class="space-y-6" aria-live="polite">
-                    <!-- Primary KPIs (3 Core Pillars) -->
+                    <!-- Primary KPIs (4 Swiss Brutalist Metric Cards) -->
                     <section aria-labelledby="primary-metrics-heading">
                         <h2 id="primary-metrics-heading" class="sr-only">Primary Key Performance Indicators</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                             
-                            <!-- 1. Total Bus Lines (Sky Blue / Bus Theme) -->
-                            <div class="group relative bg-card hover:bg-accent/30 rounded-2xl border border-border p-5 shadow-xs transition-all hover:shadow-md flex flex-col justify-between">
+                            <!-- 1. Total Bus Lines -->
+                            <div class="brutalist-card brutalist-card-interactive p-5 flex flex-col justify-between">
                                 <div class="flex items-start justify-between">
                                     <div>
-                                        <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                        <p class="text-2xs font-extrabold text-muted-foreground uppercase tracking-wider font-mono">
                                             @Lang.GetText("TotalBusLines")
                                         </p>
-                                        <h3 class="text-3xl md:text-4xl font-bold font-mono text-foreground mt-2">
+                                        <h3 class="text-3xl font-extrabold font-mono-numbers text-foreground mt-2">
                                             @summary.TotalBusLines.ToString("N0")
                                         </h3>
                                     </div>
-                                    <div class="w-12 h-12 rounded-xl bg-bus-bg text-bus border border-bus/30 flex items-center justify-center shadow-xs shrink-0" aria-hidden="true">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                                    <div class="w-10 h-10 rounded-full bg-bus-bg text-bus border-2 border-border flex items-center justify-center shadow-xs shrink-0" aria-hidden="true">
+                                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/>
                                         </svg>
                                     </div>
                                 </div>
-                                <div class="mt-4 pt-4 border-t border-border/60 flex items-center justify-between">
+                                <div class="mt-4 pt-3 border-t-2 border-border flex items-center justify-between">
                                     <span class="text-2xs text-muted-foreground font-mono">
                                         @summary.TotalCardAcceptedBuses @Lang.GetText("CardAccepted")
                                     </span>
                                     <a href="bus-lines" 
-                                       class="inline-flex items-center min-h-[44px] px-2 text-xs font-semibold text-primary hover:text-primary/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
-                                       aria-label="@Lang.GetText("ManageBusLines") - @summary.TotalBusLines @Lang.GetText("TotalBusLines")">
+                                       class="inline-flex items-center text-xs font-bold text-bus hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                       aria-label="@Lang.GetText("ManageBusLines") - @summary.TotalBusLines">
                                         <span>@Lang.GetText("ViewAll")</span>
-                                        <svg class="w-3.5 h-3.5 ml-1 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                        <svg class="w-3.5 h-3.5 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="m9 18 6-6-6-6"/>
                                         </svg>
                                     </a>
                                 </div>
                             </div>
 
-                            <!-- 2. Total Bus Stops (Mint / GPS Theme) -->
-                            <div class="group relative bg-card hover:bg-accent/30 rounded-2xl border border-border p-5 shadow-xs transition-all hover:shadow-md flex flex-col justify-between">
+                            <!-- 2. Total Bus Stops -->
+                            <div class="brutalist-card brutalist-card-interactive p-5 flex flex-col justify-between">
                                 <div class="flex items-start justify-between">
                                     <div>
-                                        <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                        <p class="text-2xs font-extrabold text-muted-foreground uppercase tracking-wider font-mono">
                                             @Lang.GetText("TotalBusStops")
                                         </p>
-                                        <h3 class="text-3xl md:text-4xl font-bold font-mono text-foreground mt-2">
+                                        <h3 class="text-3xl font-extrabold font-mono-numbers text-foreground mt-2">
                                             @summary.TotalBusStops.ToString("N0")
                                         </h3>
                                     </div>
-                                    <div class="w-12 h-12 rounded-xl bg-gps-bg text-gps border border-gps/30 flex items-center justify-center shadow-xs shrink-0" aria-hidden="true">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <div class="w-10 h-10 rounded-full bg-gps-bg text-gps border-2 border-border flex items-center justify-center shadow-xs shrink-0" aria-hidden="true">
+                                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>
                                         </svg>
                                     </div>
                                 </div>
-                                <div class="mt-4 pt-4 border-t border-border/60 flex items-center justify-between">
+                                <div class="mt-4 pt-3 border-t-2 border-border flex items-center justify-between">
                                     <span class="text-2xs text-muted-foreground font-mono">
                                         @summary.TotalRegions @Lang.GetText("TotalTownships")
                                     </span>
                                     <a href="bus-stops" 
-                                       class="inline-flex items-center min-h-[44px] px-2 text-xs font-semibold text-gps hover:opacity-80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
-                                       aria-label="@Lang.GetText("ManageBusStops") - @summary.TotalBusStops @Lang.GetText("TotalBusStops")">
+                                       class="inline-flex items-center text-xs font-bold text-gps hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                       aria-label="@Lang.GetText("ManageBusStops") - @summary.TotalBusStops">
                                         <span>@Lang.GetText("ViewAll")</span>
-                                        <svg class="w-3.5 h-3.5 ml-1 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                        <svg class="w-3.5 h-3.5 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="m9 18 6-6-6-6"/>
                                         </svg>
                                     </a>
                                 </div>
                             </div>
 
-                            <!-- 3. Total YPS Stores (Coral / Store Theme) -->
-                            <div class="group relative bg-card hover:bg-accent/30 rounded-2xl border border-border p-5 shadow-xs transition-all hover:shadow-md flex flex-col justify-between">
+                            <!-- 3. Card Acceptance Rate -->
+                            <div class="brutalist-card brutalist-card-interactive p-5 flex flex-col justify-between">
                                 <div class="flex items-start justify-between">
                                     <div>
-                                        <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                            @Lang.GetText("TotalYpsStores")
+                                        <p class="text-2xs font-extrabold text-muted-foreground uppercase tracking-wider font-mono">
+                                            @Lang.GetText("CardAcceptedBuses")
                                         </p>
-                                        <h3 class="text-3xl md:text-4xl font-bold font-mono text-foreground mt-2">
-                                            @summary.TotalStores.ToString("N0")
+                                        <h3 class="text-3xl font-extrabold font-mono-numbers text-foreground mt-2">
+                                            @GetCardPercentage()%
                                         </h3>
                                     </div>
-                                    <div class="w-12 h-12 rounded-xl bg-store-bg text-store border border-store/30 flex items-center justify-center shadow-xs shrink-0" aria-hidden="true">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                                    <div class="w-10 h-10 rounded-full bg-brand-bg text-brand border-2 border-border flex items-center justify-center shadow-xs shrink-0" aria-hidden="true">
+                                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>
                                         </svg>
                                     </div>
                                 </div>
-                                <div class="mt-4 pt-4 border-t border-border/60 flex items-center justify-between">
+                                <div class="mt-4 pt-3 border-t-2 border-border flex items-center justify-between">
+                                    <span class="text-2xs text-muted-foreground font-mono">
+                                        @summary.TotalCardAcceptedBuses of @summary.TotalBusLines Fleet
+                                    </span>
+                                    <span class="text-xs font-bold text-brand">Active</span>
+                                </div>
+                            </div>
+
+                            <!-- 4. Total YPS Stores -->
+                            <div class="brutalist-card brutalist-card-interactive p-5 flex flex-col justify-between">
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <p class="text-2xs font-extrabold text-muted-foreground uppercase tracking-wider font-mono">
+                                            @Lang.GetText("TotalYpsStores")
+                                        </p>
+                                        <h3 class="text-3xl font-extrabold font-mono-numbers text-foreground mt-2">
+                                            @summary.TotalStores.ToString("N0")
+                                        </h3>
+                                    </div>
+                                    <div class="w-10 h-10 rounded-full bg-store-bg text-store border-2 border-border flex items-center justify-center shadow-xs shrink-0" aria-hidden="true">
+                                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="mt-4 pt-3 border-t-2 border-border flex items-center justify-between">
                                     <span class="text-2xs text-muted-foreground font-mono">
                                         Top-up &amp; Card Retail
                                     </span>
                                     <a href="yps-stores" 
-                                       class="inline-flex items-center min-h-[44px] px-2 text-xs font-semibold text-store hover:opacity-80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
-                                       aria-label="@Lang.GetText("ManageYpsStores") - @summary.TotalStores @Lang.GetText("TotalYpsStores")">
+                                       class="inline-flex items-center text-xs font-bold text-store hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                       aria-label="@Lang.GetText("ManageYpsStores") - @summary.TotalStores">
                                         <span>@Lang.GetText("ViewAll")</span>
-                                        <svg class="w-3.5 h-3.5 ml-1 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                        <svg class="w-3.5 h-3.5 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="m9 18 6-6-6-6"/>
                                         </svg>
                                     </a>
                                 </div>
@@ -157,71 +163,73 @@
 
                     <!-- Secondary Network Indicators & Breakdown -->
                     <section aria-labelledby="network-breakdown-heading">
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                             
-                            <!-- Card Acceptance Rate -->
-                            <div class="bg-card rounded-2xl border border-border p-5 shadow-xs flex flex-col justify-between">
+                            <!-- Card Acceptance Rate Progress -->
+                            <div class="brutalist-card p-5 flex flex-col justify-between">
                                 <div>
-                                    <div class="flex items-center justify-between mb-3">
-                                        <h3 id="network-breakdown-heading" class="text-sm font-semibold text-foreground">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h3 id="network-breakdown-heading" class="text-xs font-extrabold uppercase tracking-wider text-foreground font-mono">
                                             @Lang.GetText("CardAcceptedBuses")
                                         </h3>
-                                        <CategoryBadge Text="@($"{GetCardPercentage()}%")" Variant="CategoryBadge.BadgeVariant.YpsAccepted" ShowDot="true" />
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-2xs font-extrabold font-mono bg-brand-bg text-brand border border-brand/40 shadow-xs">
+                                            @GetCardPercentage()%
+                                        </span>
                                     </div>
                                     <p class="text-xs text-muted-foreground mb-4">
-                                        Proportion of active bus fleet equipped with YPS smart card payment.
+                                        Proportion of active bus fleet equipped with YPS smart card contactless readers.
                                     </p>
                                 </div>
                                 <div>
-                                    <div class="w-full h-2.5 bg-muted rounded-full overflow-hidden" role="progressbar" aria-valuenow="@GetCardPercentage()" aria-valuemin="0" aria-valuemax="100" aria-label="Card Acceptance Progress">
-                                        <div class="h-full bg-primary rounded-full transition-all duration-500" style="width: @(GetCardPercentage())%;"></div>
+                                    <div class="w-full h-3 bg-muted border-2 border-border rounded-full overflow-hidden" role="progressbar" aria-valuenow="@GetCardPercentage()" aria-valuemin="0" aria-valuemax="100" aria-label="Card Acceptance Progress">
+                                        <div class="h-full bg-brand rounded-full transition-all duration-500" style="width: @(GetCardPercentage())%;"></div>
                                     </div>
                                     <div class="flex justify-between items-center mt-2 text-2xs text-muted-foreground font-mono">
                                         <span>@summary.TotalCardAcceptedBuses @Lang.GetText("CardAccepted")</span>
-                                        <span>@summary.TotalBusLines Total</span>
+                                        <span>@summary.TotalBusLines Total Lines</span>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Covered Townships / Operational Regions -->
-                            <div class="bg-card rounded-2xl border border-border p-5 shadow-xs flex flex-col justify-between">
+                            <div class="brutalist-card p-5 flex flex-col justify-between">
                                 <div>
-                                    <div class="flex items-center justify-between mb-3">
-                                        <h3 class="text-sm font-semibold text-foreground">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h3 class="text-xs font-extrabold uppercase tracking-wider text-foreground font-mono">
                                             @Lang.GetText("TotalTownships")
                                         </h3>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-muted text-foreground border border-border">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-2xs font-extrabold font-mono bg-muted text-foreground border border-border shadow-xs">
                                             Yangon Division
                                         </span>
                                     </div>
                                     <p class="text-xs text-muted-foreground mb-4">
-                                        Active administrative townships with registered bus stops or stores.
+                                        Administrative townships with registered bus stops, route checkpoints, or sales points.
                                     </p>
                                 </div>
                                 <div class="flex items-baseline gap-2">
-                                    <span class="text-2xl font-bold font-mono text-foreground">@summary.TotalRegions</span>
-                                    <span class="text-xs text-muted-foreground">Townships &amp; Regions</span>
+                                    <span class="text-3xl font-extrabold font-mono-numbers text-foreground">@summary.TotalRegions</span>
+                                    <span class="text-xs text-muted-foreground font-bold">Townships &amp; Regions</span>
                                 </div>
                             </div>
 
                             <!-- Active Route Stop Sequences -->
-                            <div class="bg-card rounded-2xl border border-border p-5 shadow-xs flex flex-col justify-between">
+                            <div class="brutalist-card p-5 flex flex-col justify-between">
                                 <div>
-                                    <div class="flex items-center justify-between mb-3">
-                                        <h3 class="text-sm font-semibold text-foreground">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h3 class="text-xs font-extrabold uppercase tracking-wider text-foreground font-mono">
                                             @Lang.GetText("TotalRouteMappings")
                                         </h3>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-route-bg text-route border border-route/30">
-                                            Mapped
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-2xs font-extrabold font-mono bg-bus-bg text-bus border border-bus/40 shadow-xs">
+                                            Sequenced
                                         </span>
                                     </div>
                                     <p class="text-xs text-muted-foreground mb-4">
-                                        Stop-to-route sequence links configured across outbound &amp; return routes.
+                                        Stop-to-route sequence links configured across outbound &amp; return transit corridors.
                                     </p>
                                 </div>
                                 <div class="flex items-baseline gap-2">
-                                    <span class="text-2xl font-bold font-mono text-foreground">@summary.TotalRouteMappings.ToString("N0")</span>
-                                    <span class="text-xs text-muted-foreground">Stop Connections</span>
+                                    <span class="text-3xl font-extrabold font-mono-numbers text-foreground">@summary.TotalRouteMappings.ToString("N0")</span>
+                                    <span class="text-xs text-muted-foreground font-bold">Stop Connections</span>
                                 </div>
                             </div>
 
@@ -229,81 +237,81 @@
                     </section>
 
                     <!-- Quick Management Actions Grid -->
-                    <section aria-labelledby="quick-actions-heading" class="bg-card rounded-2xl border border-border p-5 shadow-xs">
+                    <section aria-labelledby="quick-actions-heading" class="brutalist-card p-5">
                         <div class="mb-4">
-                            <h2 id="quick-actions-heading" class="text-sm font-semibold text-foreground">
+                            <h2 id="quick-actions-heading" class="text-sm font-extrabold text-foreground">
                                 @Lang.GetText("QuickActions")
                             </h2>
                             <p class="text-xs text-muted-foreground mt-0.5">
-                                Direct shortcuts to administrative modules and data registers.
+                                Direct shortcuts to transit management modules and registry tables.
                             </p>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                             
                             <!-- Bus Lines Link -->
-                            <a href="bus-lines" class="flex items-center gap-3.5 p-3.5 rounded-xl border border-border bg-background hover:bg-accent/40 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group min-h-[44px]">
-                                <div class="w-10 h-10 rounded-lg bg-bus-bg text-bus border border-bus/30 flex items-center justify-center shrink-0" aria-hidden="true">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                            <a href="bus-lines" class="flex items-center gap-3.5 p-3.5 rounded-xl border-2 border-border bg-card hover:bg-accent/60 transition-all shadow-[2px_2px_0px_var(--shadow-hard)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_var(--shadow-hard)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group min-h-[44px]">
+                                <div class="w-10 h-10 rounded-full bg-bus-bg text-bus border-2 border-border flex items-center justify-center shrink-0" aria-hidden="true">
+                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/>
                                     </svg>
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <h4 class="text-xs font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                                    <h4 class="text-xs font-bold text-foreground group-hover:text-bus transition-colors truncate">
                                         @Lang.GetText("NavBusLines")
                                     </h4>
-                                    <p class="text-2xs text-muted-foreground truncate">
+                                    <p class="text-2xs text-muted-foreground font-mono truncate">
                                         @summary.TotalBusLines routes
                                     </p>
                                 </div>
                             </a>
 
                             <!-- Bus Stops Link -->
-                            <a href="bus-stops" class="flex items-center gap-3.5 p-3.5 rounded-xl border border-border bg-background hover:bg-accent/40 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group min-h-[44px]">
-                                <div class="w-10 h-10 rounded-lg bg-gps-bg text-gps border border-gps/30 flex items-center justify-center shrink-0" aria-hidden="true">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            <a href="bus-stops" class="flex items-center gap-3.5 p-3.5 rounded-xl border-2 border-border bg-card hover:bg-accent/60 transition-all shadow-[2px_2px_0px_var(--shadow-hard)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_var(--shadow-hard)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group min-h-[44px]">
+                                <div class="w-10 h-10 rounded-full bg-gps-bg text-gps border-2 border-border flex items-center justify-center shrink-0" aria-hidden="true">
+                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>
                                     </svg>
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <h4 class="text-xs font-semibold text-foreground group-hover:text-gps transition-colors truncate">
+                                    <h4 class="text-xs font-bold text-foreground group-hover:text-gps transition-colors truncate">
                                         @Lang.GetText("NavBusStops")
                                     </h4>
-                                    <p class="text-2xs text-muted-foreground truncate">
+                                    <p class="text-2xs text-muted-foreground font-mono truncate">
                                         @summary.TotalBusStops locations
                                     </p>
                                 </div>
                             </a>
 
                             <!-- Route Mapping Link -->
-                            <a href="route-stops" class="flex items-center gap-3.5 p-3.5 rounded-xl border border-border bg-background hover:bg-accent/40 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group min-h-[44px]">
-                                <div class="w-10 h-10 rounded-lg bg-route-bg text-route border border-route/30 flex items-center justify-center shrink-0" aria-hidden="true">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.818V8.049a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                            <a href="route-stops" class="flex items-center gap-3.5 p-3.5 rounded-xl border-2 border-border bg-card hover:bg-accent/60 transition-all shadow-[2px_2px_0px_var(--shadow-hard)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_var(--shadow-hard)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group min-h-[44px]">
+                                <div class="w-10 h-10 rounded-full bg-bus-bg text-bus border-2 border-border flex items-center justify-center shrink-0" aria-hidden="true">
+                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/>
                                     </svg>
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <h4 class="text-xs font-semibold text-foreground group-hover:text-route transition-colors truncate">
+                                    <h4 class="text-xs font-bold text-foreground group-hover:text-bus transition-colors truncate">
                                         @Lang.GetText("NavRouteMapping")
                                     </h4>
-                                    <p class="text-2xs text-muted-foreground truncate">
+                                    <p class="text-2xs text-muted-foreground font-mono truncate">
                                         Sequence &amp; Map
                                     </p>
                                 </div>
                             </a>
 
                             <!-- YPS Stores Link -->
-                            <a href="yps-stores" class="flex items-center gap-3.5 p-3.5 rounded-xl border border-border bg-background hover:bg-accent/40 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group min-h-[44px]">
-                                <div class="w-10 h-10 rounded-lg bg-store-bg text-store border border-store/30 flex items-center justify-center shrink-0" aria-hidden="true">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                            <a href="yps-stores" class="flex items-center gap-3.5 p-3.5 rounded-xl border-2 border-border bg-card hover:bg-accent/60 transition-all shadow-[2px_2px_0px_var(--shadow-hard)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_var(--shadow-hard)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group min-h-[44px]">
+                                <div class="w-10 h-10 rounded-full bg-store-bg text-store border-2 border-border flex items-center justify-center shrink-0" aria-hidden="true">
+                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>
                                     </svg>
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <h4 class="text-xs font-semibold text-foreground group-hover:text-store transition-colors truncate">
+                                    <h4 class="text-xs font-bold text-foreground group-hover:text-store transition-colors truncate">
                                         @Lang.GetText("NavYpsStores")
                                     </h4>
-                                    <p class="text-2xs text-muted-foreground truncate">
+                                    <p class="text-2xs text-muted-foreground font-mono truncate">
                                         @summary.TotalStores stores
                                     </p>
                                 </div>

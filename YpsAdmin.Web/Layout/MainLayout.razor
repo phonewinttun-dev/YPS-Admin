@@ -5,128 +5,101 @@
 
 <ToastNotification />
 
-<div class="h-screen w-screen flex flex-col md:flex-row bg-background text-foreground font-sans transition-colors duration-300 overflow-hidden">
+<div class="h-screen w-screen flex flex-col md:flex-row bg-background text-foreground font-sans transition-colors duration-200 overflow-hidden">
     <!-- Sidebar Navigation: Fixed left column with sticky bottom controls -->
-    <aside class="w-full md:w-64 h-auto md:h-full bg-card border-r border-border flex flex-col justify-between shrink-0 shadow-xs z-30 overflow-y-auto" aria-label="Sidebar Navigation">
+    <aside class="w-full md:w-64 h-auto md:h-full bg-card border-r-2 border-border flex flex-col justify-between shrink-0 shadow-[2px_0px_0px_var(--shadow-hard)] z-30 overflow-y-auto" aria-label="Sidebar Navigation">
         <div>
             <!-- Header Brand -->
-            <div class="p-4 border-b border-border flex items-center justify-between shrink-0">
-                <a href="/" class="flex items-center gap-2.5 text-foreground font-bold text-base tracking-tight hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md">
-                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-brand-bg text-brand border border-brand/20 font-bold text-xs shadow-xs font-mono">
+            <div class="p-4 border-b-2 border-border flex items-center justify-between shrink-0">
+                <a href="/" class="flex items-center gap-2.5 text-foreground font-extrabold text-base tracking-tight hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
+                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground border-2 border-border font-extrabold text-xs shadow-xs font-mono-numbers">
                         YPS
                     </span>
-                    <span class="font-semibold text-sm">@Lang.GetText("AppTitle")</span>
+                    <span class="font-extrabold text-sm tracking-wide">@Lang.GetText("AppTitle")</span>
                 </a>
             </div>
 
-            <!-- Navigation Links -->
-            <nav class="p-3 space-y-1" aria-label="Main Navigation">
-                <NavLink href="dashboard" class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" Match="NavLinkMatch.All">
-                    <svg class="w-4 h-4 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 00-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            <!-- Navigation Links with reUI SVG Icons -->
+            <nav class="p-3 space-y-1.5" aria-label="Main Navigation">
+                <NavLink href="dashboard" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-xs font-bold text-muted-foreground hover:bg-accent hover:text-foreground border border-transparent hover:border-border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&.active]:bg-primary [&.active]:text-primary-foreground [&.active]:border-border [&.active]:shadow-[2px_2px_0px_var(--shadow-hard)]" Match="NavLinkMatch.All">
+                    <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>
                     </svg>
                     <span>@Lang.GetText("NavDashboard")</span>
                 </NavLink>
 
-                <NavLink href="bus-lines" class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" Match="NavLinkMatch.Prefix">
-                    <svg class="w-4 h-4 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                <NavLink href="bus-lines" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-xs font-bold text-muted-foreground hover:bg-accent hover:text-foreground border border-transparent hover:border-border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&.active]:bg-primary [&.active]:text-primary-foreground [&.active]:border-border [&.active]:shadow-[2px_2px_0px_var(--shadow-hard)]" Match="NavLinkMatch.Prefix">
+                    <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/>
                     </svg>
                     <span>@Lang.GetText("NavBusLines")</span>
                 </NavLink>
 
-                <NavLink href="bus-stops" class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" Match="NavLinkMatch.Prefix">
-                    <svg class="w-4 h-4 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <NavLink href="bus-stops" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-xs font-bold text-muted-foreground hover:bg-accent hover:text-foreground border border-transparent hover:border-border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&.active]:bg-primary [&.active]:text-primary-foreground [&.active]:border-border [&.active]:shadow-[2px_2px_0px_var(--shadow-hard)]" Match="NavLinkMatch.Prefix">
+                    <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>
                     </svg>
                     <span>@Lang.GetText("NavBusStops")</span>
                 </NavLink>
 
-                <NavLink href="route-stops" class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" Match="NavLinkMatch.Prefix">
-                    <svg class="w-4 h-4 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.818V8.049a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                <NavLink href="route-stops" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-xs font-bold text-muted-foreground hover:bg-accent hover:text-foreground border border-transparent hover:border-border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&.active]:bg-primary [&.active]:text-primary-foreground [&.active]:border-border [&.active]:shadow-[2px_2px_0px_var(--shadow-hard)]" Match="NavLinkMatch.Prefix">
+                    <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/>
                     </svg>
                     <span>@Lang.GetText("NavRouteMapping")</span>
                 </NavLink>
 
-                <NavLink href="yps-stores" class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" Match="NavLinkMatch.Prefix">
-                    <svg class="w-4 h-4 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                <NavLink href="yps-stores" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-xs font-bold text-muted-foreground hover:bg-accent hover:text-foreground border border-transparent hover:border-border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&.active]:bg-primary [&.active]:text-primary-foreground [&.active]:border-border [&.active]:shadow-[2px_2px_0px_var(--shadow-hard)]" Match="NavLinkMatch.Prefix">
+                    <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>
                     </svg>
                     <span>@Lang.GetText("NavYpsStores")</span>
                 </NavLink>
             </nav>
         </div>
 
-        <!-- Footer & Controls (Theme & Language Switcher): Always pinned at bottom of sidebar -->
-        <div class="p-3.5 border-t border-border bg-muted/40 space-y-2.5 shrink-0">
-            <!-- Theme Toggle in Sidebar -->
-            <div>
-                <button type="button"
-                        @onclick="ToggleTheme"
-                        class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg bg-card text-foreground border border-border hover:bg-accent hover:text-accent-foreground transition-all shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
-                        aria-label="Toggle light and dark mode">
-                    <span class="flex items-center gap-2">
-                        @if (Theme.IsDark)
-                        {
-                            <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                            </svg>
-                            <span>Dark Mode</span>
-                        }
-                        else
-                        {
-                            <svg class="w-4 h-4 text-[#0B5F9B] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                            </svg>
-                            <span>Light Mode</span>
-                        }
-                    </span>
-                    <span class="text-2xs font-mono text-muted-foreground">@(Theme.IsDark ? "Switch to Light" : "Switch to Dark")</span>
-                </button>
-            </div>
-
-            <!-- Language Switcher -->
-            <div>
-                <div class="flex items-center gap-1.5 bg-muted p-1 rounded-lg border border-border">
-                    <button type="button" 
-                            @onclick='() => SetLang("en")' 
-                            class="flex-1 py-1.5 px-2.5 text-xs font-semibold rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer @(Lang.CurrentLanguage == "en" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground")">
-                        English
-                    </button>
-                    <button type="button" 
-                            @onclick='() => SetLang("my")' 
-                            class="flex-1 py-1.5 px-2.5 text-xs font-semibold rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer @(Lang.CurrentLanguage == "my" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground")">
-                        မြန်မာ
-                    </button>
-                </div>
-            </div>
-        </div>
     </aside>
 
     <!-- Main Content Area: Header at top, independent scrolling on body -->
     <main id="main-content" class="flex-1 flex flex-col h-full min-w-0 overflow-hidden" tabindex="-1">
-        <!-- Top App Bar with Persistent Breadcrumb & Quick Theme Toggle -->
-        <header class="h-14 bg-card border-b border-border px-6 flex items-center justify-between shadow-xs shrink-0 z-20">
+        <!-- Top App Bar with Persistent Breadcrumb, Language Toggle & Theme Toggle -->
+        <header class="h-14 bg-card border-b-2 border-border px-6 flex items-center justify-between shadow-xs shrink-0 z-20">
             <Breadcrumb />
             
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
+                <!-- Language Toggle Button with reUI Languages SVG Icon -->
+                <button type="button"
+                        @onclick="ToggleLanguage"
+                        class="h-9 px-3 rounded-full border-2 border-border text-foreground hover:bg-accent transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer shadow-xs flex items-center gap-1.5 text-xs font-bold font-mono"
+                        title="@(Lang.CurrentLanguage == "en" ? "Switch to Myanmar" : "Switch to English")"
+                        aria-label="Toggle language">
+                    <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="m5 8 6 6"/>
+                        <path d="m4 14 6-6 2-3"/>
+                        <path d="M2 5h12"/>
+                        <path d="M7 2h1"/>
+                        <path d="m22 22-5-10-5 10"/>
+                        <path d="M14 18h6"/>
+                    </svg>
+                    <span>@(Lang.CurrentLanguage == "en" ? "EN" : "မြန်မာ")</span>
+                </button>
+
+                <!-- Theme Toggle Button with reUI Sun/Moon SVG Icons -->
                 <button type="button"
                         @onclick="ToggleTheme"
-                        class="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                        class="h-9 w-9 p-0 rounded-full border-2 border-border text-foreground hover:bg-accent transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer shadow-xs flex items-center justify-center shrink-0"
                         title="@(Theme.IsDark ? "Switch to Light Mode" : "Switch to Dark Mode")"
                         aria-label="Toggle theme">
                     @if (Theme.IsDark)
                     {
-                        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        <svg class="w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
                         </svg>
                     }
                     else
                     {
-                        <svg class="w-4 h-4 text-[#0B5F9B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        <svg class="w-4 h-4 text-bus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
                         </svg>
                     }
                 </button>
@@ -160,6 +133,12 @@
     private async Task ToggleTheme()
     {
         await Theme.ToggleThemeAsync();
+    }
+
+    private async Task ToggleLanguage()
+    {
+        var nextLang = Lang.CurrentLanguage == "en" ? "my" : "en";
+        await Lang.SetLanguageAsync(nextLang);
     }
 
     private async Task SetLang(string langCode)

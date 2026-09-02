@@ -28,25 +28,25 @@
 
     private string GetButtonClass()
     {
-        var baseClasses = "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none cursor-pointer active:scale-[0.99]";
+        var baseClasses = "inline-flex items-center justify-center whitespace-nowrap rounded-full text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none cursor-pointer border-2 border-border shadow-[2.5px_2.5px_0px_var(--shadow-hard)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3.5px_3.5px_0px_var(--shadow-hard)] active:translate-x-[1.5px] active:translate-y-[1.5px] active:shadow-none";
 
         var variantClasses = Variant switch
         {
-            ButtonVariant.Default => "bg-primary text-white shadow-xs hover:bg-primary/90",
-            ButtonVariant.Secondary => "bg-primary-container text-on-primary-container shadow-xs hover:bg-primary-container/85 border border-amber-400/30",
-            ButtonVariant.Outline => "border border-border bg-card text-foreground shadow-xs hover:bg-accent hover:text-accent-foreground",
-            ButtonVariant.Ghost => "text-foreground hover:bg-accent hover:text-accent-foreground",
-            ButtonVariant.Destructive => "bg-destructive text-destructive-foreground shadow-xs hover:bg-destructive/90",
-            _ => "bg-primary text-white hover:bg-primary/90"
+            ButtonVariant.Default => "bg-primary text-primary-foreground border-border",
+            ButtonVariant.Secondary => "bg-secondary text-secondary-foreground border-border hover:bg-accent",
+            ButtonVariant.Outline => "bg-card text-foreground border-border hover:bg-accent",
+            ButtonVariant.Ghost => "border-transparent shadow-none hover:bg-accent hover:text-accent-foreground hover:translate-x-0 hover:translate-y-0 hover:shadow-none",
+            ButtonVariant.Destructive => "bg-destructive text-white border-border hover:opacity-90",
+            _ => "bg-primary text-primary-foreground border-border"
         };
 
         var sizeClasses = Size switch
         {
-            ButtonSize.Sm => "h-8 rounded-md px-3 text-xs gap-1.5 min-h-[32px]",
-            ButtonSize.Md => "h-9 px-4 py-2 text-sm gap-2 min-h-[36px]",
-            ButtonSize.Lg => "h-10 rounded-md px-6 text-base gap-2 min-h-[40px]",
-            ButtonSize.Icon => "h-8 w-8 p-0 rounded-md shrink-0",
-            _ => "h-9 px-4 py-2 text-sm gap-2"
+            ButtonSize.Sm => "h-8 px-3 text-xs gap-1.5 min-h-[36px]",
+            ButtonSize.Md => "h-9 px-4 py-2 text-xs gap-2 min-h-[40px]",
+            ButtonSize.Lg => "h-11 px-6 text-sm gap-2.5 min-h-[44px]",
+            ButtonSize.Icon => "h-9 w-9 p-0 shrink-0 min-h-[36px] min-w-[36px]",
+            _ => "h-9 px-4 py-2 text-xs gap-2"
         };
 
         return $"{baseClasses} {variantClasses} {sizeClasses} {Class}".Trim();
